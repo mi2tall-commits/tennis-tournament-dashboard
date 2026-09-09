@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=v13_safe">
+  <link rel="stylesheet" href="styles.css?v=v14_nav_back">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -373,8 +373,11 @@
   <div id="scoreModal" class="modal-backdrop">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalMatchTitle">경기 스코어 입력</h3>
-        <button class="modal-close" onclick="app.closeModal('scoreModal')">&times;</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('scoreModal')">← 뒤로</button>
+          <h3 class="modal-title" id="modalMatchTitle">경기 스코어 입력</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('scoreModal')">✕ 닫기</button>
       </div>
       <div class="modal-body">
         <div class="score-stepper-wrap">
@@ -520,8 +523,11 @@
   <div id="matchmakerModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 620px;">
       <div class="modal-header">
-        <h3 class="modal-title">⚙️ 대진표 편성 & 환경 설정 마법사</h3>
-        <button class="modal-close" onclick="app.closeModal('matchmakerModal')">&times;</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('matchmakerModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:14px;">⚙️ 대진표 편성 마법사</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('matchmakerModal')">✕ 닫기</button>
       </div>
       <div class="modal-body">
         <!-- Court & Schedule Settings Form (#1, #2) -->
@@ -619,11 +625,14 @@
   <div id="draftReviewModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 780px;">
       <div class="modal-header">
-        <div>
-          <h3 class="modal-title">📋 경기이사 대진표 1차 드래프트 검토 & 수동 조정</h3>
-          <div style="font-size:12px; color:var(--text-muted);">자동 생성된 대진입니다. 선수를 변경하거나 조정한 후 최종 확정 버튼을 누르세요.</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('draftReviewModal')">← 뒤로</button>
+          <div>
+            <h3 class="modal-title" style="font-size:14px;">📋 대진표 1차 드래프트 검토</h3>
+            <div style="font-size:11px; color:var(--text-muted);">경기이사가 선수를 변경하거나 조정한 후 최종 확정합니다.</div>
+          </div>
         </div>
-        <button class="modal-close" onclick="app.closeModal('draftReviewModal')">&times;</button>
+        <button type="button" class="modal-close" onclick="app.closeModal('draftReviewModal')">✕ 닫기</button>
       </div>
       <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
         <div id="draftMatchListContainer" class="draft-matches-container">
@@ -641,8 +650,11 @@
   <div id="eventMatchmakerModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 600px;">
       <div class="modal-header">
-        <h3 class="modal-title">🎲 이벤트 경기: 조별 조원 랜덤 복식 페어링</h3>
-        <button class="modal-close" onclick="app.closeModal('eventMatchmakerModal')">&times;</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('eventMatchmakerModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:14px;">🎲 이벤트 랜덤 복식 페어링</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('eventMatchmakerModal')">✕ 닫기</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -786,8 +798,11 @@
   <div id="settingsModal" class="modal-backdrop">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 class="modal-title">⚙️ 대회 환경 설정 & 데이터 관리</h3>
-        <button class="modal-close" onclick="app.closeModal('settingsModal')">&times;</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('settingsModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:14px;">⚙️ 환경 설정</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('settingsModal')">✕ 닫기</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -853,11 +868,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v13_safe"></script>
-  <script src="js/member_manager.js?v=v13_safe"></script>
-  <script src="js/matchmaker_engine.js?v=v13_safe"></script>
-  <script src="js/leaderboard_engine.js?v=v13_safe"></script>
-  <script src="js/tournament_app.js?v=v13_safe"></script>
+  <script src="sample_tournament_data.js?v=v14_nav_back"></script>
+  <script src="js/member_manager.js?v=v14_nav_back"></script>
+  <script src="js/matchmaker_engine.js?v=v14_nav_back"></script>
+  <script src="js/leaderboard_engine.js?v=v14_nav_back"></script>
+  <script src="js/tournament_app.js?v=v14_nav_back"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -987,11 +1002,14 @@
   <div id="groupManagerModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 820px;">
       <div class="modal-header">
-        <div>
-          <h3 class="modal-title">👥 A~D 4개조 조 편성 관리자</h3>
-          <div style="font-size:12px; color:var(--text-muted);">회원 명단을 기준으로 A조, B조, C조, D조를 직접 선택하여 구성합니다.</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('groupManagerModal')">← 뒤로</button>
+          <div>
+            <h3 class="modal-title" style="font-size:14px;">👥 A~D 4개조 조 편성 관리자</h3>
+            <div style="font-size:11px; color:var(--text-muted);">회원 명단을 기준으로 A~D조 직접 편성 (불참자 제외 가능)</div>
+          </div>
         </div>
-        <button class="modal-close" onclick="app.closeModal('groupManagerModal')">&times;</button>
+        <button type="button" class="modal-close" onclick="app.closeModal('groupManagerModal')">✕ 닫기</button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <!-- Group Summary Cards -->
@@ -1034,14 +1052,16 @@
   <div id="historyModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 820px;">
       <div class="modal-header">
-        <div>
-          <h3 class="modal-title">📜 역대 대회 내역 &amp; 명예의 전당 (기록보관소)</h3>
-          <div style="font-size:12px; color:var(--text-muted);">종료된 월별 대회의 최종 순위, 우승자, 주요 경기 통계를 요약하여 열람합니다.</div>
-        </div>
         <div style="display:flex; align-items:center; gap:8px;">
-          <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:6px 12px;" onclick="app.finishCurrentTournament()">🏁 현재 대회 종료 및 보관</button>
-          <button class="btn-xs" style="background:#059669; font-weight:800; padding:6px 12px;" onclick="app.startNewTournamentPrompt()">➕ 신규 대회 시작</button>
-          <button class="modal-close" onclick="app.closeModal('historyModal')">&times;</button>
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('historyModal')">← 뒤로</button>
+          <div>
+            <h3 class="modal-title" style="font-size:14px;">📜 역대 대회 내역 &amp; 명예의 전당</h3>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:5px 8px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
+          <button class="btn-xs" style="background:#059669; font-weight:800; padding:5px 8px;" onclick="app.startNewTournamentPrompt()">➕ 새대회</button>
+          <button class="modal-close" onclick="app.closeModal('historyModal')">✕ 닫기</button>
         </div>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">

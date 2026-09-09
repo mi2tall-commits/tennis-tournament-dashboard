@@ -1526,12 +1526,29 @@ renderLeaderboard() {
 
   showModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.add("active");
+    if (!el) return;
+    el.classList.add("active");
+    // Mobile native Back button support
+    try {
+      if (!history.state || history.state.modalId !== id) {
+        history.pushState({ modalId: id }, "");
+      }
+    } catch(e) {}
   }
 
   closeModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.remove("active");
+    // Pop history state if closing programmatically
+    try {
+      if (history.state && history.state.modalId === id) {
+        history.back();
+      }
+    } catch(e) {}
+  }
+
+  closeAllActiveModals() {
+    document.querySelectorAll(".modal-backdrop.active").forEach(m => m.classList.remove("active"));
   }
 
   switchMobileTab(tabId) {
@@ -1563,6 +1580,21 @@ renderLeaderboard() {
   }
 
   bindEvents() {
+    // 1. Mobile Phone Native Back Button Listener (popstate)
+    window.addEventListener("popstate", (e) => {
+      const activeModals = document.querySelectorAll(".modal-backdrop.active");
+      if (activeModals.length > 0) {
+        activeModals.forEach(m => m.classList.remove("active"));
+      }
+    });
+
+    // 2. Click outside (backdrop tap) to close modal
+    document.addEventListener("click", (e) => {
+      if (e.target && e.target.classList.contains("modal-backdrop") && e.target.classList.contains("active")) {
+        this.closeModal(e.target.id);
+      }
+    });
+
     const btnToggleView = document.getElementById("btnToggleView");
     if (btnToggleView) {
       btnToggleView.addEventListener("click", () => {
