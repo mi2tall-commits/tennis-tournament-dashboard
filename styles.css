@@ -1300,3 +1300,117 @@ body.force-stadium-mode .dashboard-container {
   font-size: 9px;
   font-weight: 700;
 }
+
+/* 순위보드 듀얼 탭 (당월 개인리그전 vs 연간 종합 랭킹) */
+.lb-tab-group {
+  display: inline-flex;
+  background: #090f1d;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #1e3358;
+}
+.lb-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lb-tab-btn.active {
+  background: #1e3a6e;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.lb-tab-btn:hover:not(.active) {
+  color: #38bdf8;
+}
+
+/* 대회 내역 카드 스타일 */
+.history-tournaments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.history-tourney-card {
+  background: #090f1d;
+  border: 1px solid #1e3358;
+  border-radius: 8px;
+  padding: 14px;
+  transition: border-color 0.2s;
+}
+.history-tourney-card:hover {
+  border-color: #38bdf8;
+}
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.history-title-badge {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  margin-right: 8px;
+}
+.history-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.badge-completed {
+  font-size: 10px;
+  font-weight: 800;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.history-podium-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #111b33;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.hist-medal {
+  color: #cbd5e1;
+}
+.hist-medal b {
+  color: var(--neon-gold);
+}
+.history-meta-info {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.history-mini-table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid #1e3358;
+  padding-top: 6px;
+}
+.history-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.history-mini-table th {
+  color: var(--text-muted);
+  padding: 4px 6px;
+  text-align: left;
+}
+.history-mini-table td {
+  padding: 4px 6px;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(30, 51, 88, 0.4);
+}

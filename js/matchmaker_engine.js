@@ -34,7 +34,7 @@ class MatchmakerEngine {
   /**
    * 경기 시작 시간과 게임 소요 시간(분)을 기반으로 타임슬롯 자동 생성
    */
-  generateTimeSlots(startTime = "10:00", durationMinutes = 40, slotCount = 5) {
+  generateTimeSlots(startTime = "08:00", durationMinutes = 40, slotCount = 5) {
     const slots = [];
     const [startH, startM] = startTime.split(":").map(Number);
     let currentTotalMinutes = (startH * 60) + startM;

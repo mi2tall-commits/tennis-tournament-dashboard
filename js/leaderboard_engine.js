@@ -218,13 +218,31 @@ class LeaderboardEngine {
     return history;
   }
 
-  getSeasonHistory() {
+  getSeasonHistory(currentTournament = null) {
+    let list = [];
     try {
       const saved = localStorage.getItem(this.seasonStorageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch(e) {
-      return [];
+      if (saved) {
+        list = JSON.parse(saved);
+      }
+    } catch(e) {}
+
+    // Seed with DEFAULT_TOURNAMENT history if empty
+    if ((!list || list.length === 0) && typeof DEFAULT_TOURNAMENT !== "undefined" && DEFAULT_TOURNAMENT.history) {
+      list = JSON.parse(JSON.stringify(DEFAULT_TOURNAMENT.history));
+      try { localStorage.setItem(this.seasonStorageKey, JSON.stringify(list)); } catch(e) {}
     }
+
+    // Merge current tournament history if provided
+    if (currentTournament && Array.isArray(currentTournament.history)) {
+      currentTournament.history.forEach(h => {
+        if (!list.some(item => item.id === h.id)) {
+          list.push(h);
+        }
+      });
+    }
+
+    return list;
   }
 
   getSeasonCumulativeLeaderboard() {

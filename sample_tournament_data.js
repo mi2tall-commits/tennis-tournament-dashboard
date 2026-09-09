@@ -1,4 +1,4 @@
-// 테니스 동호회 정기대회 샘플 데이터셋 (64명 공식 회원 명부 연동)
+// 테니스 동호회 정기대회 샘플 데이터셋 (8시 디폴트 & 대회 내역 아카이브 탑재)
 const DEFAULT_TOURNAMENT = {
   "id": "tourney_202610",
   "title": "2026년 10월 정기대회",
@@ -8,7 +8,8 @@ const DEFAULT_TOURNAMENT = {
   "pointsDraw": 1,
   "pointsLoss": 0,
   "gameDurationMinutes": 40,
-  "startTime": "10:00",
+  "startTime": "08:00",
+  "status": "ongoing",
   "courts": [
     "15번",
     "16번",
@@ -17,24 +18,24 @@ const DEFAULT_TOURNAMENT = {
   ],
   "timeSlots": [
     {
+      "start": "08:00",
+      "end": "08:40"
+    },
+    {
+      "start": "08:40",
+      "end": "09:20"
+    },
+    {
+      "start": "09:20",
+      "end": "10:00"
+    },
+    {
       "start": "10:00",
       "end": "10:40"
     },
     {
       "start": "10:40",
       "end": "11:20"
-    },
-    {
-      "start": "11:20",
-      "end": "12:00"
-    },
-    {
-      "start": "12:00",
-      "end": "12:40"
-    },
-    {
-      "start": "12:40",
-      "end": "13:20"
     }
   ],
   "players": [
@@ -565,6 +566,116 @@ const DEFAULT_TOURNAMENT = {
       "scoreB": 5,
       "tieBreak": "7:3",
       "status": "finished"
+    }
+  ],
+  "history": [
+    {
+      "id": "tourney_202609",
+      "title": "2026년 9월 정기대회",
+      "date": "2026-09-20",
+      "mode": "regular_individual",
+      "status": "completed",
+      "matchesCount": 15,
+      "firstPlace": "김성윤(회장)",
+      "secondPlace": "서동원",
+      "thirdPlace": "김현제",
+      "summary": "9월 정기 월례회: 김성윤(회장) 4승 무패로 단독 1위 달성.",
+      "ranks": [
+        {
+          "rank": 1,
+          "name": "김성윤(회장)",
+          "points": 12,
+          "wins": 4,
+          "draws": 0,
+          "losses": 0,
+          "diff": 14,
+          "record": "4-0-0"
+        },
+        {
+          "rank": 2,
+          "name": "서동원",
+          "points": 9,
+          "wins": 3,
+          "draws": 0,
+          "losses": 1,
+          "diff": 8,
+          "record": "3-0-1"
+        },
+        {
+          "rank": 3,
+          "name": "김현제",
+          "points": 9,
+          "wins": 3,
+          "draws": 0,
+          "losses": 1,
+          "diff": 6,
+          "record": "3-0-1"
+        },
+        {
+          "rank": 4,
+          "name": "이정윤",
+          "points": 7,
+          "wins": 2,
+          "draws": 1,
+          "losses": 1,
+          "diff": 3,
+          "record": "2-1-1"
+        },
+        {
+          "rank": 5,
+          "name": "정우근",
+          "points": 6,
+          "wins": 2,
+          "draws": 0,
+          "losses": 2,
+          "diff": 1,
+          "record": "2-0-2"
+        }
+      ]
+    },
+    {
+      "id": "tourney_202608",
+      "title": "2026년 8월 여름 특별대회",
+      "date": "2026-08-16",
+      "mode": "regular_individual",
+      "status": "completed",
+      "matchesCount": 14,
+      "firstPlace": "장경찬",
+      "secondPlace": "한성호",
+      "thirdPlace": "손정철",
+      "summary": "8월 특별전: 장경찬 3승 1무로 우승.",
+      "ranks": [
+        {
+          "rank": 1,
+          "name": "장경찬",
+          "points": 10,
+          "wins": 3,
+          "draws": 1,
+          "losses": 0,
+          "diff": 9,
+          "record": "3-1-0"
+        },
+        {
+          "rank": 2,
+          "name": "한성호",
+          "points": 9,
+          "wins": 3,
+          "draws": 0,
+          "losses": 1,
+          "diff": 7,
+          "record": "3-0-1"
+        },
+        {
+          "rank": 3,
+          "name": "손정철",
+          "points": 7,
+          "wins": 2,
+          "draws": 1,
+          "losses": 1,
+          "diff": 4,
+          "record": "2-1-1"
+        }
+      ]
     }
   ],
   "courtBookings": [

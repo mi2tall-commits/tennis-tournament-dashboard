@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css?v=64m6">
+  <link rel="stylesheet" href="styles.css?v=64m7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -38,6 +38,14 @@
       <button class="btn-header" onclick="app.openCourtBookingModal()">
         <span>☕</span>
         <span class="btn-text">커피쿠폰</span>
+      </button>
+      <button class="btn-header" onclick="app.openHistoryModal()">
+        <span>📜</span>
+        <span class="btn-text">대회 내역</span>
+      </button>
+      <button class="btn-header" style="border-color:#f59e0b; background:rgba(245,158,11,0.15);" onclick="app.finishCurrentTournament()">
+        <span>🏁</span>
+        <span class="btn-text" style="color:#fbbf24; font-weight:800;">대회 종료</span>
       </button>
       <button class="btn-header" onclick="app.openRosterModal()">
         <span>👥</span>
@@ -73,19 +81,25 @@
     <section class="top-split-grid">
       <!-- Left: Real-time Leaderboard -->
       <div class="panel-card">
-        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div class="panel-title">
-              <span>🏆</span>
-              <span>실시간 순위보드</span>
-            </div>
-            <div class="panel-subtitle">승점 &gt; 득실차 &gt; 다득점</div>
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <!-- Dual Tabs: 당월 개인리그전 vs 연간 종합 랭킹 -->
+          <div class="lb-tab-group">
+            <button id="tabBtnMonthlyLeague" class="lb-tab-btn active" onclick="app.setLeaderboardMode('monthly')">
+              <span>🏆 당월 개인 리그전</span>
+            </button>
+            <button id="tabBtnAnnualSeason" class="lb-tab-btn" onclick="app.setLeaderboardMode('annual')">
+              <span>👑 연간 종합 랭킹</span>
+            </button>
           </div>
-          <!-- League Reset Button (#5) -->
-          <button class="btn-reset-league" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
-            <span>🔄</span>
-            <span>순위 리셋</span>
-          </button>
+          
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="leaderboardCurrentModeText" style="font-size:11px; color:var(--text-muted); font-weight:700;">승점 &gt; 득실차 &gt; 다득점</span>
+            <!-- League Reset Button -->
+            <button id="btnResetLeagueUi" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
+              <span>🔄</span>
+              <span>리그전 순위 리셋</span>
+            </button>
+          </div>
         </div>
 
         <div class="leaderboard-table-wrap">
@@ -247,6 +261,23 @@
       </div>
     </section>
 
+    
+    <!-- Tab 6: 대회 내역 요약 (#3) -->
+    <section id="tab-history" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title">📜 대회 내역 &amp; 명예의 전당</div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800;" onclick="app.finishCurrentTournament()">🏁 현 대회 종료</button>
+            <button class="btn-xs" style="background:#059669;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+          </div>
+        </div>
+        <div id="mobileHistoryList" style="margin-top:10px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
     <!-- Tab 5: 동호회 명단 -->
     <section id="tab-roster" class="mobile-view-section">
       <div class="panel-card">
@@ -296,6 +327,10 @@
     <button class="mobile-nav-btn" data-tab="tab-roster" onclick="app.switchMobileTab('tab-roster')">
       <span class="nav-icon">👥</span>
       <span>명단</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="tab-history" onclick="app.switchMobileTab('tab-history')">
+      <span class="nav-icon">📜</span>
+      <span>대회내역</span>
     </button>
   </nav>
 
@@ -490,7 +525,7 @@
           <div class="form-row" style="margin-top:6px;">
             <div class="form-group">
               <label>최초 시작 시간</label>
-              <input type="time" id="mmStartTime" class="form-input" value="10:00">
+              <input type="time" id="mmStartTime" class="form-input" value="08:00">
             </div>
             <div class="form-group">
               <label>게임당 소요 시간 (기본 40분)</label>
@@ -793,11 +828,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=64m6"></script>
-  <script src="js/member_manager.js?v=64m6"></script>
-  <script src="js/matchmaker_engine.js?v=64m6"></script>
-  <script src="js/leaderboard_engine.js?v=64m6"></script>
-  <script src="js/tournament_app.js?v=64m6"></script>
+  <script src="sample_tournament_data.js?v=64m7"></script>
+  <script src="js/member_manager.js?v=64m7"></script>
+  <script src="js/matchmaker_engine.js?v=64m7"></script>
+  <script src="js/leaderboard_engine.js?v=64m7"></script>
+  <script src="js/tournament_app.js?v=64m7"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -951,6 +986,32 @@
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('groupManagerModal')">취소</button>
         <button class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.saveGroupAssignments()">조 편성 확정 및 저장</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 10. Tournament History Modal (대회 내역 요약 & 기록 보관소 #3) -->
+  <div id="historyModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 820px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">📜 역대 대회 내역 &amp; 명예의 전당 (기록보관소)</h3>
+          <div style="font-size:12px; color:var(--text-muted);">종료된 월별 대회의 최종 순위, 우승자, 주요 경기 통계를 요약하여 열람합니다.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:6px 12px;" onclick="app.finishCurrentTournament()">🏁 현재 대회 종료 및 보관</button>
+          <button class="btn-xs" style="background:#059669; font-weight:800; padding:6px 12px;" onclick="app.startNewTournamentPrompt()">➕ 신규 대회 시작</button>
+          <button class="modal-close" onclick="app.closeModal('historyModal')">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div id="historyTournamentList" class="history-tournaments-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('historyModal')">닫기</button>
       </div>
     </div>
   </div>

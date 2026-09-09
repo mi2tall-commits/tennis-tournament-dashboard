@@ -12,13 +12,14 @@
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v6";
+    this.storageKey = "tennis_active_tournament_v7";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
     
     this.tournament = this.loadTournament();
     this.activeMobileTab = "tab-leaderboard";
+    this.leaderboardViewMode = "monthly"; // monthly (개인리그전) vs annual (연간 종합 랭킹)
     this.selectedPlayerFilter = "";
     this.audioEnabled = true;
     this.editingMatchId = null;
@@ -135,6 +136,7 @@ class TournamentApp {
     this.renderMyMatchesView();
     this.renderRosterTable();
     this.renderBookingTable();
+    this.renderHistoryTab();
     this.renderQrCode();
   }
 
@@ -160,14 +162,26 @@ class TournamentApp {
 
   renderLeaderboard() {
     const tbody = document.getElementById("leaderboardBody");
+    const modeBadgeEl = document.getElementById("leaderboardCurrentModeText");
+    const resetBtn = document.getElementById("btnResetLeagueUi");
     if (!tbody) return;
 
-    const mode = this.tournament.mode || "regular_individual";
+    // Toggle tab active classes
+    const tabMonthlyBtn = document.getElementById("tabBtnMonthlyLeague");
+    const tabAnnualBtn = document.getElementById("tabBtnAnnualSeason");
+    if (tabMonthlyBtn && tabAnnualBtn) {
+      tabMonthlyBtn.classList.toggle("active", this.leaderboardViewMode === "monthly");
+      tabAnnualBtn.classList.toggle("active", this.leaderboardViewMode === "annual");
+    }
 
-    if (mode === "regular_group") {
-      const groupRanked = this.leaderboard.calculateGroupLeaderboard(this.tournament.matches);
+    if (this.leaderboardViewMode === "annual") {
+      // Show Annual Season Cumulative Ranking
+      if (modeBadgeEl) modeBadgeEl.textContent = "👑 연간 종합 누적 랭킹 (월별 성적 합산)";
+      if (resetBtn) resetBtn.style.display = "none"; // 연간 랭킹은 리셋 버튼 숨김 (영구 보존)
+
+      const cumulative = this.leaderboard.getSeasonCumulativeLeaderboard();
       let html = "";
-      groupRanked.forEach((g, idx) => {
+      cumulative.forEach((c, idx) => {
         const rank = idx + 1;
         const rankClass = rank === 1 ? "rank-pill-1" : rank === 2 ? "rank-pill-2" : rank === 3 ? "rank-pill-3" : "rank-pill-default";
         const rowClass = rank <= 3 ? `row-rank-${rank}` : "";
@@ -175,17 +189,21 @@ class TournamentApp {
         html += `
           <tr class="${rowClass}">
             <td style="text-align: center;"><span class="rank-pill ${rankClass}">${rank}</span></td>
-            <td>-</td>
-            <td class="player-name-cell"><b>${g.group}</b></td>
-            <td>${g.played}전 ${g.wins}승 ${g.draws}무 ${g.losses}패</td>
-            <td><span class="pts-badge">${g.points}</span></td>
-            <td><span class="${g.diff > 0 ? "diff-positive" : g.diff < 0 ? "diff-negative" : "diff-zero"}">${g.diff > 0 ? "+" + g.diff : g.diff}</span></td>
+            <td style="text-align:center;">-</td>
+            <td class="player-name-cell"><b>${c.name}</b></td>
+            <td>${c.totalWins}승 ${c.totalDraws}무 ${c.totalLosses}패</td>
+            <td><span class="pts-badge">${c.totalPoints}</span></td>
+            <td><span class="${c.totalDiff > 0 ? "diff-positive" : c.totalDiff < 0 ? "diff-negative" : "diff-zero"}">${c.totalDiff > 0 ? "+" + c.totalDiff : c.totalDiff}</span></td>
           </tr>
         `;
       });
-      tbody.innerHTML = html;
+      tbody.innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">아직 종료된 대회가 없습니다. 대회가 끝나면 [대회 종료] 버튼을 눌러 연간 랭킹에 기록하세요!</td></tr>`;
       return;
     }
+
+    // Show Monthly Individual League Ranking
+    if (modeBadgeEl) modeBadgeEl.textContent = "👤 당월 개인 리그전 (복식 경기 개인 승점 집계)";
+    if (resetBtn) resetBtn.style.display = "inline-flex";
 
     const activePlayers = this.memberManager.getActiveMembers();
     const ranked = this.leaderboard.calculateIndividualLeaderboard(
@@ -212,7 +230,7 @@ class TournamentApp {
       html += `
         <tr class="${rowClass}">
           <td style="text-align: center;"><span class="rank-pill ${rankClass}">${p.rank}</span></td>
-          <td>${deltaHtml}</td>
+          <td style="text-align:center;">${deltaHtml}</td>
           <td class="player-name-cell">${p.name}</td>
           <td>${p.record}</td>
           <td><span class="pts-badge">${p.points}</span></td>
@@ -222,6 +240,11 @@ class TournamentApp {
     });
 
     tbody.innerHTML = html;
+  }
+
+  setLeaderboardMode(mode) {
+    this.leaderboardViewMode = mode;
+    this.renderLeaderboard();
   }
 
   /**
@@ -615,6 +638,142 @@ class TournamentApp {
     alert(`[${booker}] 님의 ${court} (${hours}시간) 코트 예약 기록이 추가되었습니다!`);
   }
 
+
+  // ==============================================================================
+  // 🏁 대회 종료 & 대회 내역 요약 관리 (#3)
+  // ==============================================================================
+  finishCurrentTournament() {
+    if (!confirm(`🏁 [${this.tournament.title}] 대회를 최종 완료하시겠습니까?\n\n확인을 누르시면 현재 대진 및 순위 결과가 '대회 내역' 탭에 영구 보관되며, 연간 종합 랭킹에 자동 누적 반영됩니다.`)) {
+      return;
+    }
+
+    const activePlayers = this.memberManager.getActiveMembers();
+    const finalRanks = this.leaderboard.calculateIndividualLeaderboard(this.tournament.matches, activePlayers);
+    const top1 = finalRanks[0] ? finalRanks[0].name : "-";
+    const top2 = finalRanks[1] ? finalRanks[1].name : "-";
+    const top3 = finalRanks[2] ? finalRanks[2].name : "-";
+
+    const completedTourney = {
+      id: "tourney_" + Date.now(),
+      title: this.tournament.title,
+      date: this.tournament.date || new Date().toISOString().slice(0, 10),
+      mode: this.tournament.mode || "regular_individual",
+      status: "completed",
+      matchesCount: (this.tournament.matches || []).filter(m => m.status === "finished").length,
+      firstPlace: top1,
+      secondPlace: top2,
+      thirdPlace: top3,
+      summary: `${this.tournament.title} 공식 완료: 우승 ${top1}, 준우승 ${top2}, 3위 ${top3}.`,
+      ranks: finalRanks.slice(0, 10)
+    };
+
+    if (!this.tournament.history) this.tournament.history = [];
+    this.tournament.history.unshift(completedTourney);
+
+    // Save snapshot to Season Cumulative storage
+    this.leaderboard.saveTournamentToSeason(this.tournament, finalRanks);
+
+    this.tournament.status = "completed";
+    this.tournament.breakingNews = `[대회 공식 종료] ${this.tournament.title}가 성황리에 종료되었습니다! 🥇 우승: ${top1}`;
+    this.saveTournament();
+    this.render();
+    this.renderHistoryTab();
+
+    alert(`🎉 [${this.tournament.title}] 대회가 성공적으로 종료되었습니다!\n\n🥇 1위: ${top1}\n🥈 2위: ${top2}\n🥉 3위: ${top3}\n\n결과가 [대회 내역] 탭 및 연간 랭킹에 영구 보관되었습니다.`);
+  }
+
+  startNewTournamentPrompt() {
+    const defaultTitle = new Date().getFullYear() + "년 " + (new Date().getMonth() + 1) + "월 정기대회";
+    const newTitle = prompt("새로운 대회 공식 명칭을 입력하세요:", defaultTitle);
+    if (!newTitle) return;
+
+    // Reset current tournament to fresh state
+    this.tournament.title = newTitle.trim();
+    this.tournament.date = new Date().toISOString().slice(0, 10);
+    this.tournament.startTime = "08:00";
+    this.tournament.timeSlots = this.matchmaker.generateTimeSlots("08:00", 40, 5);
+    this.tournament.status = "ongoing";
+
+    // Generate balanced new matches with 64 members
+    const active = this.memberManager.getActiveMembers();
+    const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
+    this.tournament.matches = this.matchmaker.generateLevelBalancedMatches(active, courts, this.tournament.timeSlots);
+    this.leaderboard.resetIndividualRanks();
+    this.tournament.breakingNews = `[신규 대회] ${this.tournament.title}가 시작되었습니다!`;
+
+    this.saveTournament();
+    this.render();
+    this.renderHistoryTab();
+    alert(`🎾 새로운 대회 [${this.tournament.title}]가 시작되었습니다! (08:00 시작 40분 슬롯 편성 완료)`);
+  }
+
+  openHistoryModal() {
+    this.renderHistoryTab();
+    this.showModal("historyModal");
+  }
+
+  renderHistoryTab() {
+    const listEl = document.getElementById("historyTournamentList");
+    const mobListEl = document.getElementById("mobileHistoryList");
+    const historyList = this.leaderboard.getSeasonHistory(this.tournament);
+
+    const generateCardsHtml = () => {
+      if (!historyList || historyList.length === 0) {
+        return `<div style="text-align:center; padding:30px; color:var(--text-muted);">보관된 대회 내역이 없습니다. 대회가 끝나면 [대회 종료] 버튼을 눌러 저장하세요.</div>`;
+      }
+
+      let html = "";
+      historyList.forEach((h, idx) => {
+        const topRanks = Array.isArray(h.ranks) ? h.ranks.slice(0, 5) : [];
+        html += `
+          <div class="history-tourney-card">
+            <div class="history-card-header">
+              <div>
+                <span class="history-title-badge">${h.title}</span>
+                <span class="history-date">${h.date}</span>
+              </div>
+              <span class="badge-completed">종료 완료</span>
+            </div>
+            <div class="history-podium-row">
+              <span class="hist-medal">🥇 1위: <b>${h.firstPlace || (topRanks[0] ? topRanks[0].name : "-")}</b></span>
+              <span class="hist-medal">🥈 2위: <b>${h.secondPlace || (topRanks[1] ? topRanks[1].name : "-")}</b></span>
+              <span class="hist-medal">🥉 3위: <b>${h.thirdPlace || (topRanks[2] ? topRanks[2].name : "-")}</b></span>
+            </div>
+            <div class="history-meta-info">
+              <span>총 완료 경기: <b>${h.matchesCount || 15}경기</b></span>
+              <span>대회 요약: ${h.summary || "정기 월례회 완료"}</span>
+            </div>
+            ${topRanks.length > 0 ? `
+              <div class="history-mini-table-wrap">
+                <table class="history-mini-table">
+                  <thead>
+                    <tr><th>순위</th><th>선수명</th><th>전적</th><th>승점</th><th>득실</th></tr>
+                  </thead>
+                  <tbody>
+                    ${topRanks.map(r => `
+                      <tr>
+                        <td style="text-align:center;">${r.rank}</td>
+                        <td><b>${r.name}</b></td>
+                        <td>${r.record || (r.wins + "-" + r.draws + "-" + r.losses)}</td>
+                        <td>${r.points}</td>
+                        <td>${r.diff > 0 ? "+" + r.diff : r.diff}</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      });
+      return html;
+    };
+
+    const cardsHtml = generateCardsHtml();
+    if (listEl) listEl.innerHTML = cardsHtml;
+    if (mobListEl) mobListEl.innerHTML = cardsHtml;
+  }
+
   renderQrCode() {
     const qrImg = document.getElementById("mobileQrImg");
     if (!qrImg) return;
@@ -819,7 +978,7 @@ class TournamentApp {
 
   openMatchmakerModal() {
     // 설정값 반영
-    document.getElementById("mmStartTime").value = this.tournament.startTime || "10:00";
+    document.getElementById("mmStartTime").value = this.tournament.startTime || "08:00";
     document.getElementById("mmDuration").value = this.tournament.gameDurationMinutes || 40;
     document.getElementById("mmCourtNames").value = (this.tournament.courts || ["15번", "16번", "17번", "18번"]).join(", ");
     document.getElementById("mmCourtCount").value = (this.tournament.courts || []).length || 4;
