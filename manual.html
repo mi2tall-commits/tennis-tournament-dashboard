@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📖 테니스 동호회 실시간 대회 전광판 & 모바일 대시보드 공식 이용 매뉴얼</title>
+  <style>
+    :root {
+      --bg-main: #070c18;
+      --bg-card: #0e172a;
+      --bg-card-hover: #172545;
+      --border-color: #1e3358;
+      --neon-cyan: #38bdf8;
+      --neon-blue: #0284c7;
+      --neon-gold: #f59e0b;
+      --neon-green: #10b981;
+      --neon-red: #ef4444;
+      --neon-purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Sticky Header */
+    .manual-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(13, 22, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid var(--border-color);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon { font-size: 24px; }
+    .header-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--neon-cyan);
+    }
+    .btn-return-app {
+      background: var(--neon-blue);
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-return-app:hover {
+      background: #0369a1;
+    }
+
+    /* Container */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Target Audience Selector Tabs */
+    .role-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0 20px;
+      background: #0b1324;
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .role-tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .role-tab-btn.active {
+      background: var(--neon-blue);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Fast Quick-Jump TOC */
+    .quick-nav {
+      background: #0b1324;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+    }
+    .quick-nav-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--neon-gold);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .quick-nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .quick-nav-link {
+      background: #131f38;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #1f3358;
+    }
+    .quick-nav-link:hover {
+      border-color: var(--neon-cyan);
+      color: #fff;
+    }
+
+    /* Section Cards */
+    .manual-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .section-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .badge-member { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-staff { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-common { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-box {
+      background: #090f1d;
+      border: 1px solid #1a2b4c;
+      border-left: 4px solid var(--neon-cyan);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .step-header {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .callout-box {
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .callout-tip { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+    .callout-warn { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: #fcd34d; }
+    .callout-info { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #7dd3fc; }
+
+    /* Dual Language Subsection */
+    .bilingual-block {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .en-subtext {
+      font-size: 11px;
+      color: #94a3b8;
+      font-style: italic;
+      border-top: 1px dashed #1e3358;
+      padding-top: 4px;
+      margin-top: 4px;
+    }
+
+    /* Key Value Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .feature-item {
+      background: #090f1d;
+      border: 1px solid #1a2b4c;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .feature-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--neon-gold);
+      margin-bottom: 4px;
+    }
+    .feature-body {
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    /* Floating Back to Top */
+    .floating-top-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 90;
+    }
+
+    /* Footer */
+    .manual-footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 30px;
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation -->
+  <header class="manual-header">
+    <div class="header-title-wrap">
+      <span class="header-icon">📖</span>
+      <div>
+        <h1 class="header-title">테니스 동호회 공식 사용 매뉴얼</h1>
+        <div class="header-subtitle">Live Tournament Dashboard &amp; Mobile Guide</div>
+      </div>
+    </div>
+    <a href="index.html" class="btn-return-app">
+      <span>🎾</span>
+      <span>대회 전광판 열기</span>
+    </a>
+  </header>
+
+  <div class="container">
+
+    <!-- Role Filter Tabs -->
+    <div class="role-tabs">
+      <button class="role-tab-btn active" onclick="filterManual('all')">
+        <span>🌐</span>
+        <span>전체 보기</span>
+      </button>
+      <button class="role-tab-btn" onclick="filterManual('member')">
+        <span>👤</span>
+        <span>일반 회원용</span>
+      </button>
+      <button class="role-tab-btn" onclick="filterManual('staff')">
+        <span>⚙️</span>
+        <span>운영진/경기이사</span>
+      </button>
+    </div>
+
+    <!-- Quick Navigation TOC -->
+    <nav class="quick-nav">
+      <div class="quick-nav-title">
+        <span>⚡</span>
+        <span>빠른 이동 (목차)</span>
+      </div>
+      <div class="quick-nav-links">
+        <a href="#sec-quickstart" class="quick-nav-link">📱 시작하기 (홈화면 추가)</a>
+        <a href="#sec-member-courts" class="quick-nav-link">📊 코트 현황 확인</a>
+        <a href="#sec-member-mymatches" class="quick-nav-link">📅 내 경기 찾기</a>
+        <a href="#sec-member-rankings" class="quick-nav-link">🏆 리그전 &amp; 연간 랭킹</a>
+        <a href="#sec-member-coffee" class="quick-nav-link">☕ 커피 쿠폰 순위</a>
+        <a href="#sec-staff-newtourney" class="quick-nav-link">⚙️ 신규 대회 생성</a>
+        <a href="#sec-staff-attendance" class="quick-nav-link">👥 참석자(30~50%) &amp; 조편성</a>
+        <a href="#sec-staff-matchmaker" class="quick-nav-link">⚡ 대진표 생성 &amp; 스코어</a>
+        <a href="#sec-staff-finish" class="quick-nav-link">🏁 대회 종료 &amp; 이력 보관</a>
+        <a href="#sec-faq" class="quick-nav-link">❓ FAQ &amp; 캐시 새로고침</a>
+      </div>
+    </nav>
+
+    <!-- SECTION 0: Quickstart & Mobile Installation -->
+    <section id="sec-quickstart" class="manual-section sec-member sec-staff">
+      <span class="section-badge badge-common">기본 설정 / Basic Setup</span>
+      <h2 class="section-title">📱 모바일 스마트폰 홈 화면에 앱처럼 추가하기</h2>
+      
+      <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">
+        웹 브라우저를 매번 열지 않고 스마트폰 바탕화면의 앱 아이콘처럼 원터치로 접속하여 실시간 대회를 확인하실 수 있습니다.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-title">🍎 아이폰 (Safari 브라우저)</div>
+          <div class="feature-body">
+            1. Safari로 대시보드 주소 접속<br>
+            2. 하단 중앙의 <b>[공유 아이콘 (네모 위 화살표)]</b> 터치<br>
+            3. 아래로 스크롤하여 <b>[홈 화면에 추가]</b> 선택<br>
+            4. 우측 상단 <b>[추가]</b> 터치 시 홈 화면에 테니스 앱 아이콘 생성
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">🤖 갤럭시/안드로이드 (Chrome 브라우저)</div>
+          <div class="feature-body">
+            1. Chrome으로 대시보드 주소 접속<br>
+            2. 우측 상단 <b>[점 3개 메뉴 (⋮)]</b> 터치<br>
+            3. 메뉴에서 <b>[홈 화면에 추가]</b> 또는 <b>[앱 설치]</b> 선택<br>
+            4. <b>[추가]</b> 확인 터치 시 홈 화면에 테니스 앱 아이콘 생성
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box callout-info">
+        💡 <b>실시간 자동 업데이트 안내</b>: 경기이사가 점수를 입력하거나 대진표를 변경하면 전광판과 회원 스마트폰 화면이 실시간으로 동기화됩니다.
+        <div class="en-subtext">Real-time sync ensures player screens update instantly whenever scores or schedules change.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 🎾 PART 1: 일반 회원용 이용 가이드 (FOR GENERAL MEMBERS) -->
+    <!-- ============================================================== -->
+
+    <!-- SECTION 1: 코트별 진행 현황 -->
+    <section id="sec-member-courts" class="manual-section sec-member">
+      <span class="section-badge badge-member">일반 회원 안내 / Member Guide</span>
+      <h2 class="section-title">📊 1. 실시간 코트별 경기 진행 현황 (모바일 첫 화면)</h2>
+      
+      <div class="step-box">
+        <div class="step-header">
+          <span>👀</span>
+          <span>모바일 접속 시 가장 먼저 보이는 핵심 화면</span>
+        </div>
+        <div class="step-desc">
+          - 모바일로 접속하면 하단 첫 번째 탭인 <b>[📊 코트]</b> 화면이 자동으로 열립니다.<br>
+          - 15번, 16번, 17번, 18번 등 우리 동호회가 대관한 코트별로 <b>현재 경기 중인 선수 4명(복식), 세트 스코어, 경기 시간, 대기 중인 다음 경기</b>를 한눈에 파악할 수 있습니다.<br>
+          - 빨간색 <b>[LIVE ●]</b> 뱃지가 깜빡이는 경기는 현재 코트에서 치열하게 진행 중인 경기입니다.
+        </div>
+        <div class="en-subtext">The Court Status tab shows active 4-player doubles matches, real-time set scores, and upcoming games for each booked court.</div>
+      </div>
+
+      <div class="callout-box callout-tip">
+        🎾 <b>회원 꿀팁</b>: 본인 경기가 시작되기 10분 전, 전광판에서 코트 번호와 상대방을 미리 확인하고 코트 옆에서 웜업을 준비하세요!
+      </div>
+    </section>
+
+    <!-- SECTION 2: 내 경기 찾기 -->
+    <section id="sec-member-mymatches" class="manual-section sec-member">
+      <span class="section-badge badge-member">일반 회원 안내 / Member Guide</span>
+      <h2 class="section-title">📅 2. 내 경기 일정 &amp; 파트너 찾기 ([📅 내 경기] 탭)</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>🔍</span>
+          <span>내 이름으로 배정된 모든 경기 원클릭 조회</span>
+        </div>
+        <div class="step-desc">
+          1. 하단 내비게이션 바에서 <b>[📅 내 경기]</b> 탭을 터치합니다.<br>
+          2. 상단 <b>[선수 이름 검색]</b> 입력창에 본인 이름(예: 전현덕)을 입력하거나 드롭다운 목록에서 선택합니다.<br>
+          3. 오늘 내가 출전할 <b>경기 시간표, 배정 코트, 나와 함께 뛸 복식 파트너, 맞서 싸울 상대팀</b> 목록이 시간 순서대로 깔끔하게 나열됩니다.<br>
+          4. 이미 종료된 경기는 최종 스코어와 <b>[승/패]</b> 결과가 함께 표시됩니다.
+        </div>
+        <div class="en-subtext">Quickly filter by your name in the 'My Matches' tab to view assigned game times, partner, opponents, and courts.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: 랭킹 확인 -->
+    <section id="sec-member-rankings" class="manual-section sec-member">
+      <span class="section-badge badge-member">일반 회원 안내 / Member Guide</span>
+      <h2 class="section-title">🏆 3. 순위표 확인법: 당월 개인리그 vs 연간 종합 랭킹</h2>
+
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-title">🥇 당월 개인 리그전 ([🏆 개인리그] 탭)</div>
+          <div class="feature-body">
+            - <b>이번 달 대회</b>의 순수한 경기 실적만 집계합니다.<br>
+            - 모든 경기는 복식으로 진행되지만, <b>승점(승리 3점, 무승부 1점, 패배 0점) 및 세트 득실차는 개인별로 누적</b>되어 개인 순위가 결정됩니다.<br>
+            - 당일 대회 우승자/준우승자를 가리는 공식 랭킹입니다.
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">👑 연간 누적 랭킹 ([👑 연간랭킹] 탭)</div>
+          <div class="feature-body">
+            - 1월부터 12월까지 매월 치러진 <b>모든 정기대회의 실적이 영구 누적</b>된 명예의 전당입니다.<br>
+            - 매월 말일 당월 리그전이 종료되어도 연간 랭킹은 리셋되지 않고 1년간 차곡차곡 누적됩니다.<br>
+            - 연말 총회 클럽 MVP 및 최우수선수 시상의 공식 기준입니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: 커피 쿠폰 순위표 -->
+    <section id="sec-member-coffee" class="manual-section sec-member">
+      <span class="section-badge badge-member">일반 회원 안내 / Member Guide</span>
+      <h2 class="section-title">☕ 4. 코트 예약 기여도 &amp; 커피 쿠폰 시상 ([☕ 커피쿠폰] 탭)</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>🎁</span>
+          <span>동호회 코트 대관 봉사 회원 특별 혜택</span>
+        </div>
+        <div class="step-desc">
+          - 매월 공공 코트 예약에 헌신해주신 회원님들을 위해 <b>매월 1위(3매), 2위(2매), 3위(1매)</b>의 모바일 커피 쿠폰이 지급됩니다.<br>
+          - <b>월말 자동 리셋</b>: 매월 1일~말일까지의 대관 실적을 기준으로 집계되며, <b>매월 말일 자정 마감 후 익월 1일 00시부터 0건으로 자동 리셋</b>되어 새 달의 집계가 시작됩니다.<br>
+          - 예약 내역은 투명하게 목록으로 공개되며, 본인이 대관한 코트 내역이 누락되었다면 운영진에게 등록을 요청하세요!
+        </div>
+        <div class="en-subtext">The coffee coupon podium rewards top court bookers monthly (1st: 3 coupons, 2nd: 2, 3rd: 1) and automatically resets on the 1st of every month.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ⚙️ PART 2: 경기이사 & 운영진 실전 매뉴얼 (FOR STAFF & DIRECTORS) -->
+    <!-- ============================================================== -->
+
+    <!-- SECTION 5: 신규 대회 생성 -->
+    <section id="sec-staff-newtourney" class="manual-section sec-staff">
+      <span class="section-badge badge-staff">운영진/경기이사 매뉴얼 / Staff Manual</span>
+      <h2 class="section-title">⚙️ 5. 새 대회 생성 &amp; 대회 환경 설정</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>🆕</span>
+          <span>정기전/번개대회 신규 개설 절차</span>
+        </div>
+        <div class="step-desc">
+          1. 하단 <b>[📜 대회내역]</b> 탭에서 상단 <b>[➕ 새 대회]</b> 버튼을 누릅니다.<br>
+          2. 팝업창에 새 대회 명칭(예: <i>2026년 11월 가을 정기대회</i>)을 입력하고 확인을 누릅니다.<br>
+          3. 이전 대회의 대진과 스코어가 초기화되고, 깨끗한 새 대회가 생성됩니다. (※ <b>64명 회원 명부는 그대로 안전하게 유지</b>됩니다.)<br>
+          4. 상단 헤더 우측의 <b>[🛠️ 설정]</b> 버튼을 눌러 대회 일자 및 대회 모드(개인 리그전 / A~D 조별 리그 / 이벤트전)를 변경할 수 있습니다.
+        </div>
+        <div class="en-subtext">Create new tournaments via History > [+ New Tournament]. All 64 member records remain permanently safe.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: 참석자 필터링 & 조 편성 -->
+    <section id="sec-staff-attendance" class="manual-section sec-staff">
+      <span class="section-badge badge-staff">운영진/경기이사 매뉴얼 / Staff Manual</span>
+      <h2 class="section-title">👥 6. 당일 참석 인원(30~50%) 필터링 및 A~D조 편성</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>❌</span>
+          <span>불참자 자동 제외 &amp; LEVEL 밸런스 자동 편성</span>
+        </div>
+        <div class="step-desc">
+          전체 64명 중 보통 20~32명(30~50%)만 참석하는 동호회 특성에 맞춰 불참자 필터링 기능이 완벽하게 탑재되어 있습니다.<br><br>
+          1. 상단 헤더의 <b>[⚙️ 대진 편성]</b> 버튼을 누른 후 <b>[👥 A~D조 직접 편성/관리]</b>를 엽니다.<br>
+          2. <b>불참자 처리</b>: 오늘 불참하는 회원의 조 선택 셀렉트박스를 <b>`❌ 불참 (미참석)`</b>으로 변경합니다.<br>
+          3. <b>자동 밸런스 배정</b>: 상단 <b>[⚖️ LEVEL 밸런스 자동 배정]</b> 버튼을 클릭하면, 불참자를 제외한 <b>실제 참석자만 LEVEL 1~4등급(상·중·하)을 균등 분배</b>하여 A·B·C·D조로 공평하게 자동 배치됩니다.<br>
+          4. <b>수동 조정</b>: 경기이사가 조장을 지정하거나 특정 회원의 조를 바꾸고 싶다면 드롭다운을 직접 변경한 뒤 <b>[저장 완료]</b>를 누릅니다.
+        </div>
+        <div class="en-subtext">Exclude absent members by setting their group to '❌ 불참'. Clicking 'Auto Level Balance' evenly balances only attending players across Groups A-D based on LEVEL 1-4.</div>
+      </div>
+
+      <div class="callout-box callout-warn">
+        ⚠️ <b>주의사항</b>: 불참으로 설정된 회원은 대진표 자동 생성 시 출전 명단에서 자동으로 완전히 제외되므로, 경기 진행 중 빈 자리가 생기지 않습니다.
+      </div>
+    </section>
+
+    <!-- SECTION 7: 대진표 생성 및 스코어 입력 -->
+    <section id="sec-staff-matchmaker" class="manual-section sec-staff">
+      <span class="section-badge badge-staff">운영진/경기이사 매뉴얼 / Staff Manual</span>
+      <h2 class="section-title">⚡ 7. 대진표 1차 자동 생성 &amp; 실시간 스코어 입력</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>⚡</span>
+          <span>1차 AI 자동 생성 후 경기이사 드래프트 수정 절차</span>
+        </div>
+        <div class="step-desc">
+          1. <b>[⚙️ 대진 편성]</b> 모달에서 <b>코트 번호(15, 16, 17, 18번 등)</b>와 <b>경기 시작 시간/슬롯(40분 간격)</b>을 설정합니다.<br>
+          2. <b>[⚡ 1차 대진표 자동 생성하기]</b>를 클릭합니다.<br>
+          3. <b>1차 드래프트 미리보기 창</b>이 열립니다. 알고리즘이 경기 수가 적은 선수를 우선 배정하고 레벨을 맞춰 4인 복식을 조합합니다.<br>
+          4. 드롭다운으로 특정 선수의 파트너를 직접 바꿀 수 있으며, 확인 후 <b>[✅ 확정 및 전광판 반영]</b>을 누르면 즉시 전체 회원에게 공개됩니다.<br>
+          5. <b>실시간 스코어 입력</b>: 경기가 끝나면 전광판 코트 카드의 <b>[✏️ 스코어 입력]</b>을 눌러 게임 스코어(+/- 스텝퍼)를 입력하고 <b>[종료 확정]</b>을 누릅니다. 승패와 승점, 순위표가 즉시 자동 계산됩니다!
+        </div>
+        <div class="en-subtext">Generate balanced 4-player doubles automatically, fine-tune matchups in the draft review window, and record scores with live rank updates.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: 대회 종료 & 영구 보관 -->
+    <section id="sec-staff-finish" class="manual-section sec-staff">
+      <span class="section-badge badge-staff">운영진/경기이사 매뉴얼 / Staff Manual</span>
+      <h2 class="section-title">🏁 8. 대회 공식 종료 &amp; 연간 랭킹 영구 누적</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>📜</span>
+          <span>대회 마감 및 대회 내역(아카이브) 저장</span>
+        </div>
+        <div class="step-desc">
+          1. 당일 모든 코트 경기가 끝나면 상단 헤더의 붉은색 <b>[🏁 대회 종료]</b> 버튼을 누릅니다.<br>
+          2. 최종 확인을 승인하면:<br>
+             - 당일 대회 최종 대진표, 스코어, 순위 결과가 <b>[대회 내역 &amp; 명예의 전당]</b>에 영구 박제됩니다.<br>
+             - 당일 획득한 개인별 승점과 승/무/패가 <b>[연간 종합 랭킹]</b>에 자동으로 합산 누적됩니다.<br>
+          3. 회원들은 언제든지 <b>[대회내역]</b> 탭에서 과거 몇 월 대회에서 누가 우승했고 몇 대 몇으로 이겼는지 영구 열람할 수 있습니다.
+        </div>
+        <div class="en-subtext">Click 'Finish Tournament' to freeze the day's records into the permanent Hall of Fame and roll points into the Annual Season Leaderboard.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 9: 코트 대관 기록 등록/삭제 -->
+    <section id="sec-staff-booking" class="manual-section sec-staff">
+      <span class="section-badge badge-staff">운영진/경기이사 매뉴얼 / Staff Manual</span>
+      <h2 class="section-title">☕ 9. 코트 대관 예약 등록 및 취소 관리</h2>
+
+      <div class="step-box">
+        <div class="step-header">
+          <span>➕</span>
+          <span>새 예약 등록 및 오입력 즉시 삭제</span>
+        </div>
+        <div class="step-desc">
+          1. 하단 <b>[☕ 커피쿠폰]</b> 탭에서 <b>[⚙️ 예약 관리 &amp; 등록]</b> 버튼을 누릅니다.<br>
+          2. <b>예약자 성명</b> 드롭다운에서 64명 회원 중 예약자를 터치하고, 대관 코트 번호, 일자, 시간(h)을 입력 후 <b>[➕ 등록]</b>을 누릅니다.<br>
+          3. 모달 하단의 <b>[📋 등록된 코트 예약 목록]</b>에 즉시 추가되며, 포디움 순위가 갱신됩니다.<br>
+          4. 잘못 등록된 건은 목록 우측의 붉은색 <b>[🗑️ 삭제]</b> 버튼을 누르면 즉시 취소됩니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ❓ PART 3: 자주 묻는 질문 & 문제 해결 (FAQ) -->
+    <!-- ============================================================== -->
+    <section id="sec-faq" class="manual-section sec-member sec-staff">
+      <span class="section-badge badge-common">자주 묻는 질문 / FAQ</span>
+      <h2 class="section-title">❓ 자주 묻는 질문 &amp; 문제 해결 (FAQ)</h2>
+
+      <div class="step-box">
+        <div class="step-header">Q1. 화면이 예전 상태로 멈춰있거나 새 대진표가 안 보여요!</div>
+        <div class="step-desc">
+          모바일 브라우저의 캐시 때문일 수 있습니다.<br>
+          - <b>아이폰 Safari</b>: 화면 상단 새로고침 아이콘을 길게 누르거나 화면을 아래로 힘껏 당겨 새로고침합니다.<br>
+          - <b>안드로이드 Chrome</b>: 우측 상단 메뉴(⋮) > <b>[새로고침]</b>을 누릅니다.
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-header">Q2. 모바일에서 팝업창을 열었다가 어떻게 닫나요?</div>
+        <div class="step-desc">
+          - 팝업창 좌측 상단의 <b>[← 뒤로]</b> 버튼 또는 우측 상단의 <b>[✕ 닫기]</b> 버튼을 터치하시면 됩니다.<br>
+          - 팝업창 바깥의 어두운 배경 영역을 터치하거나, 스마트폰의 물리적 뒤로가기 제스처를 사용하셔도 안전하게 닫힙니다.
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-header">Q3. 회원 명단 64명과 LEVEL 정보가 실수로 날아갈 위험은 없나요?</div>
+        <div class="step-desc">
+          <b>전혀 없습니다.</b> 64명 정회원 명부와 각자의 LEVEL 1~4등급, 직책 정보는 시스템 핵심 영역에 영구 보호되고 있으며, 새 대회를 만들거나 대회를 종료해도 100% 안전하게 보존됩니다.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Floating Back to Top Button -->
+  <button class="floating-top-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" title="맨 위로">
+    ↑
+  </button>
+
+  <footer class="manual-footer">
+    <p>🎾 테니스 동호회 실시간 대회 전광판 &amp; 모바일 대시보드 공식 운영 시스템</p>
+    <p style="margin-top: 4px; color: #64748b;">Tennis Tournament Live Dashboard • All 64 Members Safeguarded</p>
+  </footer>
+
+  <script>
+    function filterManual(role) {
+      document.querySelectorAll('.role-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = event.currentTarget;
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const allSections = document.querySelectorAll('.manual-section');
+      if (role === 'all') {
+        allSections.forEach(el => el.style.display = 'block');
+      } else if (role === 'member') {
+        allSections.forEach(el => {
+          el.style.display = el.classList.contains('sec-member') ? 'block' : 'none';
+        });
+      } else if (role === 'staff') {
+        allSections.forEach(el => {
+          el.style.display = el.classList.contains('sec-staff') ? 'block' : 'none';
+        });
+      }
+    }
+  </script>
+</body>
+</html>
