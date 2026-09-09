@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css?v=mobfix9">
+  <link rel="stylesheet" href="styles.css?v=dualv10">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -104,9 +104,10 @@
           </div>
         </div>
 
+        <div id="leaderboardBannerNotice"></div>
         <div class="leaderboard-table-wrap">
           <table class="leaderboard-table">
-            <thead>
+            <thead id="leaderboardThead">
               <tr>
                 <th style="width: 45px; text-align: center;">순위</th>
                 <th style="width: 50px;">변동</th>
@@ -205,9 +206,10 @@
             👤 당월 개인 리그전 (복식 경기 개인 승점 집계)
           </div>
         </div>
+        <div id="mobLeaderboardBannerNotice"></div>
         <div class="leaderboard-table-wrap">
           <table class="leaderboard-table">
-            <thead>
+            <thead id="mobileLeaderboardThead">
               <tr>
                 <th style="width: 40px; text-align: center;">순위</th>
                 <th style="width: 45px;">변동</th>
@@ -319,11 +321,15 @@
     </section>
   </div>
 
-  <!-- Mobile Bottom Navigation Bar -->
+  <!-- Mobile Bottom Navigation Bar (명확한 리그전 & 연간 랭킹 분리 #5) -->
   <nav class="mobile-nav-bar">
-    <button class="mobile-nav-btn active" data-tab="tab-leaderboard" onclick="app.switchMobileTab('tab-leaderboard')">
+    <button class="mobile-nav-btn active" id="navBtnLeague" data-tab="tab-leaderboard" onclick="app.setLeaderboardMode('monthly'); app.switchMobileTab('tab-leaderboard')">
       <span class="nav-icon">🏆</span>
-      <span>순위</span>
+      <span>개인리그</span>
+    </button>
+    <button class="mobile-nav-btn" id="navBtnAnnual" data-tab="tab-annual-direct" onclick="app.setLeaderboardMode('annual'); app.switchMobileTab('tab-leaderboard')">
+      <span class="nav-icon">👑</span>
+      <span>연간랭킹</span>
     </button>
     <button class="mobile-nav-btn" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
       <span class="nav-icon">📊</span>
@@ -845,11 +851,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=mobfix9"></script>
-  <script src="js/member_manager.js?v=mobfix9"></script>
-  <script src="js/matchmaker_engine.js?v=mobfix9"></script>
-  <script src="js/leaderboard_engine.js?v=mobfix9"></script>
-  <script src="js/tournament_app.js?v=mobfix9"></script>
+  <script src="sample_tournament_data.js?v=dualv10"></script>
+  <script src="js/member_manager.js?v=dualv10"></script>
+  <script src="js/matchmaker_engine.js?v=dualv10"></script>
+  <script src="js/leaderboard_engine.js?v=dualv10"></script>
+  <script src="js/tournament_app.js?v=dualv10"></script>
 
   <!-- Mobile View Syncer -->
   <script>

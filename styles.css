@@ -1566,3 +1566,33 @@ body.force-stadium-mode .dashboard-container {
   background: #f59e0b;
   color: #000;
 }
+
+/* 듀얼 랭킹 모드 구분 배너 */
+.ranking-mode-banner {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 6px 0 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.banner-monthly {
+  background: linear-gradient(90deg, rgba(2, 132, 199, 0.18) 0%, rgba(14, 165, 233, 0.05) 100%);
+  border-left: 4px solid #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-left-width: 4px;
+}
+
+.banner-annual {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(251, 191, 36, 0.05) 100%);
+  border-left: 4px solid #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-left-width: 4px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

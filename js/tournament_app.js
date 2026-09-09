@@ -165,13 +165,19 @@ class TournamentApp {
     }
   }
 
-  renderLeaderboard() {
+renderLeaderboard() {
     const tbody = document.getElementById("leaderboardBody");
+    const mobTbody = document.getElementById("mobileLeaderboardBody");
+    const dtThead = document.getElementById("leaderboardThead");
+    const mobThead = document.getElementById("mobileLeaderboardThead");
     const modeBadgeEl = document.getElementById("leaderboardCurrentModeText");
     const resetBtn = document.getElementById("btnResetLeagueUi");
-    if (!tbody) return;
+    const mobModeText = document.getElementById("mobLeaderboardModeText");
+    const mobResetBtn = document.getElementById("mobBtnResetLeague");
+    const bannerEl = document.getElementById("leaderboardBannerNotice");
+    const mobBannerEl = document.getElementById("mobLeaderboardBannerNotice");
 
-    // Toggle tab active classes (both desktop & mobile)
+    // 1. Sync Tab Button Active Styles (Desktop & Mobile)
     const tabMonthlyBtn = document.getElementById("tabBtnMonthlyLeague");
     const tabAnnualBtn = document.getElementById("tabBtnAnnualSeason");
     if (tabMonthlyBtn && tabAnnualBtn) {
@@ -186,46 +192,127 @@ class TournamentApp {
       mobTabAnnualBtn.classList.toggle("active", this.leaderboardViewMode === "annual");
     }
 
-    const mobModeText = document.getElementById("mobLeaderboardModeText");
-    const mobResetBtn = document.getElementById("mobBtnResetLeague");
+    // 2. Render Annual Cumulative Season Leaderboard
     if (this.leaderboardViewMode === "annual") {
-      if (mobModeText) mobModeText.textContent = "👑 연간 종합 누적 랭킹 (월별 성적 합산)";
+      const annualDesc = "👑 [연간 종합 랭킹] 2026 시즌 역대 월별 대회 누적 성적 및 명예의 전당";
+      if (modeBadgeEl) modeBadgeEl.textContent = annualDesc;
+      if (mobModeText) mobModeText.textContent = annualDesc;
+      if (resetBtn) resetBtn.style.display = "none";
       if (mobResetBtn) mobResetBtn.style.display = "none";
-    } else {
-      if (mobModeText) mobModeText.textContent = "👤 당월 개인 리그전 (복식 경기 개인 승점 집계)";
-      if (mobResetBtn) mobResetBtn.style.display = "inline-flex";
-    }
 
-    if (this.leaderboardViewMode === "annual") {
-      // Show Annual Season Cumulative Ranking
-      if (modeBadgeEl) modeBadgeEl.textContent = "👑 연간 종합 누적 랭킹 (월별 성적 합산)";
-      if (resetBtn) resetBtn.style.display = "none"; // 연간 랭킹은 리셋 버튼 숨김 (영구 보존)
+      const bannerHtml = `
+        <div class="ranking-mode-banner banner-annual">
+          <div style="font-weight:900; font-size:13px; color:#fbbf24;">👑 2026 시즌 연간 종합 누적 순위표 (명예의 전당)</div>
+          <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">역대 종료된 모든 정기전 성적이 누적 합산된 공식 시즌 랭킹입니다. (다승왕 · 포인트왕)</div>
+        </div>
+      `;
+      if (bannerEl) bannerEl.innerHTML = bannerHtml;
+      if (mobBannerEl) mobBannerEl.innerHTML = bannerHtml;
+
+      // Annual Table Headers
+      if (dtThead) {
+        dtThead.innerHTML = `
+          <tr>
+            <th style="width: 50px; text-align: center;">시즌순위</th>
+            <th>선수명</th>
+            <th style="text-align: center; color:#fbbf24;">누적 포인트</th>
+            <th style="text-align: center;">통산 전적</th>
+            <th style="text-align: center;">총 득실차</th>
+            <th style="text-align: center; color:#f59e0b;">입상 (🥇우승/🥈준우승)</th>
+            <th style="text-align: center;">참가 대회</th>
+          </tr>
+        `;
+      }
+      if (mobThead) {
+        mobThead.innerHTML = `
+          <tr>
+            <th style="width: 38px; text-align: center;">순위</th>
+            <th>선수명</th>
+            <th style="text-align: center; color:#fbbf24;">누적승점</th>
+            <th style="text-align: center;">통산전적</th>
+            <th style="text-align: center;">우승/준우승</th>
+          </tr>
+        `;
+      }
 
       const cumulative = this.leaderboard.getSeasonCumulativeLeaderboard();
-      let html = "";
+      let dtHtml = "";
+      let mobHtml = "";
+
       cumulative.forEach((c, idx) => {
         const rank = idx + 1;
         const rankClass = rank === 1 ? "rank-pill-1" : rank === 2 ? "rank-pill-2" : rank === 3 ? "rank-pill-3" : "rank-pill-default";
         const rowClass = rank <= 3 ? `row-rank-${rank}` : "";
 
-        html += `
+        dtHtml += `
           <tr class="${rowClass}">
             <td style="text-align: center;"><span class="rank-pill ${rankClass}">${rank}</span></td>
-            <td style="text-align:center;">-</td>
             <td class="player-name-cell"><b>${c.name}</b></td>
-            <td>${c.totalWins}승 ${c.totalDraws}무 ${c.totalLosses}패</td>
-            <td><span class="pts-badge">${c.totalPoints}</span></td>
-            <td><span class="${c.totalDiff > 0 ? "diff-positive" : c.totalDiff < 0 ? "diff-negative" : "diff-zero"}">${c.totalDiff > 0 ? "+" + c.totalDiff : c.totalDiff}</span></td>
+            <td style="text-align: center;"><span class="pts-badge" style="background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.4);">${c.totalPoints}점</span></td>
+            <td style="text-align: center;">${c.totalWins}승 ${c.totalDraws}무 ${c.totalLosses}패</td>
+            <td style="text-align: center;"><span class="${c.totalDiff > 0 ? "diff-positive" : c.totalDiff < 0 ? "diff-negative" : "diff-zero"}">${c.totalDiff > 0 ? "+" + c.totalDiff : c.totalDiff}</span></td>
+            <td style="text-align: center; font-weight:800; color:#fbbf24;">🥇 ${c.championships}회 / 🥈 ${c.runnerUps}회</td>
+            <td style="text-align: center; color:var(--text-muted); font-size:11px;">${c.tournamentsCount}개 대회</td>
+          </tr>
+        `;
+
+        mobHtml += `
+          <tr class="${rowClass}">
+            <td style="text-align: center;"><span class="rank-pill ${rankClass}">${rank}</span></td>
+            <td class="player-name-cell"><b>${c.name}</b></td>
+            <td style="text-align: center;"><span class="pts-badge" style="background:rgba(251,191,36,0.2); color:#fbbf24;">${c.totalPoints}점</span></td>
+            <td style="text-align: center; font-size:11px;">${c.totalWins}승 ${c.totalLosses}패</td>
+            <td style="text-align: center; font-size:11px; font-weight:800; color:#fbbf24;">🥇${c.championships} 🥈${c.runnerUps}</td>
           </tr>
         `;
       });
-      tbody.innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">아직 종료된 대회가 없습니다. 대회가 끝나면 [대회 종료] 버튼을 눌러 연간 랭킹에 기록하세요!</td></tr>`;
+
+      if (tbody) tbody.innerHTML = dtHtml;
+      if (mobTbody) mobTbody.innerHTML = mobHtml;
       return;
     }
 
-    // Show Monthly Individual League Ranking
-    if (modeBadgeEl) modeBadgeEl.textContent = "👤 당월 개인 리그전 (복식 경기 개인 승점 집계)";
+    // 3. Render Monthly Individual League Leaderboard
+    const monthlyDesc = "👤 [당월 개인 리그전] 이번 대회 복식 경기 개인별 승점 집계 (승:3점 / 무:1점 / 패:0점)";
+    if (modeBadgeEl) modeBadgeEl.textContent = monthlyDesc;
+    if (mobModeText) mobModeText.textContent = monthlyDesc;
     if (resetBtn) resetBtn.style.display = "inline-flex";
+    if (mobResetBtn) mobResetBtn.style.display = "inline-flex";
+
+    const bannerMonthlyHtml = `
+      <div class="ranking-mode-banner banner-monthly">
+        <div style="font-weight:900; font-size:13px; color:#38bdf8;">🏆 당월 정기전 개인 리그 순위표</div>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">모든 게임은 복식으로 진행되며, 각 개인의 승패 및 득실 결과를 실시간으로 누적합니다.</div>
+      </div>
+    `;
+    if (bannerEl) bannerEl.innerHTML = bannerMonthlyHtml;
+    if (mobBannerEl) mobBannerEl.innerHTML = bannerMonthlyHtml;
+
+    // Monthly Table Headers
+    if (dtThead) {
+      dtThead.innerHTML = `
+        <tr>
+          <th style="width: 45px; text-align: center;">순위</th>
+          <th style="width: 50px;">변동</th>
+          <th>선수명</th>
+          <th>전적(승-무-패)</th>
+          <th>승점</th>
+          <th>득실차</th>
+        </tr>
+      `;
+    }
+    if (mobThead) {
+      mobThead.innerHTML = `
+        <tr>
+          <th style="width: 40px; text-align: center;">순위</th>
+          <th style="width: 45px;">변동</th>
+          <th>선수명</th>
+          <th>전적</th>
+          <th>승점</th>
+          <th>득실차</th>
+        </tr>
+      `;
+    }
 
     const activePlayers = this.memberManager.getActiveMembers();
     const ranked = this.leaderboard.calculateIndividualLeaderboard(
@@ -240,11 +327,8 @@ class TournamentApp {
       const rowClass = p.rank <= 3 ? `row-rank-${p.rank}` : "";
 
       let deltaHtml = `<span class="delta-same">-</span>`;
-      if (p.delta > 0) {
-        deltaHtml = `<span class="delta-up">▲${p.delta}</span>`;
-      } else if (p.delta < 0) {
-        deltaHtml = `<span class="delta-down">▼${Math.abs(p.delta)}</span>`;
-      }
+      if (p.delta > 0) deltaHtml = `<span class="delta-up">▲${p.delta}</span>`;
+      else if (p.delta < 0) deltaHtml = `<span class="delta-down">▼${Math.abs(p.delta)}</span>`;
 
       const diffClass = p.diff > 0 ? "diff-positive" : p.diff < 0 ? "diff-negative" : "diff-zero";
       const diffStr = p.diff > 0 ? `+${p.diff}` : `${p.diff}`;
@@ -261,9 +345,9 @@ class TournamentApp {
       `;
     });
 
-    tbody.innerHTML = html;
+    if (tbody) tbody.innerHTML = html;
+    if (mobTbody) mobTbody.innerHTML = html;
   }
-
   setLeaderboardMode(mode) {
     this.leaderboardViewMode = mode;
     this.renderLeaderboard();
