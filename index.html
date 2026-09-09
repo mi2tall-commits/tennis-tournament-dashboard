@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css?v=hdrv11">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
+  <link rel="stylesheet" href="styles.css?v=master_reset_v12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -184,9 +184,21 @@
        📱 Mobile-First Interactive View
        ========================================== -->
   <div class="mobile-container">
-    <!-- Tab 1: 순위보드 -->
-        <!-- Tab 1: 순위보드 (모바일 듀얼 탭 및 리셋) -->
-    <section id="tab-leaderboard" class="mobile-view-section active">
+    <!-- Tab 1: 코트 현황 (모바일 최우선 배치) -->
+    <section id="tab-courts" class="mobile-view-section active">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📊 코트별 진행 현황</div>
+          <span class="panel-subtitle">터치하여 스코어 즉시 입력</span>
+        </div>
+        <div id="mobileCourtsContainer">
+          <!-- Mobile court cards populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: 순위보드 (모바일 듀얼 탭 및 리셋) -->
+    <section id="tab-leaderboard" class="mobile-view-section">
       <div class="panel-card">
         <div class="panel-header" style="display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -228,18 +240,7 @@
       </div>
     </section>
 
-    <!-- Tab 2: 코트 현황 -->
-    <section id="tab-courts" class="mobile-view-section">
-      <div class="panel-card">
-        <div class="panel-header">
-          <div class="panel-title">📊 코트별 진행 현황</div>
-          <span class="panel-subtitle">터치하여 스코어 즉시 입력</span>
-        </div>
-        <div id="mobileCourtsContainer">
-          <!-- Mobile court cards populated dynamically -->
-        </div>
-      </div>
-    </section>
+
 
     <!-- Tab 3: 내 경기 일정 -->
     <section id="tab-mymatches" class="mobile-view-section">
@@ -324,17 +325,17 @@
 
   <!-- Mobile Bottom Navigation Bar (명확한 리그전 & 연간 랭킹 분리 #5) -->
   <nav class="mobile-nav-bar">
-    <button class="mobile-nav-btn active" id="navBtnLeague" data-tab="tab-leaderboard" onclick="app.setLeaderboardMode('monthly'); app.switchMobileTab('tab-leaderboard')">
+    <button class="mobile-nav-btn active" id="navBtnCourts" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
+      <span class="nav-icon">📊</span>
+      <span>코트</span>
+    </button>
+    <button class="mobile-nav-btn" id="navBtnLeague" data-tab="tab-leaderboard" onclick="app.setLeaderboardMode('monthly'); app.switchMobileTab('tab-leaderboard')">
       <span class="nav-icon">🏆</span>
       <span>개인리그</span>
     </button>
     <button class="mobile-nav-btn" id="navBtnAnnual" data-tab="tab-annual-direct" onclick="app.setLeaderboardMode('annual'); app.switchMobileTab('tab-leaderboard')">
       <span class="nav-icon">👑</span>
       <span>연간랭킹</span>
-    </button>
-    <button class="mobile-nav-btn" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
-      <span class="nav-icon">📊</span>
-      <span>코트</span>
     </button>
     <button class="mobile-nav-btn" data-tab="tab-mymatches" onclick="app.switchMobileTab('tab-mymatches')">
       <span class="nav-icon">📅</span>
@@ -526,6 +527,9 @@
         <!-- Court & Schedule Settings Form (#1, #2) -->
         <div style="background:#090f1d; padding:12px; border-radius:8px; border:1px solid #1e3358; margin-bottom:12px;">
           <h4 style="font-size:13px; color:var(--neon-cyan); margin-bottom:8px;">🏟️ 코트 번호 & 게임 시간표 기본 설정</h4>
+          <div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:11px; color:#38bdf8;">
+            💡 <b>당일 참석 인원 안내</b>: 64명 중 당일 참석 인원(보통 20~32명, 30~50%)만 <b>[👥 A~D조 직접 편성]</b>에서 조를 배정하고 불참자는 <code>❌ 불참</code>으로 설정하시면, 불참자를 자동 제외하고 최적의 밸런스로 대진표가 자동 생성됩니다.
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label>코트 개수</label>
@@ -852,11 +856,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=hdrv11"></script>
-  <script src="js/member_manager.js?v=hdrv11"></script>
-  <script src="js/matchmaker_engine.js?v=hdrv11"></script>
-  <script src="js/leaderboard_engine.js?v=hdrv11"></script>
-  <script src="js/tournament_app.js?v=hdrv11"></script>
+  <script src="sample_tournament_data.js?v=master_reset_v12"></script>
+  <script src="js/member_manager.js?v=master_reset_v12"></script>
+  <script src="js/matchmaker_engine.js?v=master_reset_v12"></script>
+  <script src="js/leaderboard_engine.js?v=master_reset_v12"></script>
+  <script src="js/tournament_app.js?v=master_reset_v12"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -881,7 +885,17 @@
         const mobCourts = document.getElementById("mobileCourtsContainer");
         if (mobCourts) {
           let html = "";
-          (app.tournament.matches || []).forEach(m => {
+          const matches = app.tournament.matches || [];
+          if (matches.length === 0) {
+            mobCourts.innerHTML = `
+              <div style="text-align:center; padding:36px 16px; background:#0e1726; border-radius:8px; border:1px dashed #1e3358;">
+                <div style="font-size:36px; margin-bottom:10px;">🎾</div>
+                <div style="font-weight:800; font-size:15px; color:#fff;">현재 진행 중인 경기가 없습니다</div>
+                <div style="font-size:12px; color:#94a3b8; margin-top:6px;">상단 <b>[⚙️ 대진 편성]</b> 버튼을 터치하여 새 대진표를 생성하세요.</div>
+              </div>
+            `;
+          } else {
+            matches.forEach(m => {
             const slot = (app.tournament.timeSlots || [])[m.timeSlotIndex] || { start: "-", end: "-" };
             const statusText = app.getStatusText(m.status);
             const teamAStr = (m.teamA || []).join(", ");
@@ -908,6 +922,7 @@
             `;
           });
           mobCourts.innerHTML = html;
+          }
         }
       };
       app.render();
@@ -989,7 +1004,7 @@
 
         <!-- Quick Balance Toolbar -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin: 12px 0 8px 0; background:#090f1d; padding:8px 12px; border-radius:6px; border:1px solid #1e3358;">
-          <span style="font-size:12px; color:var(--neon-cyan); font-weight:800;">📋 회원별 소속조 직접 선택 (64명 명단)</span>
+          <span id="groupSummaryHeaderInfo" style="font-size:12px; color:var(--neon-cyan); font-weight:800;">📋 회원별 소속조 직접 선택 (64명 명단)</span>
           <button class="btn-xs" style="background:#7c3aed; font-weight:800;" onclick="app.autoBalanceGroups()">⚖️ LEVEL 밸런스 자동 배정</button>
         </div>
 
@@ -1039,6 +1054,44 @@
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('historyModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 11. Master Reset Confirmation Modal -->
+  <div id="masterResetModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 520px; border: 2px solid #ef4444;">
+      <div class="modal-header" style="background: #200b12; border-bottom: 1px solid #7f1d1d;">
+        <h3 class="modal-title" style="color: #fca5a5;">⚠️ 마스터 리셋 & 캐시 완전 초기화</h3>
+        <button class="modal-close" onclick="app.closeModal('masterResetModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="font-size: 13px; line-height: 1.6; color: #f1f5f9;">
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+          <div style="font-weight: 800; color: #f87171; margin-bottom: 6px;">🗑️ 삭제 및 0 리셋 대상 (모든 예시 데이터 영구 삭제)</div>
+          <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #cbd5e1;">
+            <li>진행 중인 모든 코트 경기 및 스코어 (0건으로 초기화)</li>
+            <li>당월 개인 리그전 전적, 승점, 득실차 (전원 0승 0무 0패, 승점 0점)</li>
+            <li>연간 종합 랭킹 누적 성적 및 명예의 전당 (0점으로 초기화)</li>
+            <li>역대 대회 내역 아카이브 (8월, 9월 예시 대회 삭제)</li>
+            <li>월별 코트 예약 커피 쿠폰 지급 내역 (0건으로 초기화)</li>
+            <li>브라우저 캐시, 로컬 저장소(localStorage), 세션 저장소 완전 클리어</li>
+          </ul>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); padding: 12px; border-radius: 8px;">
+          <div style="font-weight: 800; color: #34d399; margin-bottom: 4px;">🛡️ 안전 보존 대상 (절대 삭제되지 않음)</div>
+          <div style="font-size: 12px; color: #a7f3d0;">
+            ✅ <b>동호회 64명 공식 회원 명단 영구 보존</b><br>
+            ✅ <b>회원별 LEVEL(1~4등급), 직책, 연락처, 가입일 100% 유지</b>
+          </div>
+        </div>
+        <p style="margin-top: 12px; font-size: 12px; color: #94a3b8;">
+          실행 후 캐시 방지 파라미터(Cache-Buster)와 함께 페이지가 자동으로 강력 새로고침됩니다. 정말로 초기화하시겠습니까?
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between;">
+        <button class="btn-secondary" onclick="app.closeModal('masterResetModal')">취소</button>
+        <button class="btn-danger" style="background: #dc2626; font-weight: 900; padding:8px 16px;" onclick="app.executeMasterReset()">💥 네, 예시 데이터 초기화 및 캐시 삭제</button>
       </div>
     </div>
   </div>

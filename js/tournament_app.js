@@ -18,7 +18,7 @@ class TournamentApp {
     this.leaderboard = new LeaderboardEngine();
     
     this.tournament = this.loadTournament();
-    this.activeMobileTab = "tab-leaderboard";
+    this.activeMobileTab = "tab-courts";
     this.leaderboardViewMode = "monthly"; // monthly (개인리그전) vs annual (연간 종합 랭킹)
     this.selectedPlayerFilter = "";
     this.audioEnabled = true;
@@ -42,17 +42,22 @@ class TournamentApp {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed.matches) && parsed.matches.length > 0) {
-          // Check if matches contain old legacy names (like '정다운', '송영수', '대니얼')
-          const validNames = new Set(this.memberManager.getAllMembers().map(m => m.name));
-          const hasLegacy = parsed.matches.some(m => 
-            (m.teamA || []).some(name => !validNames.has(name)) ||
-            (m.teamB || []).some(name => !validNames.has(name))
-          );
-          if (!hasLegacy) {
+        if (parsed) {
+          // If master reset or explicitly zero matches, preserve clean state
+          if (parsed.isMasterReset || (Array.isArray(parsed.matches) && parsed.matches.length === 0)) {
             return parsed;
           }
-          console.warn("기존 레거시 명단 경기 감지됨, 공식 64명 명단으로 자동 교체합니다.");
+          if (Array.isArray(parsed.matches) && parsed.matches.length > 0) {
+            const validNames = new Set(this.memberManager.getAllMembers().map(m => m.name));
+            const hasLegacy = parsed.matches.some(m => 
+              (m.teamA || []).some(name => !validNames.has(name)) ||
+              (m.teamB || []).some(name => !validNames.has(name))
+            );
+            if (!hasLegacy) {
+              return parsed;
+            }
+            console.warn("기존 레거시 명단 경기 감지됨, 공식 64명 명단으로 자동 교체합니다.");
+          }
         }
       }
     } catch(e) {
@@ -1044,7 +1049,10 @@ renderLeaderboard() {
     const active = this.memberManager.getActiveMembers();
     const groups = ["A조", "B조", "C조", "D조"];
 
-    // 1. Group summary cards
+    const attending = active.filter(m => m.group !== "미참석");
+    const absent = active.filter(m => m.group === "미참석");
+
+    // 1. Group summary cards (A, B, C, D조 + 미참석 불참 카드)
     const summaryEl = document.getElementById("groupSummaryGrid");
     if (summaryEl) {
       let html = "";
@@ -1066,7 +1074,28 @@ renderLeaderboard() {
           </div>
         `;
       });
+      html += `
+        <div class="group-col-card" style="border-color:#475569; background:rgba(30,41,59,0.5);">
+          <div class="group-col-header" style="border-color:#475569;">
+            <span class="group-col-title" style="color:#94a3b8;">❌ 미참석 (불참)</span>
+            <span class="group-col-count" style="color:#94a3b8;">${absent.length}명</span>
+          </div>
+          <div class="group-members-pill-list">
+            ${absent.length === 0 ? '<span style="font-size:11px; color:#64748b;">불참자 없음</span>' : absent.map(m => `
+              <span class="group-mem-pill" style="opacity:0.6; background:#1e293b; color:#94a3b8; border-color:#334155;">
+                ${m.name} <span class="badge-lvl">${m.clubLevel || 2}등</span>
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      `;
       summaryEl.innerHTML = html;
+    }
+
+    // Header badge
+    const headerInfo = document.getElementById("groupSummaryHeaderInfo");
+    if (headerInfo) {
+      headerInfo.innerHTML = `총 <b>${active.length}명</b> 중 당일 참석: <b style="color:#38bdf8;">${attending.length}명</b> / <span style="color:#94a3b8;">불참: ${absent.length}명</span>`;
     }
 
     // 2. Member assignment table
@@ -1075,17 +1104,19 @@ renderLeaderboard() {
       let html = "";
       active.forEach((m, idx) => {
         const curGroup = m.group || "A조";
+        const isAbsent = curGroup === "미참석";
         html += `
-          <tr>
+          <tr style="${isAbsent ? 'opacity:0.55; background:rgba(15,23,42,0.4);' : ''}">
             <td style="text-align:center; font-family:var(--font-mono);">${m.no || idx + 1}</td>
-            <td><b>${m.name}</b></td>
+            <td><b>${m.name}</b> ${isAbsent ? '<span style="font-size:10px; color:#ef4444; font-weight:800; margin-left:4px;">[불참]</span>' : ''}</td>
             <td style="text-align:center;"><span class="level-badge">${m.clubLevel || 2}등급</span></td>
             <td style="text-align:center;">
-              <select class="form-select form-select-xs" onchange="app.changeMemberGroup('${m.id}', this.value)" style="width:90px; padding:3px 6px; font-weight:800; background:#0e1726; color:#38bdf8; border:1px solid #1e3358;">
+              <select class="form-select form-select-xs" onchange="app.changeMemberGroup('${m.id}', this.value)" style="width:115px; padding:3px 6px; font-weight:800; background:#0e1726; color:${isAbsent ? '#ef4444' : '#38bdf8'}; border:1px solid ${isAbsent ? '#ef4444' : '#1e3358'};">
                 <option value="A조" ${curGroup === "A조" ? "selected" : ""}>A조</option>
                 <option value="B조" ${curGroup === "B조" ? "selected" : ""}>B조</option>
                 <option value="C조" ${curGroup === "C조" ? "selected" : ""}>C조</option>
                 <option value="D조" ${curGroup === "D조" ? "selected" : ""}>D조</option>
+                <option value="미참석" ${isAbsent ? "selected" : ""} style="color:#ef4444;">❌ 불참 (미참석)</option>
               </select>
             </td>
           </tr>
@@ -1102,15 +1133,18 @@ renderLeaderboard() {
 
   autoBalanceGroups() {
     const active = this.memberManager.getActiveMembers();
-    // Sort by level/skill
-    const sorted = [...active].sort((a, b) => (a.clubLevel || 2) - (b.clubLevel || 2));
+    // Only balance attendees (exclude members marked as '미참석')
+    const attendees = active.filter(m => m.group !== "미참석");
+    const targetMembers = attendees.length >= 4 ? attendees : active;
+
+    const sorted = [...targetMembers].sort((a, b) => (a.clubLevel || 2) - (b.clubLevel || 2));
     const groups = ["A조", "B조", "C조", "D조"];
     sorted.forEach((m, idx) => {
       const g = groups[idx % 4];
       this.memberManager.setMemberGroup(m.id, g);
     });
     this.renderGroupManagerModal();
-    alert("⚖️ 회원들의 LEVEL을 고려하여 A~D조로 균등하게 자동 편성되었습니다!");
+    alert(`⚖️ 참석 회원 ${targetMembers.length}명의 LEVEL을 고려하여 A~D조로 균등하게 자동 편성되었습니다!`);
   }
 
   saveGroupAssignments() {
@@ -1160,7 +1194,9 @@ renderLeaderboard() {
     }
 
     const timeSlots = this.matchmaker.generateTimeSlots(startTime, duration, 5);
-    const active = this.memberManager.getActiveMembers();
+    const allActive = this.memberManager.getActiveMembers();
+    const attendees = allActive.filter(m => m.group !== "미참석");
+    const active = attendees.length >= 4 ? attendees : allActive;
 
     let draft = [];
     if (type === "level_balanced") {
@@ -1168,8 +1204,10 @@ renderLeaderboard() {
     } else if (type === "group_matches") {
       const byGroup = {};
       active.forEach(m => {
-        if (!byGroup[m.group]) byGroup[m.group] = [];
-        byGroup[m.group].push(m);
+        if (m.group && m.group !== "미참석") {
+          if (!byGroup[m.group]) byGroup[m.group] = [];
+          byGroup[m.group].push(m);
+        }
       });
       draft = this.matchmaker.generateGroupMatches(byGroup, courts, timeSlots);
     }
@@ -1417,13 +1455,65 @@ renderLeaderboard() {
     this.render();
   }
 
+  openMasterResetModal() {
+    this.closeModal("settingsModal");
+    this.showModal("masterResetModal");
+  }
+
+  executeMasterReset() {
+    // 1. Keep 64 official members 100% intact!
+    // 2. Create clean tournament object
+    const cleanTournament = {
+      id: "tourney_" + Date.now(),
+      title: (this.tournament && this.tournament.title) || "2026년 정기대회",
+      date: (this.tournament && this.tournament.date) || new Date().toISOString().slice(0, 10),
+      startTime: "08:00",
+      gameDurationMinutes: 40,
+      courts: ["15번", "16번", "17번", "18번"],
+      timeSlots: this.matchmaker.generateTimeSlots("08:00", 40, 5),
+      matches: [],
+      courtBookings: [],
+      history: [],
+      status: "ready",
+      isMasterReset: true
+    };
+
+    this.tournament = cleanTournament;
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(cleanTournament));
+
+      // Remove legacy storage keys
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("tennis_active_tournament_") && k !== this.storageKey) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      sessionStorage.clear();
+
+      if (window.caches) {
+        caches.keys().then(names => {
+          names.forEach(n => caches.delete(n));
+        });
+      }
+    } catch(e) {
+      console.error("Master reset storage error:", e);
+    }
+
+    this.closeModal("masterResetModal");
+    alert("✅ 마스터 리셋 완료!\n\n모든 예시 경기 결과, 대회 내역, 커피 순위 및 브라우저 캐시가 완전히 초기화되었습니다.\n(※ 64명 공식 회원 명단과 LEVEL 정보는 안전하게 보존되었습니다)\n\n페이지가 최신 상태로 새로고침됩니다.");
+    window.location.href = window.location.origin + window.location.pathname + "?reset=" + Date.now();
+  }
+
   resetTournamentData() {
-    if (!confirm("현재 대회 데이터를 레퍼런스 초기 샘플 데이터로 복원하시겠습니까?")) return;
+    if (!confirm("테스트를 위해 초기 예시 샘플 데이터셋으로 복원하시겠습니까?")) return;
     this.tournament = JSON.parse(JSON.stringify(DEFAULT_TOURNAMENT));
     this.saveTournament();
     this.closeModal("settingsModal");
     this.render();
-    alert("초기 데이터로 복원되었습니다.");
+    alert("예시 샘플 데이터로 복원되었습니다.");
   }
 
   syncOfficialRoster() {
