@@ -1,0 +1,205 @@
+﻿// 테니스 동호회 정기대회 샘플 데이터셋 (레퍼런스 이미지 기반)
+const DEFAULT_TOURNAMENT = {
+  id: "tourney_202610",
+  title: "2026년 10월 정기대회",
+  date: "2026-10-18",
+  rule: "승점 > 득실차 > 다득점",
+  pointsWin: 3,
+  pointsDraw: 1,
+  pointsLoss: 0,
+  courts: ["1번", "2번", "3번"],
+  timeSlots: [
+    { start: "10:00", end: "10:30" },
+    { start: "10:30", end: "11:00" },
+    { start: "11:00", end: "11:30" },
+    { start: "11:30", end: "12:00" },
+    { start: "12:00", end: "12:30" }
+  ],
+  players: [
+    { id: "p1", name: "정다운" },
+    { id: "p2", name: "송영수" },
+    { id: "p3", name: "김명중" },
+    { id: "p4", name: "정민석" },
+    { id: "p5", name: "안정환" },
+    { id: "p6", name: "이동기" },
+    { id: "p7", name: "대니얼" },
+    { id: "p8", name: "양용빈" },
+    { id: "p9", name: "김은빈" },
+    { id: "p10", name: "최경승" },
+    { id: "p11", name: "정지우" },
+    { id: "p12", name: "이지연" },
+    { id: "p13", name: "전동훈" }
+  ],
+  matches: [
+    // 1번 코트
+    {
+      id: "m1",
+      court: "1번",
+      matchNo: 1,
+      timeSlotIndex: 0,
+      teamA: ["이동기", "대니얼"],
+      teamB: ["송영수", "김명중"],
+      scoreA: 6,
+      scoreB: 3,
+      tieBreak: null,
+      status: "finished" // waiting, calling, playing, finished, delayed
+    },
+    {
+      id: "m4",
+      court: "1번",
+      matchNo: 4,
+      timeSlotIndex: 1,
+      teamA: ["김명중", "전동훈"],
+      teamB: ["양용빈", "정다운"],
+      scoreA: 6,
+      scoreB: 4,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m7",
+      court: "1번",
+      matchNo: 7,
+      timeSlotIndex: 2,
+      teamA: ["최경승", "송영수"],
+      teamB: ["전동훈", "정지우"],
+      scoreA: 6,
+      scoreB: 2,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m10",
+      court: "1번",
+      matchNo: 10,
+      timeSlotIndex: 3,
+      teamA: ["전동훈", "양용빈"],
+      teamB: ["송영수", "정다운"],
+      scoreA: 0,
+      scoreB: 6,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m13",
+      court: "1번",
+      matchNo: 13,
+      timeSlotIndex: 4,
+      teamA: ["이동기", "전동훈"],
+      teamB: ["양용빈", "송영수"],
+      scoreA: 3,
+      scoreB: 6,
+      tieBreak: null,
+      status: "finished"
+    },
+
+    // 2번 코트
+    {
+      id: "m2",
+      court: "2번",
+      matchNo: 2,
+      timeSlotIndex: 0,
+      teamA: ["정다운", "정지우"],
+      teamB: ["최경승", "김은빈"],
+      scoreA: 6,
+      scoreB: 2,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m5",
+      court: "2번",
+      matchNo: 5,
+      timeSlotIndex: 1,
+      teamA: ["정민석", "안정환"],
+      teamB: ["정지우", "이지연"],
+      scoreA: 6,
+      scoreB: 3,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m8",
+      court: "2번",
+      matchNo: 8,
+      timeSlotIndex: 2,
+      teamA: ["김명중", "김은빈"],
+      teamB: ["정민석", "이동기"],
+      scoreA: 6,
+      scoreB: 4,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m11",
+      court: "2번",
+      matchNo: 11,
+      timeSlotIndex: 3,
+      teamA: ["김명중", "대니얼"],
+      teamB: ["김은빈", "정민석"],
+      scoreA: 6,
+      scoreB: 4,
+      tieBreak: null,
+      status: "finished"
+    },
+
+    // 3번 코트
+    {
+      id: "m3",
+      court: "3번",
+      matchNo: 3,
+      timeSlotIndex: 0,
+      teamA: ["안정환", "이지연"],
+      teamB: ["정민석", "양용빈"],
+      scoreA: 2,
+      scoreB: 6,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m6",
+      court: "3번",
+      matchNo: 6,
+      timeSlotIndex: 1,
+      teamA: ["최경승", "대니얼"],
+      teamB: ["이동기", "김은빈"],
+      scoreA: 4,
+      scoreB: 6,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m9",
+      court: "3번",
+      matchNo: 9,
+      timeSlotIndex: 2,
+      teamA: ["정다운", "안정환"],
+      teamB: ["이지연", "대니얼"],
+      scoreA: 6,
+      scoreB: 3,
+      tieBreak: null,
+      status: "finished"
+    },
+    {
+      id: "m12",
+      court: "3번",
+      matchNo: 12,
+      timeSlotIndex: 3,
+      teamA: ["안정환", "정지우"],
+      teamB: ["최경승", "이지연"],
+      scoreA: 5,
+      scoreB: 5,
+      tieBreak: "7:5",
+      status: "finished"
+    }
+  ],
+  newsTicker: [
+    { text: "1번 코트 #7경기 결과 (6 : 2)", sub: "1번 코트 스코어 [6 : 2] 확정.", timeAgo: "방금 전" },
+    { text: "1번 코트 #7경기 결과 (4 : 6)", sub: "1번 코트 스코어 [4 : 6] 확정.", timeAgo: "방금 전" },
+    { text: "1번 코트 #1경기 결과 (6 : 3)", sub: "1번 코트 스코어 [6 : 3] 확정.", timeAgo: "방금 전" },
+    { text: "2번 코트 #5경기 결과 (6 : 3)", sub: "2번 코트 스코어 [6 : 3] 확정.", timeAgo: "방금 전" },
+    { text: "3번 코트 #3경기 결과 (2 : 6)", sub: "3번 코트 스코어 [2 : 6] 확정.", timeAgo: "방금 전" },
+    { text: "1번 코트 #4경기 결과 (6 : 4)", sub: "1번 코트 스코어 [6 : 4] 확정.", timeAgo: "방금 전" }
+  ],
+  breakingNews: "[속보] 1번 코트 스코어 [6 : 2] 확정."
+};

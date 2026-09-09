@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ==========================================
+       Top Header
+       ========================================== -->
+  <header class="stadium-header">
+    <div class="header-left">
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        <span>LIVE</span>
+      </div>
+      <div class="tournament-title-wrap">
+        <span id="tournamentModeBadge" class="mode-pill mode-individual">👤 정기전: 개인 리그전 (전 경기 복식 · 개인 승점 누적)</span>
+        <h1 class="tournament-title" id="tournamentTitleDisplay">2026년 10월 정기대회</h1>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <button class="btn-header" id="btnToggleView">
+        <span>📺</span>
+        <span class="btn-text">전광판 모드</span>
+      </button>
+      <button class="btn-header" onclick="app.openMatchmakerModal()">
+        <span>⚙️</span>
+        <span class="btn-text">대진 편성</span>
+      </button>
+      <button class="btn-header" onclick="app.openRosterModal()">
+        <span>👥</span>
+        <span class="btn-text">회원 명단</span>
+      </button>
+      <button class="btn-header" onclick="app.openSeasonModal()">
+        <span>🏆</span>
+        <span class="btn-text">연간 랭킹</span>
+      </button>
+      <button class="btn-header" id="btnToggleAudio" onclick="app.toggleAudio()">
+        <span>🔔</span>
+        <span class="btn-text">알림음 켜짐</span>
+      </button>
+      <button class="btn-header" onclick="app.openSettingsModal()">
+        <span>⚙️</span>
+        <span class="btn-text">설정</span>
+      </button>
+      <button class="btn-header" onclick="app.toggleFullscreen()">
+        <span>⛶</span>
+        <span class="btn-text">전체화면</span>
+      </button>
+
+      <!-- Digital LED Clock -->
+      <div class="led-clock" id="liveClock">12:25:44</div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       📺 Desktop / Stadium View (Big Screen)
+       ========================================== -->
+  <main class="dashboard-container">
+    <!-- Top Split: Leaderboard & Match Ticker -->
+    <section class="top-split-grid">
+      <!-- Left: Real-time Leaderboard -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🏆</span>
+            <span>실시간 순위보드</span>
+          </div>
+          <div class="panel-subtitle">승점 &gt; 득실차 &gt; 다득점</div>
+        </div>
+
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">순위</th>
+                <th style="width: 50px;">변동</th>
+                <th>선수명</th>
+                <th>전적(승-무-패)</th>
+                <th>승점</th>
+                <th>득실차</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+              <!-- Dynamically populated by app -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Match Ticker Feed -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📢</span>
+            <span>경기 속보 및 코트 호출</span>
+          </div>
+          <span style="font-size: 10px; font-weight: 800; color: #38bdf8; background: rgba(56,189,248,0.15); padding: 2px 6px; border-radius: 4px;">Real-Time</span>
+        </div>
+
+        <div class="ticker-feed-list" id="tickerFeedList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom: Court Timeline Matrix -->
+    <section class="timeline-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>📊</span>
+          <span>코트 시계열 현황</span>
+        </div>
+        <div class="timeline-legend">
+          <div class="legend-item"><span class="legend-dot legend-finished"></span> 종료</div>
+          <div class="legend-item"><span class="legend-dot legend-calling"></span> 입장</div>
+          <div class="legend-item"><span class="legend-dot legend-playing"></span> 진행</div>
+          <div class="legend-item"><span class="legend-dot legend-delayed"></span> 지연</div>
+          <div class="legend-item"><span class="legend-dot legend-waiting"></span> 대기</div>
+        </div>
+      </div>
+
+      <div class="timeline-wrapper">
+        <table class="timeline-table">
+          <thead>
+            <tr id="timelineTheadRow">
+              <!-- Populated dynamically -->
+            </tr>
+          </thead>
+          <tbody id="timelineTbody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom Floating Mobile QR Badge -->
+      <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+        <div class="qr-float-card">
+          <img id="mobileQrImg" class="qr-code-img" alt="모바일 접속 QR">
+          <span class="qr-label">📱 모바일 접속</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       📱 Mobile-First Interactive View
+       ========================================== -->
+  <div class="mobile-container">
+    <!-- Tab 1: 순위보드 -->
+    <section id="tab-leaderboard" class="mobile-view-section active">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">🏆 실시간 순위보드</div>
+          <div class="panel-subtitle">승점 &gt; 득실차 &gt; 다득점</div>
+        </div>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">순위</th>
+                <th style="width: 45px;">변동</th>
+                <th>선수명</th>
+                <th>전적</th>
+                <th>승점</th>
+                <th>득실차</th>
+              </tr>
+            </thead>
+            <tbody id="mobileLeaderboardBody">
+              <!-- Synchronized with desktop leaderboard -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: 코트 현황 -->
+    <section id="tab-courts" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📊 코트별 진행 현황</div>
+          <span class="panel-subtitle">터치하여 스코어 즉시 입력</span>
+        </div>
+        <div id="mobileCourtsContainer">
+          <!-- Mobile court cards populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: 내 경기 일정 -->
+    <section id="tab-mymatches" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📅 내 경기 일정 모아보기</div>
+        </div>
+        <div style="margin: 10px 0;">
+          <select id="myPlayerSelect" class="form-select" style="width: 100%; font-size: 14px; padding: 10px;">
+            <!-- Player options -->
+          </select>
+        </div>
+        <div id="myMatchesContainer">
+          <!-- Filtered personal match list -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: 속보 & 공지 -->
+    <section id="tab-ticker" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📢 실시간 속보 & 코트 호출</div>
+        </div>
+        <div id="mobileTickerFeedList" class="ticker-feed-list">
+          <!-- News items -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 5: 동호회 명단 -->
+    <section id="tab-roster" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">👥 참가 회원 명단</div>
+          <button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button>
+        </div>
+        <div style="overflow-x: auto; margin-top: 8px;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 30px;">#</th>
+                <th>이름</th>
+                <th>레벨</th>
+                <th>소속조</th>
+                <th>역할</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="mobileRosterTableBody">
+              <!-- Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-nav-bar">
+    <button class="mobile-nav-btn active" data-tab="tab-leaderboard" onclick="app.switchMobileTab('tab-leaderboard')">
+      <span class="nav-icon">🏆</span>
+      <span>순위</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
+      <span class="nav-icon">📊</span>
+      <span>코트</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="tab-mymatches" onclick="app.switchMobileTab('tab-mymatches')">
+      <span class="nav-icon">📅</span>
+      <span>내 경기</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="tab-ticker" onclick="app.switchMobileTab('tab-ticker')">
+      <span class="nav-icon">📢</span>
+      <span>속보</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="tab-roster" onclick="app.switchMobileTab('tab-roster')">
+      <span class="nav-icon">👥</span>
+      <span>명단</span>
+    </button>
+  </nav>
+
+  <!-- ==========================================
+       Bottom Breaking News Marquee
+       ========================================== -->
+  <div class="bottom-ticker-bar">
+    <div class="ticker-label">속보</div>
+    <div class="ticker-track">
+      <div class="ticker-text" id="breakingNewsText">[속보] 1번 코트 스코어 [6 : 2] 확정.</div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- 1. Match Score Modal -->
+  <div id="scoreModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalMatchTitle">경기 스코어 입력</h3>
+        <button class="modal-close" onclick="app.closeModal('scoreModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="score-stepper-wrap">
+          <!-- Team A -->
+          <div class="team-score-box">
+            <span style="font-weight: 800; font-size: 13px; color: #fff;" id="modalTeamAName">Team A</span>
+            <div class="score-num-display" id="scoreADisplay">6</div>
+            <div class="score-btn-group">
+              <button class="btn-step" onclick="app.changeScore('A', -1)">-</button>
+              <button class="btn-step" onclick="app.changeScore('A', 1)">+</button>
+            </div>
+          </div>
+
+          <div class="score-colon">:</div>
+
+          <!-- Team B -->
+          <div class="team-score-box">
+            <span style="font-weight: 800; font-size: 13px; color: #fff;" id="modalTeamBName">Team B</span>
+            <div class="score-num-display" id="scoreBDisplay">3</div>
+            <div class="score-btn-group">
+              <button class="btn-step" onclick="app.changeScore('B', -1)">-</button>
+              <button class="btn-step" onclick="app.changeScore('B', 1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>타이브레이크 (선택)</label>
+            <input type="text" id="tieBreakInput" class="form-input" placeholder="예: 7:5">
+          </div>
+          <div class="form-group">
+            <label>경기 진행 상태</label>
+            <select id="matchStatusSelect" class="form-select">
+              <option value="finished">🟢 종료 (스코어 확정)</option>
+              <option value="playing">🔵 진행중 (코트 경기중)</option>
+              <option value="calling">🟡 입장/호출 (선수 대기중)</option>
+              <option value="delayed">🟠 지연 (경기 순연)</option>
+              <option value="waiting">⚪ 대기 (시작 전)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('scoreModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveScore()">확정 (저장)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Member Roster Modal -->
+  <div id="rosterModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👥 동호회 회원 명단 관리</h3>
+        <button class="modal-close" onclick="app.closeModal('rosterModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Single Member Add -->
+        <div style="background: #090f1d; padding: 12px; border-radius: 8px; border: 1px solid #1e3358;">
+          <h4 style="font-size: 13px; margin-bottom: 8px; color: var(--neon-cyan);">+ 신규 회원 개별 등록</h4>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 6px; align-items: flex-end;">
+            <div class="form-group">
+              <label>이름</label>
+              <input type="text" id="addMemberName" class="form-input" placeholder="선수 이름">
+            </div>
+            <div class="form-group">
+              <label>NTRP</label>
+              <select id="addMemberLevel" class="form-select">
+                <option value="2.0">2.0 (입문)</option>
+                <option value="2.5">2.5 (초급)</option>
+                <option value="3.0" selected>3.0 (중급)</option>
+                <option value="3.5">3.5 (중상)</option>
+                <option value="4.0">4.0 (고급)</option>
+                <option value="4.5">4.5 (에이스)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>소속조</label>
+              <select id="addMemberGroup" class="form-select">
+                <option value="A조">A조</option>
+                <option value="B조">B조</option>
+                <option value="C조">C조</option>
+                <option value="D조">D조</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>역할</label>
+              <select id="addMemberRole" class="form-select">
+                <option value="회원" selected>회원</option>
+                <option value="조장">조장</option>
+                <option value="경기이사">경기이사</option>
+                <option value="회장">회장</option>
+              </select>
+            </div>
+            <button class="btn-primary" style="height: 38px;" onclick="app.addNewMember()">추가</button>
+          </div>
+        </div>
+
+        <!-- Bulk Import Box -->
+        <div style="background: #090f1d; padding: 12px; border-radius: 8px; border: 1px solid #1e3358;">
+          <h4 style="font-size: 13px; margin-bottom: 6px; color: var(--neon-gold);">📋 명단 텍스트 일괄 붙여넣기 등록</h4>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+            한 줄에 한 명씩 입력하세요. 예시: <code>홍길동 3.5 A조 조장</code> 또는 <code>김철수, 3.0, B조</code>
+          </p>
+          <textarea id="bulkImportTextarea" class="form-input" style="width: 100%; height: 70px; resize: vertical;" placeholder="이름 [NTRP] [소속조] [역할]"></textarea>
+          <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
+            <button class="btn-secondary" onclick="app.executeBulkImport()">일괄 등록 실행</button>
+          </div>
+        </div>
+
+        <!-- Member List Table -->
+        <div style="overflow-x: auto;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 30px; text-align: center;">#</th>
+                <th>이름</th>
+                <th>레벨</th>
+                <th>소속조</th>
+                <th>역할</th>
+                <th>상태</th>
+                <th style="text-align: center;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="rosterTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('rosterModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Matchmaker Modal (4대 대진 생성) -->
+  <div id="matchmakerModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ 대진표 편성 & 생성 엔진</h3>
+        <button class="modal-close" onclick="app.closeModal('matchmakerModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Option 1 -->
+          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">① 경기이사 수동 매치 배정</div>
+              <div style="font-size: 11px; color: #94a3b8;">원하는 코트와 시간대 빈 슬롯을 클릭하여 선수를 직접 배치합니다.</div>
+            </div>
+            <button class="btn-primary" onclick="app.closeModal('matchmakerModal'); alert('코트 타임라인에서 [+ 경기 배정] 빈 칸을 터치하세요!');">수동 배정</button>
+          </div>
+
+          <!-- Option 2 -->
+          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #34d399;">② 개인 레벨(NTRP) 밸런스 자동 대진</div>
+              <div style="font-size: 11px; color: #94a3b8;">선수들의 실력 등급을 합산하여 양 팀의 실력이 대등하도록 자동 페어링합니다.</div>
+            </div>
+            <button class="btn-primary" style="background: #059669;" onclick="app.executeAutoMatchmaker('level_balanced')">자동 생성</button>
+          </div>
+
+          <!-- Option 3 -->
+          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #c084fc;">③ A~D 4개조 조별 대항전 매치 생성</div>
+              <div style="font-size: 11px; color: #94a3b8;">A조 vs B조, C조 vs D조 등 조별 라운드로빈 팀 매치를 편성합니다.</div>
+            </div>
+            <button class="btn-primary" style="background: #7c3aed;" onclick="app.executeAutoMatchmaker('group_matches')">조별 편성</button>
+          </div>
+
+          <!-- Option 4 -->
+          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #fbbf24;">④ 이벤트 친선 번외 게임 생성</div>
+              <div style="font-size: 11px; color: #94a3b8;">정규 시즌 랭킹에 영향을 주지 않는 자유 친선 경기를 편성합니다.</div>
+            </div>
+            <button class="btn-primary" style="background: #d97706;" onclick="app.executeAutoMatchmaker('event_random')">이벤트전</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('matchmakerModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Season Cumulative Leaderboard Modal -->
+  <div id="seasonModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🏆 연간 / 시즌 개인 누적 순위표</h3>
+        <button class="modal-close" onclick="app.closeModal('seasonModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+          월별 정기전 개인 리그 결과가 누적된 시즌 전체 종합 랭킹입니다. (다승왕, 득실왕, 시즌 MVP)
+        </p>
+        <div style="overflow-x: auto;">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">시즌순위</th>
+                <th>선수명</th>
+                <th style="text-align: center;">누적 승점</th>
+                <th style="text-align: center;">누적 전적</th>
+                <th style="text-align: center;">누적 득실</th>
+                <th style="text-align: center;">우승 / 준우승</th>
+                <th style="text-align: center;">참가대회수</th>
+              </tr>
+            </thead>
+            <tbody id="seasonLeaderboardBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('seasonModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Settings Modal -->
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ 대회 환경 설정 & 데이터 관리</h3>
+        <button class="modal-close" onclick="app.closeModal('settingsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>대회 공식 명칭</label>
+          <input type="text" id="setTourneyTitle" class="form-input" value="2026년 10월 정기대회">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>대회 일자</label>
+            <input type="date" id="setTourneyDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>대회 운영 모드</label>
+            <select id="setTourneyMode" class="form-select">
+              <option value="regular_individual">👤 정기전: 개인 리그전 (파트너 순환)</option>
+              <option value="regular_group">👥 정기전: 조별 대항전 (A~D 4개조)</option>
+              <option value="event">🎉 이벤트 게임 (친선/번외)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e3358;">
+          <h4 style="font-size: 12px; margin-bottom: 8px; color: #f87171;">데이터 복원 및 초기화</h4>
+          <button class="btn-danger" style="width: 100%;" onclick="app.resetTournamentData()">초기 레퍼런스 데이터로 복원</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('settingsModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveSettings()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. New Match Modal (Manual Match Creation) -->
+  <div id="newMatchModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ 신규 경기 배정</h3>
+        <button class="modal-close" onclick="app.closeModal('newMatchModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="newMatchCourt">
+        <input type="hidden" id="newMatchSlot">
+        
+        <div class="form-group">
+          <label style="color: var(--neon-cyan);">Team A (2명 복식)</label>
+          <div class="form-row">
+            <select id="newTeamA1" class="form-select"></select>
+            <select id="newTeamA2" class="form-select"></select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label style="color: #f87171;">Team B (2명 복식)</label>
+          <div class="form-row">
+            <select id="newTeamB1" class="form-select"></select>
+            <select id="newTeamB2" class="form-select"></select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('newMatchModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveNewMatch()">경기 추가 확정</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="sample_tournament_data.js"></script>
+  <script src="js/member_manager.js"></script>
+  <script src="js/matchmaker_engine.js"></script>
+  <script src="js/leaderboard_engine.js"></script>
+  <script src="js/tournament_app.js"></script>
+
+  <!-- Mobile View Syncer -->
+  <script>
+    // Sync mobile leaderboard and courts view with main app state
+    window.addEventListener("DOMContentLoaded", () => {
+      const origRender = app.render.bind(app);
+      app.render = function() {
+        origRender();
+
+        // Sync mobile views
+        const mobLb = document.getElementById("mobileLeaderboardBody");
+        const dtLb = document.getElementById("leaderboardBody");
+        if (mobLb && dtLb) mobLb.innerHTML = dtLb.innerHTML;
+
+        const mobTf = document.getElementById("mobileTickerFeedList");
+        const dtTf = document.getElementById("tickerFeedList");
+        if (mobTf && dtTf) mobTf.innerHTML = dtTf.innerHTML;
+
+        const mobRoster = document.getElementById("mobileRosterTableBody");
+        const dtRoster = document.getElementById("rosterTableBody");
+        if (mobRoster && dtRoster) mobRoster.innerHTML = dtRoster.innerHTML;
+
+        // Render mobile court cards
+        const mobCourts = document.getElementById("mobileCourtsContainer");
+        if (mobCourts) {
+          let html = "";
+          (app.tournament.matches || []).forEach(m => {
+            const slot = (app.tournament.timeSlots || [])[m.timeSlotIndex] || { start: "-", end: "-" };
+            const statusText = app.getStatusText(m.status);
+            const teamAStr = (m.teamA || []).join(", ");
+            const teamBStr = (m.teamB || []).join(", ");
+            const scoreStr = m.scoreA !== null && m.scoreB !== null ? `${m.scoreA} : ${m.scoreB}` : "- : -";
+            const tieBreakStr = m.tieBreak ? `(${m.tieBreak})` : "";
+
+            html += `
+              <div class="match-card" style="margin-bottom: 8px;" onclick="app.openScoreModal('${m.id}')">
+                <div class="match-card-top">
+                  <span class="match-no" style="color:var(--neon-cyan);">${m.court} 코트 #${m.matchNo} (${slot.start}~${slot.end})</span>
+                  <span class="match-status-badge status-${m.status}">${statusText}</span>
+                </div>
+                <div class="match-players" style="font-size: 13px; margin: 6px 0;">
+                  <span style="color:#fff;">${app.escape(teamAStr)}</span>
+                  <span style="color:var(--text-muted); font-size:10px;"> vs </span>
+                  <span style="color:#fff;">${app.escape(teamBStr)}</span>
+                </div>
+                <div class="match-score-row">
+                  <span class="score-label">스코어</span>
+                  <div class="score-box">${scoreStr} <span class="tiebreak-tag">${tieBreakStr}</span></div>
+                </div>
+              </div>
+            `;
+          });
+          mobCourts.innerHTML = html;
+        }
+      };
+      app.render();
+    });
+  </script>
+</body>
+</html>
