@@ -86,18 +86,18 @@
     /* Target Audience Selector Tabs */
     .role-tabs {
       display: flex;
-      gap: 8px;
-      margin: 16px 0 20px;
-      background: #0b1324;
-      padding: 6px;
+      gap: 6px;
+      margin: 10px 0 12px;
+      background: #090f1d;
+      padding: 4px;
       border-radius: 8px;
       border: 1px solid var(--border-color);
     }
     .role-tab-btn {
       flex: 1;
-      padding: 10px 8px;
-      font-size: 13px;
-      font-weight: 800;
+      padding: 8px 6px;
+      font-size: 12px;
+      font-weight: 700;
       border: none;
       border-radius: 6px;
       background: transparent;
@@ -106,48 +106,74 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.2s;
     }
     .role-tab-btn.active {
       background: var(--neon-blue);
       color: #fff;
-      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
     }
 
-    /* Fast Quick-Jump TOC */
-    .quick-nav {
-      background: #0b1324;
+    /* Collapsible Quick-Jump TOC */
+    .quick-nav-details {
+      background: #090f1d;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 24px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      transition: all 0.2s;
     }
-    .quick-nav-title {
+    .quick-nav-details[open] {
+      border-color: var(--neon-cyan);
+      background: #0b1426;
+    }
+    .quick-nav-summary {
       font-size: 12px;
       font-weight: 800;
       color: var(--neon-gold);
-      margin-bottom: 8px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 6px;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .quick-nav-summary::-webkit-details-marker {
+      display: none;
+    }
+    .summary-badge {
+      font-size: 10px;
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
     }
     .quick-nav-links {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #1a2b4c;
     }
     .quick-nav-link {
-      background: #131f38;
+      background: #111d33;
       color: #cbd5e1;
       text-decoration: none;
       font-size: 11px;
       font-weight: 600;
-      padding: 4px 8px;
+      padding: 5px 9px;
       border-radius: 4px;
       border: 1px solid #1f3358;
     }
     .quick-nav-link:hover {
+      border-color: var(--neon-cyan);
+      color: #fff;
+      background: #172647;
+    }
       border-color: var(--neon-cyan);
       color: #fff;
     }
@@ -323,40 +349,28 @@
       </button>
     </div>
 
-    <!-- Direct Launch Banner -->
-    <div style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.1) 100%); border: 1.5px solid var(--neon-cyan); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15);">
-      <div>
-        <div style="font-size: 14px; font-weight: 800; color: #fff; display:flex; align-items:center; gap:6px;">
-          <span>🎾</span> <span>지금 바로 대회 전광판에 접속하시겠습니까?</span>
+    <!-- Collapsible Quick Navigation TOC -->
+    <details class="quick-nav-details">
+      <summary class="quick-nav-summary">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span>⚡ 목차 바로가기</span>
+          <span class="summary-badge">10개 항목</span>
         </div>
-        <div style="font-size: 11px; color: var(--neon-cyan); margin-top: 2px;">
-          매뉴얼 확인 없이 즉시 실시간 코트 현황 및 대진표로 이동할 수 있습니다.
-        </div>
-      </div>
-      <a href="index.html" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding: 9px 16px; font-size: 12px; font-weight: 800; background: #0284c7; color:#fff; border-radius: 6px; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5);">
-        <span>🚀</span> <span>전광판 바로 열기</span>
-      </a>
-    </div>
-
-    <!-- Quick Navigation TOC -->
-    <nav class="quick-nav">
-      <div class="quick-nav-title">
-        <span>⚡</span>
-        <span>빠른 이동 (목차)</span>
-      </div>
+        <span style="font-size:11px; color:var(--text-muted);">터치하여 펼치기 ▼</span>
+      </summary>
       <div class="quick-nav-links">
-        <a href="#sec-quickstart" class="quick-nav-link">📱 시작하기 (홈화면 추가)</a>
-        <a href="#sec-member-courts" class="quick-nav-link">📊 코트 현황 확인</a>
-        <a href="#sec-member-mymatches" class="quick-nav-link">📅 내 경기 찾기</a>
-        <a href="#sec-member-rankings" class="quick-nav-link">🏆 리그전 &amp; 연간 랭킹</a>
-        <a href="#sec-member-coffee" class="quick-nav-link">☕ 커피 쿠폰 순위</a>
-        <a href="#sec-staff-newtourney" class="quick-nav-link">⚙️ 신규 대회 생성</a>
-        <a href="#sec-staff-attendance" class="quick-nav-link">👥 참석자(30~50%) &amp; 조편성</a>
-        <a href="#sec-staff-matchmaker" class="quick-nav-link">⚡ 대진표 생성 &amp; 스코어</a>
-        <a href="#sec-staff-finish" class="quick-nav-link">🏁 대회 종료 &amp; 이력 보관</a>
-        <a href="#sec-faq" class="quick-nav-link">❓ FAQ &amp; 캐시 새로고침</a>
+        <a href="#sec-quickstart" class="quick-nav-link">📱 0. 홈화면 추가</a>
+        <a href="#sec-member-courts" class="quick-nav-link">📊 1. 코트 현황 확인</a>
+        <a href="#sec-member-mymatches" class="quick-nav-link">📅 2. 내 경기 찾기</a>
+        <a href="#sec-member-rankings" class="quick-nav-link">🏆 3. 개인리그 &amp; 연간랭킹</a>
+        <a href="#sec-member-coffee" class="quick-nav-link">☕ 4. 커피 쿠폰 순위</a>
+        <a href="#sec-staff-newtourney" class="quick-nav-link">⚙️ 5. 신규 대회 생성</a>
+        <a href="#sec-staff-attendance" class="quick-nav-link">👥 6. 참석자 &amp; 조편성</a>
+        <a href="#sec-staff-matchmaker" class="quick-nav-link">⚡ 7. 대진표 &amp; 스코어</a>
+        <a href="#sec-staff-finish" class="quick-nav-link">🏁 8. 대회 종료 &amp; 이력</a>
+        <a href="#sec-faq" class="quick-nav-link">❓ FAQ &amp; 캐시</a>
       </div>
-    </nav>
+    </details>
 
     <!-- SECTION 0: Quickstart & Mobile Installation -->
     <section id="sec-quickstart" class="manual-section sec-member sec-staff">
