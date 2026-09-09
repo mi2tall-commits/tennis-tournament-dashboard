@@ -26,11 +26,15 @@
       </div>
 
       <div class="header-controls">
+        <a href="manual.html" target="_blank" class="btn-header btn-manual-top" title="웹앱 공식 사용 매뉴얼">
+          <span>📖</span>
+          <span class="btn-text">매뉴얼</span>
+        </a>
         <button class="btn-header btn-action-mm" onclick="app.openMatchmakerModal()">
           <span>⚙️</span>
           <span class="btn-text">대진 편성</span>
         </button>
-        <button class="btn-header btn-action-finish" onclick="app.finishCurrentTournament()">
+        <button class="btn-header btn-action-finish btn-desktop-only" onclick="app.finishCurrentTournament()">
           <span>🏁</span>
           <span class="btn-text">대회 종료</span>
         </button>
@@ -62,10 +66,6 @@
           <span>🛠️</span>
           <span class="btn-text btn-desktop-only">설정</span>
         </button>
-        <a href="manual.html" target="_blank" class="btn-header" style="text-decoration:none; color:var(--neon-gold); border-color:rgba(245, 158, 11, 0.4);" title="웹앱 공식 사용 매뉴얼">
-          <span>📖</span>
-          <span class="btn-text">매뉴얼</span>
-        </a>
         <button class="btn-header btn-desktop-only" onclick="app.toggleFullscreen()">
           <span>⛶</span>
         </button>
@@ -190,6 +190,15 @@
   <div class="mobile-container">
     <!-- Tab 1: 코트 현황 (모바일 최우선 배치) -->
     <section id="tab-courts" class="mobile-view-section active">
+      <!-- Quick Manual Access Banner -->
+      <a href="manual.html" target="_blank" class="mobile-manual-quickbar" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(2, 132, 199, 0.15) 100%); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:7px 12px; margin-bottom:8px; text-decoration:none; color:#f8fafc;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:15px;">📖</span>
+          <span style="font-size:12px; font-weight:700;">처음 이용하시나요? <span style="color:var(--neon-gold);">사용 매뉴얼</span> 보기</span>
+        </div>
+        <span style="font-size:11px; color:var(--neon-cyan); font-weight:800;">열기 &gt;</span>
+      </a>
+
       <div class="panel-card">
         <div class="panel-header">
           <div class="panel-title">📊 코트별 진행 현황</div>
@@ -876,11 +885,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v15_coffee_fix"></script>
-  <script src="js/member_manager.js?v=v15_coffee_fix"></script>
-  <script src="js/matchmaker_engine.js?v=v15_coffee_fix"></script>
-  <script src="js/leaderboard_engine.js?v=v15_coffee_fix"></script>
-  <script src="js/tournament_app.js?v=v15_coffee_fix"></script>
+  <script src="sample_tournament_data.js?v=v16_manual_header_fix"></script>
+  <script src="js/member_manager.js?v=v16_manual_header_fix"></script>
+  <script src="js/matchmaker_engine.js?v=v16_manual_header_fix"></script>
+  <script src="js/leaderboard_engine.js?v=v16_manual_header_fix"></script>
+  <script src="js/tournament_app.js?v=v16_manual_header_fix"></script>
 
   <!-- Mobile View Syncer -->
   <script>
