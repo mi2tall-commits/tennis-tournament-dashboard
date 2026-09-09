@@ -144,6 +144,11 @@ class TournamentApp {
     const titleEl = document.getElementById("tournamentTitleDisplay");
     if (titleEl) titleEl.textContent = this.tournament.title;
 
+    const dateBadgeEl = document.getElementById("tournamentDateBadge");
+    if (dateBadgeEl) {
+      dateBadgeEl.textContent = `📅 ${this.tournament.date || new Date().toISOString().slice(0, 10)}`;
+    }
+
     const modeBadgeEl = document.getElementById("tournamentModeBadge");
     if (modeBadgeEl) {
       const mode = this.tournament.mode || "regular_individual";
@@ -166,12 +171,29 @@ class TournamentApp {
     const resetBtn = document.getElementById("btnResetLeagueUi");
     if (!tbody) return;
 
-    // Toggle tab active classes
+    // Toggle tab active classes (both desktop & mobile)
     const tabMonthlyBtn = document.getElementById("tabBtnMonthlyLeague");
     const tabAnnualBtn = document.getElementById("tabBtnAnnualSeason");
     if (tabMonthlyBtn && tabAnnualBtn) {
       tabMonthlyBtn.classList.toggle("active", this.leaderboardViewMode === "monthly");
       tabAnnualBtn.classList.toggle("active", this.leaderboardViewMode === "annual");
+    }
+
+    const mobTabMonthlyBtn = document.getElementById("mobTabBtnMonthlyLeague");
+    const mobTabAnnualBtn = document.getElementById("mobTabBtnAnnualSeason");
+    if (mobTabMonthlyBtn && mobTabAnnualBtn) {
+      mobTabMonthlyBtn.classList.toggle("active", this.leaderboardViewMode === "monthly");
+      mobTabAnnualBtn.classList.toggle("active", this.leaderboardViewMode === "annual");
+    }
+
+    const mobModeText = document.getElementById("mobLeaderboardModeText");
+    const mobResetBtn = document.getElementById("mobBtnResetLeague");
+    if (this.leaderboardViewMode === "annual") {
+      if (mobModeText) mobModeText.textContent = "👑 연간 종합 누적 랭킹 (월별 성적 합산)";
+      if (mobResetBtn) mobResetBtn.style.display = "none";
+    } else {
+      if (mobModeText) mobModeText.textContent = "👤 당월 개인 리그전 (복식 경기 개인 승점 집계)";
+      if (mobResetBtn) mobResetBtn.style.display = "inline-flex";
     }
 
     if (this.leaderboardViewMode === "annual") {
@@ -441,6 +463,8 @@ class TournamentApp {
     if (!tbody) return;
 
     const members = this.memberManager.getAllMembers();
+    const countEl = document.getElementById("rosterMemberCount");
+    if (countEl) countEl.textContent = members.length;
     let html = "";
     members.forEach((m, idx) => {
       const statusBadge = m.status === "active" 
@@ -509,6 +533,41 @@ class TournamentApp {
     document.getElementById("editMemLevel").value = parseInt(m.clubLevel) || 2;
     document.getElementById("editMemRole").value = m.role || "회원";
     this.showModal("editMemberModalWindow");
+  }
+
+  
+  onTournamentDateChange(newDate) {
+    if (!newDate) return;
+    this.tournament.date = newDate;
+    this.saveTournament();
+    this.renderHeader();
+  }
+
+  deleteCurrentMember() {
+    if (!this.editingMemberId) return;
+    const m = this.memberManager.getMemberById(this.editingMemberId);
+    const name = m ? m.name : "해당 회원";
+
+    // 탈퇴 확인 팝업창 (사용자 요청 #2)
+    const confirmed = confirm(`[회원 탈퇴 확인]
+
+정말 "${name}" 회원을 탈퇴 처리 하시겠습니까?
+
+탈퇴 시 동호회 명단에서 완전히 삭제 조치됩니다.`);
+    if (!confirmed) return;
+
+    this.memberManager.deleteMember(this.editingMemberId);
+    this.editingMemberId = null;
+    this.closeModal("editMemberModalWindow");
+
+    // 명단, 순위, 조별 편성 화면 즉시 동기화
+    this.renderRosterTable();
+    this.renderLeaderboard();
+    if (document.getElementById("groupManagerModal") && document.getElementById("groupManagerModal").classList.contains("active")) {
+      this.renderGroupManagerModal();
+    }
+
+    alert(`✅ "${name}" 회원이 정상적으로 탈퇴 처리(명단 삭제)되었습니다.`);
   }
 
   saveEditedMember() {
@@ -978,7 +1037,12 @@ class TournamentApp {
 
   openMatchmakerModal() {
     // 설정값 반영
-    document.getElementById("mmStartTime").value = this.tournament.startTime || "08:00";
+    const dateInput = document.getElementById("mmTournamentDate");
+    if (dateInput) {
+      dateInput.value = this.tournament.date || new Date().toISOString().slice(0, 10);
+    }
+    const startTimeVal = this.tournament.startTime;
+    document.getElementById("mmStartTime").value = (startTimeVal && startTimeVal !== "10:00") ? startTimeVal : "08:00";
     document.getElementById("mmDuration").value = this.tournament.gameDurationMinutes || 40;
     document.getElementById("mmCourtNames").value = (this.tournament.courts || ["15번", "16번", "17번", "18번"]).join(", ");
     document.getElementById("mmCourtCount").value = (this.tournament.courts || []).length || 4;
@@ -996,7 +1060,12 @@ class TournamentApp {
    * 1차 자동 대진 드래프트 생성 (경기이사 수동 조정 화면으로 연결)
    */
   generateDraftMatches(type) {
-    const startTime = document.getElementById("mmStartTime").value || "10:00";
+    const dateInput = document.getElementById("mmTournamentDate");
+    if (dateInput && dateInput.value) {
+      this.tournament.date = dateInput.value;
+      this.renderHeader();
+    }
+    const startTime = document.getElementById("mmStartTime").value || "08:00";
     const duration = parseInt(document.getElementById("mmDuration").value) || 40;
     const rawCourts = document.getElementById("mmCourtNames").value;
     const courts = rawCourts.split(",").map(c => c.trim()).filter(Boolean);

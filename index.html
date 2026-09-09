@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css?v=64m7">
+  <link rel="stylesheet" href="styles.css?v=mobfix9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -14,62 +14,64 @@
   <!-- ==========================================
        Top Header
        ========================================== -->
-  <header class="stadium-header">
-    <div class="header-left">
-      <div class="live-badge">
-        <span class="live-dot"></span>
-        <span>LIVE</span>
-      </div>
-      <div class="tournament-title-wrap">
-        <span id="tournamentModeBadge" class="mode-pill mode-individual">👤 정기전: 개인 리그전 (전 경기 복식 · 개인 승점 누적)</span>
+    <header class="stadium-header">
+    <div class="header-inner-row">
+      <!-- Left: Live & Date & Title -->
+      <div class="header-brand-block">
+        <div class="header-meta-pills">
+          <div class="live-badge">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </div>
+          <span id="tournamentDateBadge" class="tourney-date-pill">📅 2026-10-18</span>
+          <span id="tournamentModeBadge" class="mode-pill mode-individual">👤 정기전: 개인 리그전</span>
+        </div>
         <h1 class="tournament-title" id="tournamentTitleDisplay">2026년 10월 정기대회</h1>
       </div>
-    </div>
 
-    <div class="header-controls">
-      <button class="btn-header" id="btnToggleView">
-        <span>📺</span>
-        <span class="btn-text">전광판 모드</span>
-      </button>
-      <button class="btn-header" onclick="app.openMatchmakerModal()">
-        <span>⚙️</span>
-        <span class="btn-text">대진 편성</span>
-      </button>
-      <button class="btn-header" onclick="app.openCourtBookingModal()">
-        <span>☕</span>
-        <span class="btn-text">커피쿠폰</span>
-      </button>
-      <button class="btn-header" onclick="app.openHistoryModal()">
-        <span>📜</span>
-        <span class="btn-text">대회 내역</span>
-      </button>
-      <button class="btn-header" style="border-color:#f59e0b; background:rgba(245,158,11,0.15);" onclick="app.finishCurrentTournament()">
-        <span>🏁</span>
-        <span class="btn-text" style="color:#fbbf24; font-weight:800;">대회 종료</span>
-      </button>
-      <button class="btn-header" onclick="app.openRosterModal()">
-        <span>👥</span>
-        <span class="btn-text">회원 명단</span>
-      </button>
-      <button class="btn-header" onclick="app.openSeasonModal()">
-        <span>🏆</span>
-        <span class="btn-text">연간 랭킹</span>
-      </button>
-      <button class="btn-header" id="btnToggleAudio" onclick="app.toggleAudio()">
-        <span>🔔</span>
-        <span class="btn-text">알림음 켜짐</span>
-      </button>
-      <button class="btn-header" onclick="app.openSettingsModal()">
-        <span>⚙️</span>
-        <span class="btn-text">설정</span>
-      </button>
-      <button class="btn-header" onclick="app.toggleFullscreen()">
-        <span>⛶</span>
-        <span class="btn-text">전체화면</span>
-      </button>
-
-      <!-- Digital LED Clock -->
-      <div class="led-clock" id="liveClock">12:25:44</div>
+      <!-- Right: Controls -->
+      <div class="header-controls">
+        <button class="btn-header btn-action-mm" onclick="app.openMatchmakerModal()">
+          <span>⚙️</span>
+          <span class="btn-text">대진 편성</span>
+        </button>
+        <button class="btn-header btn-action-finish" onclick="app.finishCurrentTournament()">
+          <span>🏁</span>
+          <span class="btn-text">대회 종료</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openCourtBookingModal()">
+          <span>☕</span>
+          <span class="btn-text">커피쿠폰</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openHistoryModal()">
+          <span>📜</span>
+          <span class="btn-text">대회 내역</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openRosterModal()">
+          <span>👥</span>
+          <span class="btn-text">회원 명단</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openSeasonModal()">
+          <span>🏆</span>
+          <span class="btn-text">연간 랭킹</span>
+        </button>
+        <button class="btn-header btn-desktop-only" id="btnToggleAudio" onclick="app.toggleAudio()">
+          <span>🔔</span>
+          <span class="btn-text">알림음</span>
+        </button>
+        <button class="btn-header btn-desktop-only" id="btnToggleView">
+          <span>📺</span>
+          <span class="btn-text">전광판</span>
+        </button>
+        <button class="btn-header" onclick="app.openSettingsModal()" title="설정">
+          <span>🛠️</span>
+          <span class="btn-text btn-desktop-only">설정</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.toggleFullscreen()">
+          <span>⛶</span>
+        </button>
+        <div class="led-clock btn-desktop-only" id="liveClock">12:00:00</div>
+      </div>
     </div>
   </header>
 
@@ -181,16 +183,27 @@
        ========================================== -->
   <div class="mobile-container">
     <!-- Tab 1: 순위보드 -->
+        <!-- Tab 1: 순위보드 (모바일 듀얼 탭 및 리셋) -->
     <section id="tab-leaderboard" class="mobile-view-section active">
       <div class="panel-card">
-        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div class="panel-title">🏆 실시간 순위보드</div>
-            <div class="panel-subtitle">승점 &gt; 득실차 &gt; 다득점</div>
+        <div class="panel-header" style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div class="lb-tab-group">
+              <button id="mobTabBtnMonthlyLeague" class="lb-tab-btn active" onclick="app.setLeaderboardMode('monthly')">
+                <span>🏆 당월 개인 리그</span>
+              </button>
+              <button id="mobTabBtnAnnualSeason" class="lb-tab-btn" onclick="app.setLeaderboardMode('annual')">
+                <span>👑 연간 랭킹</span>
+              </button>
+            </div>
+            <button id="mobBtnResetLeague" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
+              <span>🔄</span>
+              <span>순위 리셋</span>
+            </button>
           </div>
-          <button class="btn-reset-league" onclick="app.resetCurrentLeague()">
-            <span>🔄</span> 순위 리셋
-          </button>
+          <div id="mobLeaderboardModeText" style="font-size:11px; color:var(--text-muted); font-weight:700;">
+            👤 당월 개인 리그전 (복식 경기 개인 승점 집계)
+          </div>
         </div>
         <div class="leaderboard-table-wrap">
           <table class="leaderboard-table">
@@ -407,7 +420,7 @@
     <div class="modal-window" style="max-width: 680px;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:8px;">
-          <h3 class="modal-title">👥 동호회 64명 공식 회원 명단</h3>
+          <h3 class="modal-title">👥 동호회 공식 회원 명단 (<span id="rosterMemberCount">64</span>명)</h3>
           <button class="btn-xs" style="background:#059669; font-weight:800;" onclick="app.syncOfficialRoster()">🔄 64명 명부 최신화</button>
         </div>
         <button class="modal-close" onclick="app.closeModal('rosterModal')">&times;</button>
@@ -523,6 +536,10 @@
             </div>
           </div>
           <div class="form-row" style="margin-top:6px;">
+            <div class="form-group" style="flex:1.2;">
+              <label style="color:var(--neon-gold); font-weight:800;">📅 대회 날짜</label>
+              <input type="date" id="mmTournamentDate" class="form-input" style="border-color:#fbbf24;" onchange="app.onTournamentDateChange(this.value)">
+            </div>
             <div class="form-group">
               <label>최초 시작 시간</label>
               <input type="time" id="mmStartTime" class="form-input" value="08:00">
@@ -828,11 +845,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=64m7"></script>
-  <script src="js/member_manager.js?v=64m7"></script>
-  <script src="js/matchmaker_engine.js?v=64m7"></script>
-  <script src="js/leaderboard_engine.js?v=64m7"></script>
-  <script src="js/tournament_app.js?v=64m7"></script>
+  <script src="sample_tournament_data.js?v=mobfix9"></script>
+  <script src="js/member_manager.js?v=mobfix9"></script>
+  <script src="js/matchmaker_engine.js?v=mobfix9"></script>
+  <script src="js/leaderboard_engine.js?v=mobfix9"></script>
+  <script src="js/tournament_app.js?v=mobfix9"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -936,9 +953,12 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="app.closeModal('editMemberModalWindow')">취소</button>
-        <button class="btn-primary" onclick="app.saveEditedMember()">수정 저장</button>
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" id="btnWithdrawMember" class="btn-danger" style="background:#dc2626; color:#fff; font-weight:800; border:none; padding:7px 14px; border-radius:6px; cursor:pointer;" onclick="app.deleteCurrentMember()">🗑️ 회원 탈퇴</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-secondary" onclick="app.closeModal('editMemberModalWindow')">취소</button>
+          <button type="button" class="btn-primary" onclick="app.saveEditedMember()">수정 저장</button>
+        </div>
       </div>
     </div>
   </div>
