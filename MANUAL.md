@@ -23,6 +23,28 @@
 
 ---
 
+## 📺 1. 현장 대형 전광판 / iPad / PC 화면 구성 (Stadium View)
+
+### [KR]
+- **상단부 (Top Arena)**:
+  - **📊 코트 시계열 전광판**: 15~18번 코트의 40분 단위 슬롯이 100% 동일한 대칭 너비로 분할되어, 현재 진행 중인 경기와 다음 대기팀을 한눈에 파악합니다.
+  - **📢 경기 속보 및 호출**: 실시간 코트 입장 호출 및 방금 끝난 경기 스코어 확정 속보를 실시간 피드합니다.
+- **하단부 (Bottom Dual Leaderboards)**:
+  - **🏆 [좌측] 당월 개인 리그전 순위**: 이번 대회 복식 개인 승점(승3/무1/패0) 및 세트 득실차 실시간 표출.
+  - **👑 [우측] 연간 종합 랭킹 (시즌 누적)**: 2026 시즌 전체 누적 포인트와 명예의 전당(우승/준우승) 표출.
+  - 탭을 전환할 필요 없이 **하단 좌우에 동시에 표시**되어 당일 성적과 연간 순위를 동시에 비교할 수 있습니다.
+
+### [EN]
+- **Top Section**:
+  - **Court Timeline Matrix**: 15~18 court slots in 40-min blocks with perfectly uniform column widths for instant status tracking.
+  - **Match Ticker Feed**: Real-time announcements for court call-ups and confirmed match scores.
+- **Bottom Section (Dual Simultaneous Leaderboards)**:
+  - **Left**: Current Monthly League standings (points: 3/1/0, set differential).
+  - **Right**: 2026 Annual Cumulative Season Rankings & Hall of Fame.
+  - Both leaderboards appear side-by-side without needing to toggle tabs!
+
+---
+
 ## 👤 Part 1. 일반 회원용 이용 가이드 (For Club Members)
 
 ### 1. 실시간 코트 경기 현황 ([📊 코트] 탭)

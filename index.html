@@ -84,57 +84,52 @@
        📺 Desktop / Stadium View (Big Screen)
        ========================================== -->
   <main class="dashboard-container">
-    <!-- Top Split: Leaderboard & Match Ticker -->
-    <section class="top-split-grid">
-      <!-- Left: Real-time Leaderboard -->
-      <div class="panel-card">
-        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <!-- Dual Tabs: 당월 개인리그전 vs 연간 종합 랭킹 -->
-          <div class="lb-tab-group">
-            <button id="tabBtnMonthlyLeague" class="lb-tab-btn active" onclick="app.setLeaderboardMode('monthly')">
-              <span>🏆 당월 개인 리그전</span>
-            </button>
-            <button id="tabBtnAnnualSeason" class="lb-tab-btn" onclick="app.setLeaderboardMode('annual')">
-              <span>👑 연간 종합 랭킹</span>
-            </button>
+    <!-- Top Stadium Row: Court Timeline Grid (Left) + Real-time Match Ticker (Right) -->
+    <div class="stadium-top-grid">
+      <!-- Left: Court Timeline Matrix (40min slots) -->
+      <section class="timeline-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📊</span>
+            <span>코트 시계열 현황 (40분 슬롯)</span>
           </div>
-          
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span id="leaderboardCurrentModeText" style="font-size:11px; color:var(--text-muted); font-weight:700;">승점 &gt; 득실차 &gt; 다득점</span>
-            <!-- League Reset Button -->
-            <button id="btnResetLeagueUi" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
-              <span>🔄</span>
-              <span>리그전 순위 리셋</span>
-            </button>
+          <div class="timeline-legend">
+            <div class="legend-item"><span class="legend-dot legend-finished"></span> 종료</div>
+            <div class="legend-item"><span class="legend-dot legend-calling"></span> 입장</div>
+            <div class="legend-item"><span class="legend-dot legend-playing"></span> 진행</div>
+            <div class="legend-item"><span class="legend-dot legend-delayed"></span> 지연</div>
+            <div class="legend-item"><span class="legend-dot legend-waiting"></span> 대기</div>
           </div>
         </div>
 
-        <div id="leaderboardBannerNotice"></div>
-        <div class="leaderboard-table-wrap">
-          <table class="leaderboard-table">
-            <thead id="leaderboardThead">
-              <tr>
-                <th style="width: 45px; text-align: center;">순위</th>
-                <th style="width: 50px;">변동</th>
-                <th>선수명</th>
-                <th>전적(승-무-패)</th>
-                <th>승점</th>
-                <th>득실차</th>
+        <div class="timeline-wrapper">
+          <table class="timeline-table">
+            <thead>
+              <tr id="timelineTheadRow">
+                <!-- Populated dynamically -->
               </tr>
             </thead>
-            <tbody id="leaderboardBody">
-              <!-- Dynamically populated by app -->
+            <tbody id="timelineTbody">
+              <!-- Populated dynamically -->
             </tbody>
           </table>
         </div>
-      </div>
 
-      <!-- Right: Match Ticker Feed -->
-      <div class="panel-card">
+        <!-- Bottom Floating Mobile QR Badge -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+          <div class="qr-float-card" style="padding: 3px 8px;">
+            <img id="mobileQrImg" class="qr-code-img" style="width: 26px; height: 26px;" alt="모바일 접속 QR">
+            <span class="qr-label" style="font-size: 10px;">📱 모바일 접속</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Real-time Match Ticker Feed -->
+      <section class="panel-card ticker-panel">
         <div class="panel-header">
           <div class="panel-title">
             <span>📢</span>
-            <span>경기 속보 및 코트 호출</span>
+            <span>경기 속보 및 호출</span>
           </div>
           <span style="font-size: 10px; font-weight: 800; color: #38bdf8; background: rgba(56,189,248,0.15); padding: 2px 6px; border-radius: 4px;">Real-Time</span>
         </div>
@@ -142,46 +137,76 @@
         <div class="ticker-feed-list" id="tickerFeedList">
           <!-- Dynamically populated -->
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <!-- Bottom: Court Timeline Matrix -->
-    <section class="timeline-panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <span>📊</span>
-          <span>코트 시계열 현황 (40분 슬롯)</span>
+    <!-- Bottom Stadium Row: Dual Simultaneous Leaderboards (Monthly League Left, Annual Season Right) -->
+    <div class="stadium-bottom-grid">
+      <!-- Left: Real-time Monthly League Leaderboard -->
+      <section class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div class="panel-title" style="color:var(--neon-gold);">
+            <span>🏆</span>
+            <span>당월 개인 리그전 실시간 순위</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">승점 &gt; 득실차 &gt; 다득점</span>
+            <button id="btnResetLeagueUi" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
+              <span>🔄</span>
+              <span>순위 리셋</span>
+            </button>
+          </div>
         </div>
-        <div class="timeline-legend">
-          <div class="legend-item"><span class="legend-dot legend-finished"></span> 종료</div>
-          <div class="legend-item"><span class="legend-dot legend-calling"></span> 입장</div>
-          <div class="legend-item"><span class="legend-dot legend-playing"></span> 진행</div>
-          <div class="legend-item"><span class="legend-dot legend-delayed"></span> 지연</div>
-          <div class="legend-item"><span class="legend-dot legend-waiting"></span> 대기</div>
-        </div>
-      </div>
 
-      <div class="timeline-wrapper">
-        <table class="timeline-table">
-          <thead>
-            <tr id="timelineTheadRow">
-              <!-- Populated dynamically -->
-            </tr>
-          </thead>
-          <tbody id="timelineTbody">
-            <!-- Populated dynamically -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Bottom Floating Mobile QR Badge -->
-      <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-        <div class="qr-float-card">
-          <img id="mobileQrImg" class="qr-code-img" alt="모바일 접속 QR">
-          <span class="qr-label">📱 모바일 접속</span>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">순위</th>
+                <th style="width: 48px; text-align: center;">변동</th>
+                <th>선수명</th>
+                <th>전적(승-무-패)</th>
+                <th style="text-align: center;">승점</th>
+                <th style="text-align: center;">득실차</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyLeaderboardBody">
+              <!-- Dynamically populated by app -->
+            </tbody>
+          </table>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Right: Real-time Annual Cumulative Season Leaderboard -->
+      <section class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div class="panel-title" style="color:#38bdf8;">
+            <span>👑</span>
+            <span>연간 종합 랭킹 (2026 시즌 누적)</span>
+          </div>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700;">누적 승점 기준</span>
+        </div>
+
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">순위</th>
+                <th style="width: 48px; text-align: center;">변동</th>
+                <th>선수명</th>
+                <th style="text-align: center; color:#fbbf24;">누적승점</th>
+                <th style="text-align: center;">통산전적</th>
+                <th style="text-align: center; color:#f59e0b;">입상 (🥇/🥈)</th>
+                <th style="text-align: center;">참가</th>
+              </tr>
+            </thead>
+            <tbody id="annualLeaderboardBody">
+              <!-- Dynamically populated by app -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- ==========================================

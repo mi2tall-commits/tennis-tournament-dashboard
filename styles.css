@@ -199,8 +199,42 @@ body {
 }
 
 /* ==========================================
-   Top Split: Leaderboard & Match Ticker
+   🏟️ Stadium View: Dynamic 2-Tier Grid Layout
    ========================================== */
+.stadium-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.stadium-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ticker-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ticker-panel .ticker-feed-list {
+  flex: 1;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+  .stadium-top-grid {
+    grid-template-columns: 1fr;
+  }
+  .stadium-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .top-split-grid {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -455,26 +489,29 @@ body {
 /* Timeline Matrix Grid */
 .timeline-wrapper {
   overflow-x: auto;
-  margin-top: 10px;
+  margin-top: 6px;
   padding-bottom: 6px;
 }
 
 .timeline-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 6px;
-  min-width: 1100px;
+  min-width: 850px;
 }
 
 .th-court {
-  width: 70px;
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
   background: #0284c7;
   color: #ffffff;
   font-weight: 900;
   font-size: 13px;
   text-align: center;
   border-radius: 6px;
-  padding: 8px;
+  padding: 8px 4px;
 }
 
 .th-time {
@@ -490,6 +527,9 @@ body {
 }
 
 .court-label-cell {
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
   background: #0284c7;
   color: #ffffff;
   font-size: 15px;
