@@ -1242,3 +1242,61 @@ body.force-stadium-mode .dashboard-container {
   padding: 8px 10px;
   margin-bottom: 6px;
 }
+
+/* A~D조 편성 관리자 스타일 */
+.group-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+@media (max-width: 768px) {
+  .group-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.group-col-card {
+  background: #090f1d;
+  border: 1px solid #1e3358;
+  border-radius: 8px;
+  padding: 10px;
+}
+.group-col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e3358;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+.group-col-title {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--neon-cyan);
+}
+.group-col-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--neon-gold);
+}
+.group-members-pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.group-mem-pill {
+  font-size: 11px;
+  color: #cbd5e1;
+  background: #111b33;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+.group-mem-pill .badge-lvl {
+  color: #38bdf8;
+  font-size: 9px;
+  font-weight: 700;
+}

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css?v=64m5">
+  <link rel="stylesheet" href="styles.css?v=64m6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -528,9 +528,12 @@
           <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <div style="font-weight: 800; font-size: 13px; color: #c084fc;">③ A~D 4개조 조별 대항전 매치 생성</div>
-              <div style="font-size: 11px; color: #94a3b8;">A조 vs B조, C조 vs D조 등 조별 라운드로빈 팀 매치를 편성합니다.</div>
+              <div style="font-size: 11px; color: #94a3b8;">회원 명단을 기준으로 A~D조를 직접 선택하여 구성한 뒤 매치를 생성합니다.</div>
             </div>
-            <button class="btn-primary" style="background: #7c3aed;" onclick="app.generateDraftMatches('group_matches')">조별 편성</button>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="app.closeModal('matchmakerModal'); app.openGroupManagerModal();">👥 A~D조 직접 편성</button>
+              <button class="btn-primary" style="background: #7c3aed;" onclick="app.generateDraftMatches('group_matches')">조별 편성</button>
+            </div>
           </div>
 
           <!-- Option 4 (이벤트 경기: 조별 조원 랜덤 복식 페어링 #4) -->
@@ -584,7 +587,10 @@
           <input type="text" id="eventGroupNameInput" class="form-input" value="이벤트 친선 리그">
         </div>
         <div style="margin: 10px 0;">
-          <label style="font-size:12px; color:var(--text-muted); margin-bottom:6px; display:block;">조원 필터 선택:</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; color:var(--text-muted);">조원 필터 선택:</label>
+            <button class="btn-xs" style="background:#059669;" onclick="app.closeModal('eventMatchmakerModal'); app.openGroupManagerModal();">⚙️ A~D조 직접 편성/변경</button>
+          </div>
           <div style="display:flex; gap:6px;">
             <button class="btn-xs" onclick="app.filterEventMembersByGroup('ALL')">전체 선택</button>
             <button class="btn-xs" onclick="app.filterEventMembersByGroup('A조')">A조만</button>
@@ -787,11 +793,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=64m5"></script>
-  <script src="js/member_manager.js?v=64m5"></script>
-  <script src="js/matchmaker_engine.js?v=64m5"></script>
-  <script src="js/leaderboard_engine.js?v=64m5"></script>
-  <script src="js/tournament_app.js?v=64m5"></script>
+  <script src="sample_tournament_data.js?v=64m6"></script>
+  <script src="js/member_manager.js?v=64m6"></script>
+  <script src="js/matchmaker_engine.js?v=64m6"></script>
+  <script src="js/leaderboard_engine.js?v=64m6"></script>
+  <script src="js/tournament_app.js?v=64m6"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -898,6 +904,53 @@
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('editMemberModalWindow')">취소</button>
         <button class="btn-primary" onclick="app.saveEditedMember()">수정 저장</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 9. Group Assignment Modal (A~D조 직접 선택 및 편성 관리) -->
+  <div id="groupManagerModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 820px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">👥 A~D 4개조 조 편성 관리자</h3>
+          <div style="font-size:12px; color:var(--text-muted);">회원 명단을 기준으로 A조, B조, C조, D조를 직접 선택하여 구성합니다.</div>
+        </div>
+        <button class="modal-close" onclick="app.closeModal('groupManagerModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Group Summary Cards -->
+        <div id="groupSummaryGrid" class="group-summary-grid">
+          <!-- Populated dynamically with 4 columns -->
+        </div>
+
+        <!-- Quick Balance Toolbar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin: 12px 0 8px 0; background:#090f1d; padding:8px 12px; border-radius:6px; border:1px solid #1e3358;">
+          <span style="font-size:12px; color:var(--neon-cyan); font-weight:800;">📋 회원별 소속조 직접 선택 (64명 명단)</span>
+          <button class="btn-xs" style="background:#7c3aed; font-weight:800;" onclick="app.autoBalanceGroups()">⚖️ LEVEL 밸런스 자동 배정</button>
+        </div>
+
+        <!-- Member Group Selection Table -->
+        <div style="overflow-x: auto; max-height: 350px;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 35px; text-align: center;">번호</th>
+                <th>선수명</th>
+                <th style="text-align: center;">LEVEL</th>
+                <th style="text-align: center;">소속조 직접 선택</th>
+              </tr>
+            </thead>
+            <tbody id="groupAssignmentTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('groupManagerModal')">취소</button>
+        <button class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.saveGroupAssignments()">조 편성 확정 및 저장</button>
       </div>
     </div>
   </div>

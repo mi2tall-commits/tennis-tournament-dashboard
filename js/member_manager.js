@@ -1,7 +1,9 @@
 /**
  * 👥 회원 명단 관리 모듈 (Member Manager Engine)
+ * - 64명 공식 회원 명부 연동
  * - 6대 공식 역할 표준화: 회장, 부회장, 경기이사, 재무이사, 총무이사, 회원
- * - 대량 텍스트/CSV 일괄 임포트 지원
+ * - LEVEL: 1~4등급
+ * - A~D조 직접 선택 및 편성 관리 지원
  */
 
 const STANDARD_ROLES = ["회장", "부회장", "경기이사", "재무이사", "총무이사", "회원"];
@@ -20,7 +22,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1001-2001",
     "notes": "2026-05-26 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_2",
@@ -35,7 +38,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1002-2002",
     "notes": "2026-04-20 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_3",
@@ -50,7 +54,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1003-2003",
     "notes": "2026-04-20 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_4",
@@ -65,7 +70,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1004-2004",
     "notes": "2026-02-24 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_5",
@@ -80,7 +86,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1005-2005",
     "notes": "2026-01-29 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_6",
@@ -95,7 +102,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1006-2006",
     "notes": "2026-01-29 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_7",
@@ -110,7 +118,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1007-2007",
     "notes": "2026-01-20 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_8",
@@ -125,7 +134,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1008-2008",
     "notes": "2026-01-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_9",
@@ -140,7 +150,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1009-2009",
     "notes": "2026-01-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_10",
@@ -155,7 +166,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1010-2010",
     "notes": "2026-01-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_11",
@@ -170,7 +182,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1011-2011",
     "notes": "2026-01-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_12",
@@ -185,7 +198,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1012-2012",
     "notes": "2025-11-15 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_13",
@@ -200,7 +214,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1013-2013",
     "notes": "2025-06-14 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_14",
@@ -215,7 +230,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1014-2014",
     "notes": "2025-03-14 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_15",
@@ -230,7 +246,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1015-2015",
     "notes": "2025-02-15 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_16",
@@ -245,7 +262,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1016-2016",
     "notes": "2025-02-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_17",
@@ -260,7 +278,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1017-2017",
     "notes": "2025-01-25 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_18",
@@ -275,7 +294,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1018-2018",
     "notes": "2024-11-04 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_19",
@@ -290,7 +310,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1019-2019",
     "notes": "2024-11-04 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_20",
@@ -305,7 +326,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1020-2020",
     "notes": "2024-11-04 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_21",
@@ -320,7 +342,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1021-2021",
     "notes": "2024-10-17 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_22",
@@ -335,7 +358,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1022-2022",
     "notes": "2024-09-10 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_23",
@@ -350,7 +374,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1023-2023",
     "notes": "2024-08-24 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_24",
@@ -365,7 +390,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1024-2024",
     "notes": "2024-08-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_25",
@@ -380,7 +406,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1025-2025",
     "notes": "2024-07-07 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_26",
@@ -395,7 +422,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1026-2026",
     "notes": "2024-06-25 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_27",
@@ -410,7 +438,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1027-2027",
     "notes": "2024-06-25 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_28",
@@ -425,7 +454,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1028-2028",
     "notes": "2024-04-27 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_29",
@@ -440,7 +470,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1029-2029",
     "notes": "2024-02-18 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_30",
@@ -455,7 +486,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1030-2030",
     "notes": "2024-02-05 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_31",
@@ -470,7 +502,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1031-2031",
     "notes": "2023-12-31 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_32",
@@ -485,7 +518,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1032-2032",
     "notes": "2023-09-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_33",
@@ -500,7 +534,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1033-2033",
     "notes": "2023-08-12 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_34",
@@ -515,7 +550,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1034-2034",
     "notes": "2023-06-08 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_35",
@@ -530,7 +566,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1035-2035",
     "notes": "2023-06-06 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_36",
@@ -545,7 +582,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1036-2036",
     "notes": "2023-05-27 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_37",
@@ -560,7 +598,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1037-2037",
     "notes": "2023-05-21 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_38",
@@ -575,7 +614,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1038-2038",
     "notes": "2023-05-01 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_39",
@@ -590,7 +630,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1039-2039",
     "notes": "2023-05-01 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_40",
@@ -605,7 +646,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1040-2040",
     "notes": "2023-04-22 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_41",
@@ -620,7 +662,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1041-2041",
     "notes": "2023-03-03 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_42",
@@ -635,7 +678,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1042-2042",
     "notes": "2023-02-27 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_43",
@@ -650,7 +694,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1043-2043",
     "notes": "2023-02-27 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_44",
@@ -665,7 +710,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1044-2044",
     "notes": "2022-12-25 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_45",
@@ -680,7 +726,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1045-2045",
     "notes": "2022-09-30 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_46",
@@ -695,7 +742,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1046-2046",
     "notes": "2022-09-14 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_47",
@@ -710,7 +758,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1047-2047",
     "notes": "2022-08-22 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_48",
@@ -725,7 +774,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1048-2048",
     "notes": "2022-08-22 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_49",
@@ -740,7 +790,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1049-2049",
     "notes": "2022-08-22 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_50",
@@ -755,7 +806,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1050-2050",
     "notes": "2022-08-22 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_51",
@@ -770,7 +822,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1051-2051",
     "notes": "2022-07-03 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_52",
@@ -785,7 +838,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1052-2052",
     "notes": "2022-04-10 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_53",
@@ -800,7 +854,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1053-2053",
     "notes": "2022-03-15 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "A조"
   },
   {
     "id": "mem_54",
@@ -815,7 +870,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1054-2054",
     "notes": "2022-03-04 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_55",
@@ -830,7 +886,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1055-2055",
     "notes": "2021-11-17 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_56",
@@ -845,7 +902,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1056-2056",
     "notes": "2021-11-06 가입",
     "clubLevel": 1,
-    "ntrp": 3.5
+    "ntrp": 3.5,
+    "group": "D조"
   },
   {
     "id": "mem_57",
@@ -860,7 +918,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1057-2057",
     "notes": "2021-10-02 가입",
     "clubLevel": 1,
-    "ntrp": 3.5
+    "ntrp": 3.5,
+    "group": "A조"
   },
   {
     "id": "mem_58",
@@ -875,7 +934,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1058-2058",
     "notes": "2021-10-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_59",
@@ -890,7 +950,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1059-2059",
     "notes": "2021-10-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_60",
@@ -905,7 +966,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1060-2060",
     "notes": "2021-10-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   },
   {
     "id": "mem_61",
@@ -920,7 +982,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1061-2061",
     "notes": "2021-10-02 가입",
     "clubLevel": 1,
-    "ntrp": 3.5
+    "ntrp": 3.5,
+    "group": "A조"
   },
   {
     "id": "mem_62",
@@ -935,7 +998,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1062-2062",
     "notes": "2021-10-02 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "B조"
   },
   {
     "id": "mem_63",
@@ -950,7 +1014,8 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1063-2063",
     "notes": "2021-10-01 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "C조"
   },
   {
     "id": "mem_64",
@@ -965,28 +1030,31 @@ const DEFAULT_MEMBERS = [
     "phone": "010-1064-2064",
     "notes": "2021-10-01 가입",
     "clubLevel": 2,
-    "ntrp": ""
+    "ntrp": "",
+    "group": "D조"
   }
 ];
 
 class MemberManager {
   constructor() {
-    this.storageKey = "tennis_club_members_v5";
+    this.storageKey = "tennis_club_members_v6";
     this.members = this.loadMembers();
   }
 
   loadMembers() {
     try {
-      // Clear all legacy storage keys
       localStorage.removeItem("tennis_club_members_v1");
       localStorage.removeItem("tennis_club_members_v2");
       localStorage.removeItem("tennis_club_members_v3");
       localStorage.removeItem("tennis_club_members_v4");
+      localStorage.removeItem("tennis_club_members_v5");
+
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        // If saved data has full 64 members, keep it; otherwise refresh from DEFAULT_MEMBERS
-        if (Array.isArray(parsed) && parsed.length >= DEFAULT_MEMBERS.length) return parsed;
+        const parsed = json_safe_parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= DEFAULT_MEMBERS.length) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.warn("회원 로드 오류, 기본값 사용:", e);
@@ -1031,13 +1099,18 @@ class MemberManager {
   }
 
   addMember(memberData) {
-    const id = "mem_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    const no = this.members.length + 1;
+    const id = "mem_" + no;
     const newMember = {
       id: id,
+      no: no,
       name: memberData.name.trim(),
-      level: parseFloat(memberData.level) || 3.0,
-      tier: memberData.tier || this.computeTier(parseFloat(memberData.level) || 3.0),
+      rawName: memberData.name.trim(),
+      joinDate: memberData.joinDate || new Date().toISOString().slice(0, 10),
+      level: parseFloat(memberData.level) || null,
       clubLevel: parseInt(memberData.clubLevel) || 2,
+      tier: "B",
+      group: memberData.group || "A조",
       role: this.sanitizeRole(memberData.role),
       status: memberData.status || "active",
       phone: memberData.phone || "",
@@ -1052,9 +1125,11 @@ class MemberManager {
     const idx = this.members.findIndex(m => m.id === id);
     if (idx === -1) return null;
 
-    if (updates.level) {
-      updates.level = parseFloat(updates.level);
-      updates.tier = this.computeTier(updates.level);
+    if (updates.level !== undefined) {
+      updates.level = updates.level ? parseFloat(updates.level) : null;
+    }
+    if (updates.clubLevel !== undefined) {
+      updates.clubLevel = parseInt(updates.clubLevel) || 2;
     }
     if (updates.role) {
       updates.role = this.sanitizeRole(updates.role);
@@ -1074,52 +1149,18 @@ class MemberManager {
     return this.updateMember(id, { status: status });
   }
 
-  computeTier(level) {
-    if (level >= 4.0) return "S";
-    if (level >= 3.5) return "A";
-    if (level >= 3.0) return "B";
-    if (level >= 2.5) return "C";
-    return "D";
-  }
-
-  bulkImport(rawText) {
-    if (!rawText || !rawText.trim()) return 0;
-    const lines = rawText.split(/\r?\n/);
-    let count = 0;
-
-    lines.forEach(line => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) return;
-
-      const parts = trimmed.includes(",") 
-        ? trimmed.split(",").map(p => p.trim()) 
-        : trimmed.split(/\s+/);
-
-      if (parts.length === 0 || !parts[0]) return;
-
-      const name = parts[0];
-      const level = parts.length > 1 ? (parseFloat(parts[1]) || 3.0) : 3.0;
-      const clubLevel = parts.length > 2 ? (parseInt(parts[2]) || 2) : 2;
-      const role = parts.length > 3 ? this.sanitizeRole(parts[3]) : "회원";
-      const phone = parts.length > 4 ? parts[4] : "";
-
-      const existing = this.getMemberByName(name);
-      if (existing) {
-        this.updateMember(existing.id, { level, clubLevel, role, phone, status: "active" });
-      } else {
-        this.addMember({ name, level, clubLevel, role, phone, status: "active" });
-      }
-      count++;
-    });
-
-    this.saveMembers();
-    return count;
+  setMemberGroup(id, group) {
+    return this.updateMember(id, { group: group });
   }
 
   resetToDefault() {
     this.members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
     this.saveMembers();
   }
+}
+
+function json_safe_parse(str) {
+  try { return JSON.parse(str); } catch(e) { return null; }
 }
 
 window.STANDARD_ROLES = STANDARD_ROLES;

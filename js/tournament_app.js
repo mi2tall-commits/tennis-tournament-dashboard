@@ -12,7 +12,7 @@
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v3";
+    this.storageKey = "tennis_active_tournament_v6";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
@@ -32,17 +32,36 @@ class TournamentApp {
 
   loadTournament() {
     try {
+      localStorage.removeItem("tennis_active_tournament_v1");
+      localStorage.removeItem("tennis_active_tournament_v2");
+      localStorage.removeItem("tennis_active_tournament_v3");
+      localStorage.removeItem("tennis_active_tournament_v4");
+      localStorage.removeItem("tennis_active_tournament_v5");
+
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.matches) && parsed.matches.length > 0) {
-          return parsed;
+          // Check if matches contain old legacy names (like '정다운', '송영수', '대니얼')
+          const validNames = new Set(this.memberManager.getAllMembers().map(m => m.name));
+          const hasLegacy = parsed.matches.some(m => 
+            (m.teamA || []).some(name => !validNames.has(name)) ||
+            (m.teamB || []).some(name => !validNames.has(name))
+          );
+          if (!hasLegacy) {
+            return parsed;
+          }
+          console.warn("기존 레거시 명단 경기 감지됨, 공식 64명 명단으로 자동 교체합니다.");
         }
       }
     } catch(e) {
       console.warn("대회 데이터 로드 실패, 기본값 사용:", e);
     }
-    return JSON.parse(JSON.stringify(DEFAULT_TOURNAMENT));
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_TOURNAMENT));
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(fresh));
+    } catch(e) {}
+    return fresh;
   }
 
   saveTournament() {
@@ -710,6 +729,94 @@ class TournamentApp {
   // ==============================================================================
   // ⚙️ 대진표 생성 마법사 & 1차 드래프트 조정 로직 (요구사항 #1, #2, #3, #4)
   // ==============================================================================
+
+  // ==============================================================================
+  // 👥 A~D 4개조 조 편성 관리자 (요구사항 #2)
+  // ==============================================================================
+  openGroupManagerModal() {
+    this.renderGroupManagerModal();
+    this.showModal("groupManagerModal");
+  }
+
+  renderGroupManagerModal() {
+    const active = this.memberManager.getActiveMembers();
+    const groups = ["A조", "B조", "C조", "D조"];
+
+    // 1. Group summary cards
+    const summaryEl = document.getElementById("groupSummaryGrid");
+    if (summaryEl) {
+      let html = "";
+      groups.forEach(g => {
+        const inGroup = active.filter(m => m.group === g);
+        html += `
+          <div class="group-col-card">
+            <div class="group-col-header">
+              <span class="group-col-title">${g}</span>
+              <span class="group-col-count">${inGroup.length}명</span>
+            </div>
+            <div class="group-members-pill-list">
+              ${inGroup.map(m => `
+                <span class="group-mem-pill">
+                  ${m.name} <span class="badge-lvl">${m.clubLevel || 2}등</span>
+                </span>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      });
+      summaryEl.innerHTML = html;
+    }
+
+    // 2. Member assignment table
+    const tbody = document.getElementById("groupAssignmentTableBody");
+    if (tbody) {
+      let html = "";
+      active.forEach((m, idx) => {
+        const curGroup = m.group || "A조";
+        html += `
+          <tr>
+            <td style="text-align:center; font-family:var(--font-mono);">${m.no || idx + 1}</td>
+            <td><b>${m.name}</b></td>
+            <td style="text-align:center;"><span class="level-badge">${m.clubLevel || 2}등급</span></td>
+            <td style="text-align:center;">
+              <select class="form-select form-select-xs" onchange="app.changeMemberGroup('${m.id}', this.value)" style="width:90px; padding:3px 6px; font-weight:800; background:#0e1726; color:#38bdf8; border:1px solid #1e3358;">
+                <option value="A조" ${curGroup === "A조" ? "selected" : ""}>A조</option>
+                <option value="B조" ${curGroup === "B조" ? "selected" : ""}>B조</option>
+                <option value="C조" ${curGroup === "C조" ? "selected" : ""}>C조</option>
+                <option value="D조" ${curGroup === "D조" ? "selected" : ""}>D조</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+  }
+
+  changeMemberGroup(id, group) {
+    this.memberManager.setMemberGroup(id, group);
+    this.renderGroupManagerModal();
+  }
+
+  autoBalanceGroups() {
+    const active = this.memberManager.getActiveMembers();
+    // Sort by level/skill
+    const sorted = [...active].sort((a, b) => (a.clubLevel || 2) - (b.clubLevel || 2));
+    const groups = ["A조", "B조", "C조", "D조"];
+    sorted.forEach((m, idx) => {
+      const g = groups[idx % 4];
+      this.memberManager.setMemberGroup(m.id, g);
+    });
+    this.renderGroupManagerModal();
+    alert("⚖️ 회원들의 LEVEL을 고려하여 A~D조로 균등하게 자동 편성되었습니다!");
+  }
+
+  saveGroupAssignments() {
+    this.renderRosterTable();
+    this.closeModal("groupManagerModal");
+    alert("✅ A~D조 조 편성이 성공적으로 저장되었습니다!");
+  }
+
   openMatchmakerModal() {
     // 설정값 반영
     document.getElementById("mmStartTime").value = this.tournament.startTime || "10:00";
@@ -847,7 +954,7 @@ class TournamentApp {
         html += `
           <label class="checkbox-pill">
             <input type="checkbox" name="eventMember" value="${m.name}" checked>
-            <span>${m.name} (${m.group}/${m.level})</span>
+            <span>${m.name} <b style="color:var(--neon-cyan);">[${m.group || "A조"}]</b> (${m.clubLevel || 2}등급)</span>
           </label>
         `;
       });
@@ -864,7 +971,7 @@ class TournamentApp {
         cb.checked = true;
       } else {
         const mem = members.find(m => m.name === cb.value);
-        cb.checked = mem ? mem.group === groupName : false;
+        cb.checked = mem ? (mem.group === groupName) : false;
       }
     });
   }
