@@ -19,6 +19,7 @@ class TournamentApp {
     
     this.tournament = this.loadTournament();
     this.activeMobileTab = "tab-courts";
+    this.selectedBookingMonth = new Date().toISOString().slice(0, 7);
     this.leaderboardViewMode = "monthly"; // monthly (개인리그전) vs annual (연간 종합 랭킹)
     this.selectedPlayerFilter = "";
     this.audioEnabled = true;
@@ -690,7 +691,8 @@ renderLeaderboard() {
     const tbody = document.getElementById("courtBookingLeaderboardBody");
     const summaryCards = document.getElementById("coffeeCouponPodium");
     const bookings = this.tournament.courtBookings || [];
-    const ranked = this.leaderboard.calculateCourtBookingLeaderboard(bookings);
+    const curMonth = this.selectedBookingMonth || new Date().toISOString().slice(0, 7);
+    const ranked = this.leaderboard.calculateCourtBookingLeaderboard(bookings, curMonth);
 
     if (summaryCards) {
       const top1 = ranked[0] || { name: "-", count: 0, totalHours: 0 };
@@ -757,6 +759,60 @@ renderLeaderboard() {
     }
   }
 
+  openCourtBookingModal() {
+    // 64명 공식 회원 명단 셀렉트 옵션 바인딩
+    const select = document.getElementById("bookerNameSelect");
+    if (select) {
+      const members = this.memberManager.getAllMembers();
+      select.innerHTML = `<option value="">-- 회원 명단에서 선택 또는 직접 입력 --</option>` +
+        members.map(m => `<option value="${m.name}">${m.name} (${m.role || '회원'})</option>`).join("");
+    }
+    const dateInput = document.getElementById("bookingDateInput");
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().slice(0, 10);
+    }
+    this.renderBookingModalList();
+    this.showModal("courtBookingModal");
+  }
+
+  renderBookingModalList() {
+    const container = document.getElementById("modalBookingListContainer");
+    const countText = document.getElementById("modalBookingCountText");
+    const bookings = this.tournament.courtBookings || [];
+
+    if (countText) {
+      countText.textContent = `총 ${bookings.length}건`;
+    }
+
+    if (container) {
+      if (bookings.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:12px;">등록된 예약 내역이 없습니다.</div>`;
+        return;
+      }
+      let html = "";
+      bookings.slice().reverse().forEach((b, rIdx) => {
+        const actualIdx = bookings.length - 1 - rIdx;
+        html += `
+          <div class="booking-modal-item">
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <b style="color:#fff; font-size:13px;">${b.booker}</b>
+                <span style="font-size:11px; color:#38bdf8; background:rgba(56,189,248,0.15); padding:1px 6px; border-radius:4px;">${b.court}</span>
+                <span style="font-size:11px; color:var(--neon-gold); font-weight:700;">${b.hours}시간</span>
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">
+                <span>📅 ${b.date || '-'}</span>
+                ${b.note ? ` · <span>${b.note}</span>` : ''}
+              </div>
+            </div>
+            <button type="button" class="btn-delete-booking" onclick="app.deleteCourtBooking('${b.id || actualIdx}')">🗑️ 삭제</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+  }
+
   addCourtBooking() {
     const booker = document.getElementById("bookerNameInput").value.trim();
     const court = document.getElementById("bookingCourtInput").value.trim() || "15번";
@@ -765,13 +821,13 @@ renderLeaderboard() {
     const note = document.getElementById("bookingNoteInput").value.trim();
 
     if (!booker) {
-      alert("예약자 이름을 입력해주세요.");
+      alert("예약자 이름을 입력하거나 선택해주세요.");
       return;
     }
 
     if (!this.tournament.courtBookings) this.tournament.courtBookings = [];
     this.tournament.courtBookings.push({
-      id: "bk_" + Date.now(),
+      id: "bk_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
       booker,
       court,
       date,
@@ -781,9 +837,20 @@ renderLeaderboard() {
 
     this.saveTournament();
     this.renderBookingTable();
+    this.renderBookingModalList();
     document.getElementById("bookerNameInput").value = "";
     document.getElementById("bookingNoteInput").value = "";
-    alert(`[${booker}] 님의 ${court} (${hours}시간) 코트 예약 기록이 추가되었습니다!`);
+    alert(`✅ [${booker}] 님의 ${court} (${hours}시간) 예약 기록이 추가되었습니다!`);
+  }
+
+  deleteCourtBooking(bookingId) {
+    if (!confirm("해당 코트 예약 기록을 삭제하시겠습니까?")) return;
+    if (!this.tournament.courtBookings) return;
+
+    this.tournament.courtBookings = this.tournament.courtBookings.filter(b => b.id !== bookingId && String(b.id) !== String(bookingId));
+    this.saveTournament();
+    this.renderBookingTable();
+    this.renderBookingModalList();
   }
 
 
@@ -1434,10 +1501,6 @@ renderLeaderboard() {
     this.showModal("seasonModal");
   }
 
-  openCourtBookingModal() {
-    this.renderBookingTable();
-    this.showModal("courtBookingModal");
-  }
 
   openSettingsModal() {
     document.getElementById("setTourneyTitle").value = this.tournament.title;

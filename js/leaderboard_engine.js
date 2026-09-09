@@ -101,10 +101,18 @@ class LeaderboardEngine {
    * - 예약 횟수 & 예약 시간 집계
    * - 1위: 커피쿠폰 3매, 2위: 2매, 3위: 1매 지급 상태 계산
    */
-  calculateCourtBookingLeaderboard(bookings = []) {
+  calculateCourtBookingLeaderboard(bookings = [], targetMonth = null) {
     const bookerStats = {};
 
-    bookings.forEach(b => {
+    // 월별 자동 리셋 필터 (지정된 월이 없으면 현재 월 기준 자동 필터)
+    // 매월 말일 자정에 해당 월이 마감되고, 익월 1일 00시부터는 0건으로 자동 리셋되어 새로 집계됨
+    const curMonth = targetMonth || new Date().toISOString().slice(0, 7);
+    const monthlyBookings = bookings.filter(b => {
+      if (!b.date) return true;
+      return b.date.startsWith(curMonth);
+    });
+
+    monthlyBookings.forEach(b => {
       const name = (b.booker || "미상").trim();
       if (!bookerStats[name]) {
         bookerStats[name] = {

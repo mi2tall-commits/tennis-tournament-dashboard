@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    🏟️ 테니스 동호회 실시간 전광판 대시보드 (Cyber Stadium Dark Theme)
    ========================================================================== */
 
@@ -790,6 +790,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .form-group label {
@@ -800,7 +801,7 @@ body {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -812,6 +813,9 @@ body {
   border-radius: 6px;
   font-size: 13px;
   outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .form-input:focus, .form-select:focus {
   border-color: var(--neon-cyan);
@@ -1717,4 +1721,31 @@ body.force-stadium-mode .dashboard-container {
     background: #14223f;
     border-top: 1px solid #23375e;
   }
+}
+
+/* Court Booking Modal Responsive Styles */
+.booking-modal-item {
+  background: #0b1424;
+  border: 1px solid #1e3358;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.btn-delete-booking {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-delete-booking:hover {
+  background: #dc2626;
+  color: #fff;
 }
