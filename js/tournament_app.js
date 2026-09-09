@@ -419,22 +419,78 @@ class TournamentApp {
                 ? `<span style="background:rgba(192,132,252,0.2); color:#c084fc; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">📋 총무이사</span>`
                 : `<span style="color:#94a3b8; font-size:11px;">회원</span>`;
 
+      const ntrpDisplay = m.level && parseFloat(m.level) > 0 
+        ? `<span class="level-badge" style="cursor:pointer;" onclick="app.editMemberModal('${m.id}')">NTRP ${m.level}</span>`
+        : `<span style="color:var(--text-muted); font-size:11px; cursor:pointer;" onclick="app.editMemberModal('${m.id}')">-</span>`;
+
+      const curLevel = parseInt(m.clubLevel) || 2;
+      const levelSelectHtml = `
+        <select class="form-select-xs" onchange="app.updateMemberClubLevel('${m.id}', this.value)" style="padding:2px 4px; font-size:11px; font-weight:800; border-radius:4px; background:#0d182e; color:#38bdf8; border:1px solid #233c6e;">
+          <option value="1" ${curLevel === 1 ? "selected" : ""}>1등급</option>
+          <option value="2" ${curLevel === 2 ? "selected" : ""}>2등급</option>
+          <option value="3" ${curLevel === 3 ? "selected" : ""}>3등급</option>
+          <option value="4" ${curLevel === 4 ? "selected" : ""}>4등급</option>
+        </select>
+      `;
+
       html += `
         <tr>
           <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#94a3b8;">${m.no || idx + 1}</td>
           <td><b>${m.name}</b></td>
           <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#cbd5e1;">${m.joinDate || "-"}</td>
-          <td style="text-align:center;"><span class="level-badge">NTRP ${m.level}</span></td>
-          <td style="text-align:center;">${m.group}</td>
+          <td style="text-align:center;">${ntrpDisplay}</td>
+          <td style="text-align:center;">${levelSelectHtml}</td>
           <td style="text-align:center;">${roleBadge}</td>
           <td style="text-align:center;">${statusBadge}</td>
-          <td style="text-align:center;">
-            <button class="btn-xs btn-danger-xs" onclick="app.toggleMemberStatus('${m.id}')">${m.status === "active" ? "불참처리" : "출전전환"}</button>
+          <td style="text-align:center; white-space:nowrap;">
+            <button class="btn-xs" onclick="app.editMemberModal('${m.id}')">수정</button>
+            <button class="btn-xs btn-danger-xs" onclick="app.toggleMemberStatus('${m.id}')">${m.status === "active" ? "불참" : "출전"}</button>
           </td>
         </tr>
       `;
     });
     tbody.innerHTML = html;
+  }
+
+  updateMemberClubLevel(id, newLevel) {
+    this.memberManager.updateMember(id, { clubLevel: parseInt(newLevel) });
+    this.renderRosterTable();
+  }
+
+  editMemberModal(id) {
+    const m = this.memberManager.getMemberById(id);
+    if (!m) return;
+    this.editingMemberId = id;
+    document.getElementById("editMemName").value = m.name || "";
+    document.getElementById("editMemJoinDate").value = m.joinDate || "";
+    document.getElementById("editMemNtrp").value = m.level && parseFloat(m.level) > 0 ? m.level : "";
+    document.getElementById("editMemLevel").value = parseInt(m.clubLevel) || 2;
+    document.getElementById("editMemRole").value = m.role || "회원";
+    this.showModal("editMemberModalWindow");
+  }
+
+  saveEditedMember() {
+    if (!this.editingMemberId) return;
+    const name = document.getElementById("editMemName").value.trim();
+    const joinDate = document.getElementById("editMemJoinDate").value.trim();
+    const rawNtrp = document.getElementById("editMemNtrp").value.trim();
+    const ntrp = rawNtrp ? parseFloat(rawNtrp) : null;
+    const clubLevel = parseInt(document.getElementById("editMemLevel").value) || 2;
+    const role = document.getElementById("editMemRole").value;
+
+    this.memberManager.updateMember(this.editingMemberId, {
+      name,
+      joinDate,
+      level: ntrp,
+      clubLevel,
+      role
+    });
+
+    this.closeModal("editMemberModalWindow");
+    this.renderRosterTable();
+    this.renderLeaderboard();
+    this.renderMyMatchesView();
+    alert(`[${name}] 선수의 LEVEL 및 정보가 정상 수정되었습니다.`);
   }
 
   /**
@@ -456,19 +512,19 @@ class TournamentApp {
           <div class="podium-medal">🥈 2위</div>
           <div class="podium-name">${top2.name}</div>
           <div class="podium-meta">${top2.count}회 예약 (${top2.totalHours}시간)</div>
-          <div class="podium-prize">☕ 커피 쿠폰 2매</div>
+          <div class="podium-prize">☕ 커피쿠폰 시상</div>
         </div>
         <div class="podium-card podium-gold">
-          <div class="podium-medal">🥇 1위 (최다 예약)</div>
+          <div class="podium-medal">🥇 1위</div>
           <div class="podium-name">${top1.name}</div>
           <div class="podium-meta">${top1.count}회 예약 (${top1.totalHours}시간)</div>
-          <div class="podium-prize">☕ 커피 쿠폰 3매</div>
+          <div class="podium-prize">☕ 커피쿠폰 시상</div>
         </div>
         <div class="podium-card podium-bronze">
           <div class="podium-medal">🥉 3위</div>
           <div class="podium-name">${top3.name}</div>
           <div class="podium-meta">${top3.count}회 예약 (${top3.totalHours}시간)</div>
-          <div class="podium-prize">☕ 커피 쿠폰 1매</div>
+          <div class="podium-prize">☕ 커피쿠폰 시상</div>
         </div>
       `;
     }
@@ -846,8 +902,9 @@ class TournamentApp {
 
   addNewMember() {
     const name = document.getElementById("addMemberName").value.trim();
-    const level = parseFloat(document.getElementById("addMemberLevel").value) || 3.0;
-    const group = document.getElementById("addMemberGroup").value;
+    const rawLevel = document.getElementById("addMemberLevel").value;
+    const level = rawLevel ? parseFloat(rawLevel) : null;
+    const clubLevel = parseInt(document.getElementById("addMemberClubLevel").value) || 2;
     const role = document.getElementById("addMemberRole").value;
 
     if (!name) {
@@ -855,7 +912,7 @@ class TournamentApp {
       return;
     }
 
-    this.memberManager.addMember({ name, level, group, role, status: "active" });
+    this.memberManager.addMember({ name, level, clubLevel, role, status: "active" });
     document.getElementById("addMemberName").value = "";
     this.renderRosterTable();
     this.renderLeaderboard();

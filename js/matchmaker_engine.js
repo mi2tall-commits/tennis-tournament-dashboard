@@ -7,6 +7,26 @@
  */
 
 class MatchmakerEngine {
+  /**
+   * 선수의 유효 실력치 계산:
+   * 1) NTRP 값이 있으면 NTRP 우선 반영
+   * 2) NTRP 정보가 없을 때는 LEVEL (1~4등급) 반영
+   *    - 1등급: 4.0
+   *    - 2등급: 3.2
+   *    - 3등급: 2.6
+   *    - 4등급: 2.0
+   */
+  getEffectiveSkill(member) {
+    if (member.level && !isNaN(parseFloat(member.level)) && parseFloat(member.level) > 0) {
+      return parseFloat(member.level);
+    }
+    const lvl = parseInt(member.clubLevel) || 2;
+    if (lvl === 1) return 4.0;
+    if (lvl === 2) return 3.2;
+    if (lvl === 3) return 2.6;
+    return 2.0;
+  }
+
   constructor(memberManager) {
     this.memberManager = memberManager;
   }
@@ -89,8 +109,8 @@ class MatchmakerEngine {
         let minDiff = 999;
 
         pairings.forEach(p => {
-          const sumA = p.teamA[0].level + p.teamA[1].level;
-          const sumB = p.teamB[0].level + p.teamB[1].level;
+          const sumA = this.getEffectiveSkill(p.teamA[0]) + this.getEffectiveSkill(p.teamA[1]);
+          const sumB = this.getEffectiveSkill(p.teamB[0]) + this.getEffectiveSkill(p.teamB[1]);
           const diff = Math.abs(sumA - sumB);
           
           const pairKeyA = [p.teamA[0].name, p.teamA[1].name].sort().join(":");

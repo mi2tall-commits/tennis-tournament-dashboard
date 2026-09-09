@@ -132,26 +132,22 @@ class LeaderboardEngine {
       return a.name.localeCompare(b.name, "ko");
     });
 
-    // 커피 쿠폰 배정 (1위 3매, 2위 2매, 3위 1매)
+    // 커피 쿠폰 배정 (3위까지만 시상, 쿠폰 장수 미표시)
     ranked.forEach((item, idx) => {
       const rank = idx + 1;
       item.rank = rank;
       if (rank === 1) {
-        item.couponCount = 3;
-        item.badge = "🥇 1위 (☕ 쿠폰 3매)";
-        item.status = "지급 확정";
+        item.badge = "🥇 1위 (☕ 커피쿠폰)";
+        item.status = "시상 대상";
       } else if (rank === 2) {
-        item.couponCount = 2;
-        item.badge = "🥈 2위 (☕ 쿠폰 2매)";
-        item.status = "지급 확정";
+        item.badge = "🥈 2위 (☕ 커피쿠폰)";
+        item.status = "시상 대상";
       } else if (rank === 3) {
-        item.couponCount = 1;
-        item.badge = "🥉 3위 (☕ 쿠폰 1매)";
-        item.status = "지급 확정";
+        item.badge = "🥉 3위 (☕ 커피쿠폰)";
+        item.status = "시상 대상";
       } else {
-        item.couponCount = 0;
-        item.badge = "👏 격려상";
-        item.status = "기여 감사";
+        item.badge = "-";
+        item.status = "참여 감사";
       }
     });
 
