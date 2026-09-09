@@ -907,21 +907,30 @@ const DEFAULT_MEMBERS = [
 
 class MemberManager {
   constructor() {
-    this.storageKey = "tennis_club_members_v3";
+    this.storageKey = "tennis_club_members_v4";
     this.members = this.loadMembers();
   }
 
   loadMembers() {
     try {
+      // Clear all legacy storage keys
+      localStorage.removeItem("tennis_club_members_v1");
+      localStorage.removeItem("tennis_club_members_v2");
+      localStorage.removeItem("tennis_club_members_v3");
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        // If saved data has full 64 members, keep it; otherwise refresh from DEFAULT_MEMBERS
+        if (Array.isArray(parsed) && parsed.length >= DEFAULT_MEMBERS.length) return parsed;
       }
     } catch (e) {
       console.warn("회원 로드 오류, 기본값 사용:", e);
     }
-    return JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(fresh));
+    } catch(e) {}
+    return fresh;
   }
 
   saveMembers() {

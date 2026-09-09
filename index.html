@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🎾 테니스 동호회 실시간 대회 전광판 & 대시보드</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=64m4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -252,7 +252,7 @@
       <div class="panel-card">
         <div class="panel-header">
           <div class="panel-title">👥 참가 회원 명단</div>
-          <button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button>
+          <div style="display:flex; gap:4px;"><button class="btn-xs" style="background:#059669;" onclick="app.syncOfficialRoster()">🔄 최신화</button><button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button></div>
         </div>
         <div style="overflow-x: auto; margin-top: 8px;">
           <table class="leaderboard-table" style="font-size: 12px;">
@@ -371,7 +371,10 @@
   <div id="rosterModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 680px;">
       <div class="modal-header">
-        <h3 class="modal-title">👥 동호회 회원 명단 관리</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 class="modal-title">👥 동호회 64명 공식 회원 명단</h3>
+          <button class="btn-xs" style="background:#059669; font-weight:800;" onclick="app.syncOfficialRoster()">🔄 64명 명부 최신화</button>
+        </div>
         <button class="modal-close" onclick="app.closeModal('rosterModal')">&times;</button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -784,11 +787,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js"></script>
-  <script src="js/member_manager.js"></script>
-  <script src="js/matchmaker_engine.js"></script>
-  <script src="js/leaderboard_engine.js"></script>
-  <script src="js/tournament_app.js"></script>
+  <script src="sample_tournament_data.js?v=64m4"></script>
+  <script src="js/member_manager.js?v=64m4"></script>
+  <script src="js/matchmaker_engine.js?v=64m4"></script>
+  <script src="js/leaderboard_engine.js?v=64m4"></script>
+  <script src="js/tournament_app.js?v=64m4"></script>
 
   <!-- Mobile View Syncer -->
   <script>

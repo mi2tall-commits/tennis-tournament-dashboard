@@ -950,6 +950,14 @@ class TournamentApp {
     alert("초기 데이터로 복원되었습니다.");
   }
 
+  syncOfficialRoster() {
+    this.memberManager.resetToDefault();
+    this.renderRosterTable();
+    this.renderLeaderboard();
+    this.renderMyMatchesView();
+    alert("✅ 64명 공식 회원 명부로 완벽하게 최신화되었습니다!");
+  }
+
   showModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add("active");
