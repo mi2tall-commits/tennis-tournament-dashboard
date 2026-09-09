@@ -12,7 +12,7 @@
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v2";
+    this.storageKey = "tennis_active_tournament_v3";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
@@ -407,16 +407,28 @@ class TournamentApp {
           ? `<span class="status-pill-inactive">불참</span>` 
           : `<span class="status-pill-withdrawn">탈퇴</span>`;
 
+      const roleBadge = m.role === "회장" 
+        ? `<span style="background:rgba(251,191,36,0.2); color:#fbbf24; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">👑 회장</span>`
+        : m.role === "부회장"
+          ? `<span style="background:rgba(148,163,184,0.2); color:#cbd5e1; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">🎖️ 부회장</span>`
+          : m.role === "경기이사"
+            ? `<span style="background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">🎾 경기이사</span>`
+            : m.role === "재무이사"
+              ? `<span style="background:rgba(52,211,153,0.2); color:#34d399; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">💰 재무이사</span>`
+              : m.role === "총무이사"
+                ? `<span style="background:rgba(192,132,252,0.2); color:#c084fc; padding:2px 6px; border-radius:4px; font-weight:800; font-size:11px;">📋 총무이사</span>`
+                : `<span style="color:#94a3b8; font-size:11px;">회원</span>`;
+
       html += `
         <tr>
-          <td style="text-align:center;">${idx + 1}</td>
+          <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#94a3b8;">${m.no || idx + 1}</td>
           <td><b>${m.name}</b></td>
-          <td><span class="level-badge">NTRP ${m.level}</span></td>
-          <td>${m.group}</td>
-          <td>${m.role || "회원"}</td>
-          <td>${statusBadge}</td>
+          <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#cbd5e1;">${m.joinDate || "-"}</td>
+          <td style="text-align:center;"><span class="level-badge">NTRP ${m.level}</span></td>
+          <td style="text-align:center;">${m.group}</td>
+          <td style="text-align:center;">${roleBadge}</td>
+          <td style="text-align:center;">${statusBadge}</td>
           <td style="text-align:center;">
-            <button class="btn-xs" onclick="app.editMemberModal('${m.id}')">수정</button>
             <button class="btn-xs btn-danger-xs" onclick="app.toggleMemberStatus('${m.id}')">${m.status === "active" ? "불참처리" : "출전전환"}</button>
           </td>
         </tr>
