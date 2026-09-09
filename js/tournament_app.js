@@ -1,10 +1,18 @@
 /**
  * 🎾 테니스 동호회 실시간 대회 전광판 & 모바일 대시보드 (Main App Controller)
+ * 8대 실전 운영 기능 탑재:
+ * 1) 코트 개수 및 코트 고유 번호 개별 지정 (15번~18번 등)
+ * 2) 40분 단위 경기 시간표 자동 생성 및 커스텀
+ * 3) 개인 레벨별 1차 자동 대진 드래프트 생성 후 경기이사 수동 조정
+ * 4) 이벤트 경기: 조별 조원 랜덤 복식 페어링 및 조장 최종 수정
+ * 5) 개인 리그전 순위 리셋 & 연간 누적 랭킹 분리
+ * 6) ☕ 월별 코트 예약자 커피 쿠폰 순위표 (1위:3매, 2위:2매, 3위:1매)
+ * 7) 6대 역할 표준화 (회장, 부회장, 경기이사, 재무이사, 총무이사, 회원)
  */
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v1";
+    this.storageKey = "tennis_active_tournament_v2";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
@@ -14,6 +22,7 @@ class TournamentApp {
     this.selectedPlayerFilter = "";
     this.audioEnabled = true;
     this.editingMatchId = null;
+    this.draftMatches = []; // 1차 자동 생성 임시 드래프트 대진 목록
 
     this.initAudioContext();
     this.initClock();
@@ -25,7 +34,10 @@ class TournamentApp {
     try {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.matches) && parsed.matches.length > 0) {
+          return parsed;
+        }
       }
     } catch(e) {
       console.warn("대회 데이터 로드 실패, 기본값 사용:", e);
@@ -77,18 +89,16 @@ class TournamentApp {
       gain.connect(this.audioCtx.destination);
 
       if (type === "score") {
-        // 승리/확정 팡파레 (3음 멜로디)
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.1);
+        osc.frequency.setValueAtTime(783.99, now + 0.2);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
         osc.start(now);
         osc.stop(now + 0.5);
       } else if (type === "call") {
-        // 코트 호출 차임벨 (2음 딩동)
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880.00, now + 0.15); // A5
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880.00, now + 0.15);
         gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
         osc.start(now);
@@ -105,6 +115,7 @@ class TournamentApp {
     this.renderBreakingBanner();
     this.renderMyMatchesView();
     this.renderRosterTable();
+    this.renderBookingTable();
     this.renderQrCode();
   }
 
@@ -116,10 +127,10 @@ class TournamentApp {
     if (modeBadgeEl) {
       const mode = this.tournament.mode || "regular_individual";
       if (mode === "event") {
-        modeBadgeEl.textContent = "🎉 이벤트 게임";
+        modeBadgeEl.textContent = "🎉 이벤트 게임 (조별 랜덤 복식)";
         modeBadgeEl.className = "mode-pill mode-event";
       } else if (mode === "regular_group") {
-        modeBadgeEl.textContent = "👥 정기전: 조별 대항전";
+        modeBadgeEl.textContent = "👥 정기전: 조별 대항전 (A~D 4개조)";
         modeBadgeEl.className = "mode-pill mode-group";
       } else {
         modeBadgeEl.textContent = "👤 정기전: 개인 리그전 (전 경기 복식 · 개인 승점 누적)";
@@ -135,7 +146,6 @@ class TournamentApp {
     const mode = this.tournament.mode || "regular_individual";
 
     if (mode === "regular_group") {
-      // 조별 순위 렌더링
       const groupRanked = this.leaderboard.calculateGroupLeaderboard(this.tournament.matches);
       let html = "";
       groupRanked.forEach((g, idx) => {
@@ -158,7 +168,6 @@ class TournamentApp {
       return;
     }
 
-    // 개인 리그전 순위 렌더링
     const activePlayers = this.memberManager.getActiveMembers();
     const ranked = this.leaderboard.calculateIndividualLeaderboard(
       this.tournament.matches, 
@@ -196,6 +205,30 @@ class TournamentApp {
     tbody.innerHTML = html;
   }
 
+  /**
+   * 🔄 개인 리그전 순위 리셋 (사용자 요청 #5)
+   * - 당월 대회 경기 스코어를 초기화하여 처음부터 다시 랭킹 산출
+   * - 연간 누적 랭킹은 안전하게 보존
+   */
+  resetCurrentLeague() {
+    if (!confirm("⚠️ [개인 리그전 순위 리셋]\n\n이번 대회의 경기 스코어와 순위표를 초기화하시겠습니까?\n(연간 종합 랭킹 데이터는 안전하게 보존됩니다)")) {
+      return;
+    }
+
+    (this.tournament.matches || []).forEach(m => {
+      m.scoreA = null;
+      m.scoreB = null;
+      m.tieBreak = null;
+      m.status = "waiting";
+    });
+
+    this.leaderboard.resetIndividualRanks();
+    this.tournament.breakingNews = "개인 리그전 순위가 리셋되었습니다. 1경기부터 새롭게 시작합니다.";
+    this.saveTournament();
+    this.render();
+    alert("✅ 개인 리그전 순위가 성공적으로 리셋되었습니다. 새로운 경기를 진행해주세요!");
+  }
+
   renderNewsTicker() {
     const listEl = document.getElementById("tickerFeedList");
     if (!listEl) return;
@@ -221,24 +254,21 @@ class TournamentApp {
     const tbody = document.getElementById("timelineTbody");
     if (!thead || !tbody) return;
 
-    const courts = this.tournament.courts || ["1번", "2번", "3번"];
+    const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
     const timeSlots = this.tournament.timeSlots || [];
 
-    // 1. 헤더 (코트 + 시간 슬롯)
     let thHtml = `<th class="th-court">코트</th>`;
     timeSlots.forEach(ts => {
       thHtml += `<th class="th-time">${ts.start} - ${ts.end}</th>`;
     });
     thead.innerHTML = thHtml;
 
-    // 2. 바디 (코트별 행)
     let rowsHtml = "";
     courts.forEach(courtName => {
       rowsHtml += `<tr>`;
       rowsHtml += `<td class="court-label-cell">${courtName}</td>`;
 
       timeSlots.forEach((ts, tIdx) => {
-        // 해당 코트 & 시간 슬롯 경기 검색
         const match = (this.tournament.matches || []).find(
           m => m.court === courtName && m.timeSlotIndex === tIdx
         );
@@ -311,7 +341,6 @@ class TournamentApp {
     const containerEl = document.getElementById("myMatchesContainer");
     if (!selectEl || !containerEl) return;
 
-    // 선수 선택 드롭다운 옵션 채우기
     const members = this.memberManager.getActiveMembers();
     let optHtml = `<option value="">-- 내 이름 선택 (출전 경기 모아보기) --</option>`;
     members.forEach(m => {
@@ -396,10 +425,112 @@ class TournamentApp {
     tbody.innerHTML = html;
   }
 
+  /**
+   * ☕ 6) 월별 코트 예약 순위표 렌더링 (커피 쿠폰 1위:3매, 2위:2매, 3위:1매)
+   */
+  renderBookingTable() {
+    const tbody = document.getElementById("courtBookingLeaderboardBody");
+    const summaryCards = document.getElementById("coffeeCouponPodium");
+    const bookings = this.tournament.courtBookings || [];
+    const ranked = this.leaderboard.calculateCourtBookingLeaderboard(bookings);
+
+    if (summaryCards) {
+      const top1 = ranked[0] || { name: "-", count: 0, totalHours: 0 };
+      const top2 = ranked[1] || { name: "-", count: 0, totalHours: 0 };
+      const top3 = ranked[2] || { name: "-", count: 0, totalHours: 0 };
+
+      summaryCards.innerHTML = `
+        <div class="podium-card podium-silver">
+          <div class="podium-medal">🥈 2위</div>
+          <div class="podium-name">${top2.name}</div>
+          <div class="podium-meta">${top2.count}회 예약 (${top2.totalHours}시간)</div>
+          <div class="podium-prize">☕ 커피 쿠폰 2매</div>
+        </div>
+        <div class="podium-card podium-gold">
+          <div class="podium-medal">🥇 1위 (최다 예약)</div>
+          <div class="podium-name">${top1.name}</div>
+          <div class="podium-meta">${top1.count}회 예약 (${top1.totalHours}시간)</div>
+          <div class="podium-prize">☕ 커피 쿠폰 3매</div>
+        </div>
+        <div class="podium-card podium-bronze">
+          <div class="podium-medal">🥉 3위</div>
+          <div class="podium-name">${top3.name}</div>
+          <div class="podium-meta">${top3.count}회 예약 (${top3.totalHours}시간)</div>
+          <div class="podium-prize">☕ 커피 쿠폰 1매</div>
+        </div>
+      `;
+    }
+
+    if (tbody) {
+      let html = "";
+      ranked.forEach(r => {
+        const rankClass = r.rank === 1 ? "rank-pill-1" : r.rank === 2 ? "rank-pill-2" : r.rank === 3 ? "rank-pill-3" : "rank-pill-default";
+        html += `
+          <tr>
+            <td style="text-align:center;"><span class="rank-pill ${rankClass}">${r.rank}</span></td>
+            <td class="player-name-cell"><b>${r.name}</b></td>
+            <td style="text-align:center;"><span class="pts-badge">${r.count}회</span></td>
+            <td style="text-align:center;">${r.totalHours}시간</td>
+            <td><span style="font-size:11px; color:#38bdf8;">${r.courtsSummary || "-"}</span></td>
+            <td style="text-align:center; font-weight:800; color:var(--neon-gold);">${r.badge}</td>
+            <td style="text-align:center; font-size:11px; color:var(--text-muted);">${r.lastDate}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // 모바일 예약 리스트 렌더링
+    const mobList = document.getElementById("mobileBookingList");
+    if (mobList) {
+      let html = "";
+      bookings.slice().reverse().forEach(b => {
+        html += `
+          <div class="booking-log-item">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:800; color:#fff;">${b.booker} (${b.court})</span>
+              <span style="font-size:11px; color:var(--neon-cyan);">${b.date} (${b.hours}시간)</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${b.note || "정기 예약"}</div>
+          </div>
+        `;
+      });
+      mobList.innerHTML = html;
+    }
+  }
+
+  addCourtBooking() {
+    const booker = document.getElementById("bookerNameInput").value.trim();
+    const court = document.getElementById("bookingCourtInput").value.trim() || "15번";
+    const date = document.getElementById("bookingDateInput").value || new Date().toISOString().slice(0, 10);
+    const hours = parseFloat(document.getElementById("bookingHoursInput").value) || 2;
+    const note = document.getElementById("bookingNoteInput").value.trim();
+
+    if (!booker) {
+      alert("예약자 이름을 입력해주세요.");
+      return;
+    }
+
+    if (!this.tournament.courtBookings) this.tournament.courtBookings = [];
+    this.tournament.courtBookings.push({
+      id: "bk_" + Date.now(),
+      booker,
+      court,
+      date,
+      hours,
+      note
+    });
+
+    this.saveTournament();
+    this.renderBookingTable();
+    document.getElementById("bookerNameInput").value = "";
+    document.getElementById("bookingNoteInput").value = "";
+    alert(`[${booker}] 님의 ${court} (${hours}시간) 코트 예약 기록이 추가되었습니다!`);
+  }
+
   renderQrCode() {
     const qrImg = document.getElementById("mobileQrImg");
     if (!qrImg) return;
-    // Current URL or safe fallback encoded into QR via quick SVG / image API
     const currentUrl = encodeURIComponent(window.location.href);
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUrl}`;
   }
@@ -448,7 +579,6 @@ class TournamentApp {
     match.tieBreak = tie || null;
     match.status = status;
 
-    // 경기 속보 등록
     if (status === "finished") {
       const newsItem = {
         text: `${match.court} #${match.matchNo}경기 결과 (${sA} : ${sB}${tie ? " " + tie : ""})`,
@@ -472,7 +602,6 @@ class TournamentApp {
     document.getElementById("newMatchCourt").value = courtName;
     document.getElementById("newMatchSlot").value = timeSlotIndex;
     
-    // 선수 옵션
     const members = this.memberManager.getActiveMembers();
     const populateSelect = (id) => {
       const el = document.getElementById(id);
@@ -510,41 +639,191 @@ class TournamentApp {
     this.render();
   }
 
-  // 4대 대진 생성 모달 액션
+  // ==============================================================================
+  // ⚙️ 대진표 생성 마법사 & 1차 드래프트 조정 로직 (요구사항 #1, #2, #3, #4)
+  // ==============================================================================
   openMatchmakerModal() {
+    // 설정값 반영
+    document.getElementById("mmStartTime").value = this.tournament.startTime || "10:00";
+    document.getElementById("mmDuration").value = this.tournament.gameDurationMinutes || 40;
+    document.getElementById("mmCourtNames").value = (this.tournament.courts || ["15번", "16번", "17번", "18번"]).join(", ");
+    document.getElementById("mmCourtCount").value = (this.tournament.courts || []).length || 4;
     this.showModal("matchmakerModal");
   }
 
-  executeAutoMatchmaker(mode) {
-    const active = this.memberManager.getActiveMembers();
-    const courts = this.tournament.courts;
-    const timeSlots = this.tournament.timeSlots;
+  onCourtCountChange() {
+    const count = parseInt(document.getElementById("mmCourtCount").value) || 4;
+    const defaultCourtNames = ["15번", "16번", "17번", "18번", "19번", "20번", "1번", "2번"];
+    const names = defaultCourtNames.slice(0, count);
+    document.getElementById("mmCourtNames").value = names.join(", ");
+  }
 
-    if (mode === "level_balanced") {
-      const generated = this.matchmaker.generateLevelBalancedMatches(active, courts, timeSlots);
-      this.tournament.matches = generated;
-      this.tournament.mode = "regular_individual";
-      alert(`✅ 레벨 밸런스 기반 ${generated.length}개 대진이 자동 생성되었습니다!`);
-    } else if (mode === "group_matches") {
+  /**
+   * 1차 자동 대진 드래프트 생성 (경기이사 수동 조정 화면으로 연결)
+   */
+  generateDraftMatches(type) {
+    const startTime = document.getElementById("mmStartTime").value || "10:00";
+    const duration = parseInt(document.getElementById("mmDuration").value) || 40;
+    const rawCourts = document.getElementById("mmCourtNames").value;
+    const courts = rawCourts.split(",").map(c => c.trim()).filter(Boolean);
+
+    if (courts.length === 0) {
+      alert("최소 1개 이상의 코트 번호를 입력해주세요.");
+      return;
+    }
+
+    const timeSlots = this.matchmaker.generateTimeSlots(startTime, duration, 5);
+    const active = this.memberManager.getActiveMembers();
+
+    let draft = [];
+    if (type === "level_balanced") {
+      draft = this.matchmaker.generateLevelBalancedMatches(active, courts, timeSlots);
+    } else if (type === "group_matches") {
       const byGroup = {};
       active.forEach(m => {
         if (!byGroup[m.group]) byGroup[m.group] = [];
         byGroup[m.group].push(m);
       });
-      const generated = this.matchmaker.generateGroupMatches(byGroup, courts, timeSlots);
-      this.tournament.matches = generated;
-      this.tournament.mode = "regular_group";
-      alert(`✅ A~D 4개조 조별 대항전 ${generated.length}개 대진이 자동 생성되었습니다!`);
-    } else if (mode === "event_random") {
-      const generated = this.matchmaker.generateLevelBalancedMatches(active, courts, timeSlots);
-      this.tournament.matches = generated;
-      this.tournament.mode = "event";
-      alert(`✅ 이벤트 게임 ${generated.length}개 대진이 생성되었습니다!`);
+      draft = this.matchmaker.generateGroupMatches(byGroup, courts, timeSlots);
     }
 
-    this.saveTournament();
+    this.draftMatches = draft;
+    this.draftCourts = courts;
+    this.draftTimeSlots = timeSlots;
+    this.draftDuration = duration;
+    this.draftStartTime = startTime;
+    this.draftMode = type === "group_matches" ? "regular_group" : "regular_individual";
+
     this.closeModal("matchmakerModal");
+    this.openDraftReviewModal();
+  }
+
+  /**
+   * 경기이사 1차 드래프트 검토 & 수동 변경 모달 열기
+   */
+  openDraftReviewModal() {
+    const container = document.getElementById("draftMatchListContainer");
+    if (!container) return;
+
+    const members = this.memberManager.getActiveMembers();
+    const memberOptions = members.map(m => `<option value="${m.name}">${m.name} (${m.level})</option>`).join("");
+
+    let html = "";
+    this.draftMatches.forEach((m, idx) => {
+      const slot = this.draftTimeSlots[m.timeSlotIndex] || { start: "-", end: "-" };
+      html += `
+        <div class="draft-match-card" data-idx="${idx}">
+          <div class="draft-card-header">
+            <span class="draft-badge">${m.court} 코트 #${m.matchNo}</span>
+            <span class="draft-time">${slot.start} ~ ${slot.end}</span>
+          </div>
+          <div class="draft-teams-grid">
+            <div class="draft-team-box">
+              <span class="team-label text-cyan">Team A (복식)</span>
+              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamA', 0, this.value)">
+                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamA[0] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
+              </select>
+              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamA', 1, this.value)">
+                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamA[1] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
+              </select>
+            </div>
+            <div class="draft-vs-divider">VS</div>
+            <div class="draft-team-box">
+              <span class="team-label text-red">Team B (복식)</span>
+              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamB', 0, this.value)">
+                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamB[0] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
+              </select>
+              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamB', 1, this.value)">
+                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamB[1] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
+              </select>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    this.showModal("draftReviewModal");
+  }
+
+  updateDraftPlayer(matchIdx, team, playerIdx, newName) {
+    if (!this.draftMatches[matchIdx]) return;
+    this.draftMatches[matchIdx][team][playerIdx] = newName;
+  }
+
+  commitDraftMatches() {
+    if (!this.draftMatches || this.draftMatches.length === 0) return;
+    this.tournament.matches = JSON.parse(JSON.stringify(this.draftMatches));
+    this.tournament.courts = this.draftCourts;
+    this.tournament.timeSlots = this.draftTimeSlots;
+    this.tournament.gameDurationMinutes = this.draftDuration;
+    this.tournament.startTime = this.draftStartTime;
+    this.tournament.mode = this.draftMode;
+
+    this.saveTournament();
+    this.closeModal("draftReviewModal");
     this.render();
+    alert(`🎉 경기이사 최종 검토 완료! ${this.tournament.matches.length}개 대진표가 전광판에 즉시 반영되었습니다.`);
+  }
+
+  /**
+   * 4) 이벤트 경기: 조별 조원 랜덤 복식 페어링 모달 열기
+   */
+  openEventMatchmakerModal() {
+    this.closeModal("matchmakerModal");
+    const active = this.memberManager.getActiveMembers();
+    const memberCheckboxes = document.getElementById("eventMemberCheckboxes");
+    if (memberCheckboxes) {
+      let html = "";
+      active.forEach(m => {
+        html += `
+          <label class="checkbox-pill">
+            <input type="checkbox" name="eventMember" value="${m.name}" checked>
+            <span>${m.name} (${m.group}/${m.level})</span>
+          </label>
+        `;
+      });
+      memberCheckboxes.innerHTML = html;
+    }
+    this.showModal("eventMatchmakerModal");
+  }
+
+  filterEventMembersByGroup(groupName) {
+    const checkboxes = document.querySelectorAll("input[name='eventMember']");
+    const members = this.memberManager.getActiveMembers();
+    checkboxes.forEach(cb => {
+      if (groupName === "ALL") {
+        cb.checked = true;
+      } else {
+        const mem = members.find(m => m.name === cb.value);
+        cb.checked = mem ? mem.group === groupName : false;
+      }
+    });
+  }
+
+  generateEventDoublesFromModal() {
+    const checkedBoxes = Array.from(document.querySelectorAll("input[name='eventMember']:checked"));
+    const selectedNames = checkedBoxes.map(cb => cb.value);
+
+    if (selectedNames.length < 4) {
+      alert("복식 경기를 생성하려면 최소 4명 이상의 조원을 선택해주세요.");
+      return;
+    }
+
+    const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
+    const timeSlots = this.tournament.timeSlots || [];
+    const groupName = document.getElementById("eventGroupNameInput").value || "이벤트조";
+
+    const draft = this.matchmaker.generateEventRandomDoubles(selectedNames, courts, timeSlots, groupName);
+    this.draftMatches = draft;
+    this.draftCourts = courts;
+    this.draftTimeSlots = timeSlots;
+    this.draftDuration = this.tournament.gameDurationMinutes || 40;
+    this.draftStartTime = this.tournament.startTime || "10:00";
+    this.draftMode = "event";
+
+    this.closeModal("eventMatchmakerModal");
+    this.openDraftReviewModal();
   }
 
   // 회원 관리 모달 액션
@@ -597,7 +876,6 @@ class TournamentApp {
 
   // 연간/시즌 누적 순위표 모달
   openSeasonModal() {
-    // 현재 대회 순위 스냅샷을 시즌에 저장
     const activePlayers = this.memberManager.getActiveMembers();
     const currentRanked = this.leaderboard.calculateIndividualLeaderboard(
       this.tournament.matches, 
@@ -630,7 +908,11 @@ class TournamentApp {
     this.showModal("seasonModal");
   }
 
-  // 대회 설정 모달
+  openCourtBookingModal() {
+    this.renderBookingTable();
+    this.showModal("courtBookingModal");
+  }
+
   openSettingsModal() {
     document.getElementById("setTourneyTitle").value = this.tournament.title;
     document.getElementById("setTourneyDate").value = this.tournament.date || "";
@@ -656,7 +938,6 @@ class TournamentApp {
     alert("초기 데이터로 복원되었습니다.");
   }
 
-  // 모달 헬퍼
   showModal(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add("active");
@@ -696,7 +977,6 @@ class TournamentApp {
   }
 
   bindEvents() {
-    // 뷰 모드 토글 (모바일 탭 뷰 ↔ 대형 전광판 뷰)
     const btnToggleView = document.getElementById("btnToggleView");
     if (btnToggleView) {
       btnToggleView.addEventListener("click", () => {
@@ -705,7 +985,6 @@ class TournamentApp {
       });
     }
 
-    // 내 경기 필터 변경 이벤트
     const selectEl = document.getElementById("myPlayerSelect");
     if (selectEl) {
       selectEl.addEventListener("change", (e) => {
@@ -723,7 +1002,7 @@ class TournamentApp {
   }
 }
 
-// 전역 싱글톤 인스턴스
+window.TournamentApp = TournamentApp;
 window.app = null;
 window.addEventListener("DOMContentLoaded", () => {
   window.app = new TournamentApp();

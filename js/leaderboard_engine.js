@@ -1,24 +1,24 @@
-﻿/**
- * 🏆 실시간 순위 계산 및 누적 랭킹 엔진 (Leaderboard Engine)
- * - 승점(3/1/0) > 득실차 > 다득점 순위 정렬
- * - 순위 변동(▲/▼) 실시간 추적
- * - 조별 대항전 조별 순위 계산
- * - 연간/시즌 개인 누적 순위표 (Cumulative Season Tracker)
+/**
+ * 🏆 순위 계산 및 누적 랭킹 엔진 (Leaderboard Engine)
+ * - 개인 리그전 순위표 (복식 경기 개인 승점 누적)
+ * - 개인 리그전 순위 리셋 지원 (시즌 연간 랭킹과 분리)
+ * - ☕ 월별 코트 예약자 커피 쿠폰 순위표 (1위: 3매, 2위: 2매, 3위: 1매)
+ * - 연간 시즌 누적 랭킹
  */
 
 class LeaderboardEngine {
   constructor() {
-    this.seasonStorageKey = "tennis_season_tournaments_v1";
-    this.previousRanks = {}; // 이전 순위 메모리
+    this.seasonStorageKey = "tennis_season_tournaments_v2";
+    this.bookingStorageKey = "tennis_court_bookings_v2";
+    this.previousRanks = {};
   }
 
   /**
-   * 실시간 개인 순위표 산출
+   * 실시간 개인 리그전 순위표 산출
    */
   calculateIndividualLeaderboard(matches, players, pointsRule = { win: 3, draw: 1, loss: 0 }) {
     const stats = {};
 
-    // 등록된 선수 초기화
     players.forEach(p => {
       stats[p.name] = {
         name: p.name,
@@ -33,17 +33,14 @@ class LeaderboardEngine {
       };
     });
 
-    // 완료된 경기 집계
-    matches.forEach(m => {
+    (matches || []).forEach(m => {
       if (m.status !== "finished" || m.scoreA === null || m.scoreB === null) return;
 
       const sA = m.scoreA;
       const sB = m.scoreB;
-
       const teamA = m.teamA || [];
       const teamB = m.teamB || [];
 
-      // Team A 선수 스탯 누적
       teamA.forEach(name => {
         if (!stats[name]) {
           stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
@@ -51,19 +48,11 @@ class LeaderboardEngine {
         stats[name].played++;
         stats[name].gamesWon += sA;
         stats[name].gamesLost += sB;
-        if (sA > sB) {
-          stats[name].wins++;
-          stats[name].points += pointsRule.win;
-        } else if (sA === sB) {
-          stats[name].draws++;
-          stats[name].points += pointsRule.draw;
-        } else {
-          stats[name].losses++;
-          stats[name].points += pointsRule.loss;
-        }
+        if (sA > sB) { stats[name].wins++; stats[name].points += pointsRule.win; }
+        else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
+        else { stats[name].losses++; stats[name].points += pointsRule.loss; }
       });
 
-      // Team B 선수 스탯 누적
       teamB.forEach(name => {
         if (!stats[name]) {
           stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
@@ -71,25 +60,16 @@ class LeaderboardEngine {
         stats[name].played++;
         stats[name].gamesWon += sB;
         stats[name].gamesLost += sA;
-        if (sB > sA) {
-          stats[name].wins++;
-          stats[name].points += pointsRule.win;
-        } else if (sA === sB) {
-          stats[name].draws++;
-          stats[name].points += pointsRule.draw;
-        } else {
-          stats[name].losses++;
-          stats[name].points += pointsRule.loss;
-        }
+        if (sB > sA) { stats[name].wins++; stats[name].points += pointsRule.win; }
+        else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
+        else { stats[name].losses++; stats[name].points += pointsRule.loss; }
       });
     });
 
-    // 득실차 계산
     Object.values(stats).forEach(s => {
       s.diff = s.gamesWon - s.gamesLost;
     });
 
-    // 정렬 공식: 승점 내림차순 > 득실차 내림차순 > 다득점 내림차순
     const ranked = Object.values(stats).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.diff !== a.diff) return b.diff - a.diff;
@@ -97,16 +77,13 @@ class LeaderboardEngine {
       return a.name.localeCompare(b.name, "ko");
     });
 
-    // 순위 및 변동(Delta) 부여
     ranked.forEach((item, index) => {
       const currentRank = index + 1;
       const prevRank = this.previousRanks[item.name];
       let delta = 0;
-
       if (prevRank !== undefined) {
-        delta = prevRank - currentRank; // 양수: 순위 상승, 음수: 하강
+        delta = prevRank - currentRank;
       }
-
       item.rank = currentRank;
       item.delta = delta;
       item.record = `${item.wins}-${item.draws}-${item.losses}`;
@@ -115,16 +92,72 @@ class LeaderboardEngine {
     return ranked;
   }
 
-  snapshotRanks(rankedList) {
+  resetIndividualRanks() {
     this.previousRanks = {};
-    rankedList.forEach(item => {
-      this.previousRanks[item.name] = item.rank;
-    });
   }
 
   /**
-   * 조별 순위 산출 (A조, B조, C조, D조)
+   * ☕ 월별 코트 예약 순위표 산출
+   * - 예약 횟수 & 예약 시간 집계
+   * - 1위: 커피쿠폰 3매, 2위: 2매, 3위: 1매 지급 상태 계산
    */
+  calculateCourtBookingLeaderboard(bookings = []) {
+    const bookerStats = {};
+
+    bookings.forEach(b => {
+      const name = (b.booker || "미상").trim();
+      if (!bookerStats[name]) {
+        bookerStats[name] = {
+          name: name,
+          count: 0,
+          totalHours: 0,
+          courts: new Set(),
+          lastDate: b.date || "-"
+        };
+      }
+      bookerStats[name].count += 1;
+      bookerStats[name].totalHours += (parseFloat(b.hours) || 2);
+      if (b.court) bookerStats[name].courts.add(b.court);
+      if (b.date && b.date > bookerStats[name].lastDate) {
+        bookerStats[name].lastDate = b.date;
+      }
+    });
+
+    const ranked = Object.values(bookerStats).map(item => ({
+      ...item,
+      courtsSummary: Array.from(item.courts).join(", ")
+    })).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      if (b.totalHours !== a.totalHours) return b.totalHours - a.totalHours;
+      return a.name.localeCompare(b.name, "ko");
+    });
+
+    // 커피 쿠폰 배정 (1위 3매, 2위 2매, 3위 1매)
+    ranked.forEach((item, idx) => {
+      const rank = idx + 1;
+      item.rank = rank;
+      if (rank === 1) {
+        item.couponCount = 3;
+        item.badge = "🥇 1위 (☕ 쿠폰 3매)";
+        item.status = "지급 확정";
+      } else if (rank === 2) {
+        item.couponCount = 2;
+        item.badge = "🥈 2위 (☕ 쿠폰 2매)";
+        item.status = "지급 확정";
+      } else if (rank === 3) {
+        item.couponCount = 1;
+        item.badge = "🥉 3위 (☕ 쿠폰 1매)";
+        item.status = "지급 확정";
+      } else {
+        item.couponCount = 0;
+        item.badge = "👏 격려상";
+        item.status = "기여 감사";
+      }
+    });
+
+    return ranked;
+  }
+
   calculateGroupLeaderboard(matches) {
     const groups = ["A조", "B조", "C조", "D조"];
     const stats = {};
@@ -133,9 +166,8 @@ class LeaderboardEngine {
       stats[g] = { group: g, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
     });
 
-    matches.forEach(m => {
+    (matches || []).forEach(m => {
       if (m.status !== "finished" || m.scoreA === null || m.scoreB === null || !m.groupA || !m.groupB) return;
-
       const gA = m.groupA;
       const gB = m.groupB;
       const sA = m.scoreA;
@@ -169,12 +201,8 @@ class LeaderboardEngine {
     });
   }
 
-  /**
-   * 4) 연간/시즌 누적 순위표 저장 및 조회
-   */
   saveTournamentToSeason(tournament, rankedList) {
     let history = this.getSeasonHistory();
-    // 이미 존재하는 대회면 업데이트, 아니면 추가
     const existingIdx = history.findIndex(t => t.id === tournament.id);
     const tourneySnapshot = {
       id: tournament.id,
@@ -219,8 +247,8 @@ class LeaderboardEngine {
             totalDraws: 0,
             totalLosses: 0,
             totalDiff: 0,
-            championships: 0, // 1위 횟수
-            runnerUps: 0      // 2위 횟수
+            championships: 0,
+            runnerUps: 0
           };
         }
         cumulative[r.name].tournamentsCount++;
