@@ -591,7 +591,7 @@
             </div>
           </div>
           <div class="form-row" style="margin-top:6px;">
-            <div class="form-group" style="flex:1.2;">
+            <div class="form-group">
               <label style="color:var(--neon-gold); font-weight:800;">📅 대회 날짜</label>
               <input type="date" id="mmTournamentDate" class="form-input" style="border-color:#fbbf24;" onchange="app.onTournamentDateChange(this.value)">
             </div>
@@ -599,16 +599,16 @@
               <label>최초 시작 시간</label>
               <input type="time" id="mmStartTime" class="form-input" value="08:00">
             </div>
-            <div class="form-group">
-              <label>게임당 소요 시간 (기본 40분)</label>
-              <select id="mmDuration" class="form-select">
-                <option value="30">30분 단위</option>
-                <option value="40" selected>40분 단위 (기본)</option>
-                <option value="45">45분 단위</option>
-                <option value="50">50분 단위</option>
-                <option value="60">60분 단위</option>
-              </select>
-            </div>
+          </div>
+          <div class="form-group" style="margin-top:6px;">
+            <label>게임당 소요 시간 (기본 40분)</label>
+            <select id="mmDuration" class="form-select">
+              <option value="30">30분 단위</option>
+              <option value="40" selected>40분 단위 (기본)</option>
+              <option value="45">45분 단위</option>
+              <option value="50">50분 단위</option>
+              <option value="60">60분 단위</option>
+            </select>
           </div>
         </div>
 
