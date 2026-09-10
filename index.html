@@ -557,22 +557,22 @@
     </div>
   </div>
 
-  <!-- 3. Matchmaker Modal (대진표 편성 설정 마법사 #1, #2) -->
+  <!-- 3. Matchmaker Modal (코트/시간표 설정 & 수동 대진표 작성) -->
   <div id="matchmakerModal" class="modal-backdrop">
     <div class="modal-window" style="max-width: 620px;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:8px;">
           <button type="button" class="btn-modal-back" onclick="app.closeModal('matchmakerModal')">← 뒤로</button>
-          <h3 class="modal-title" style="font-size:14px;">⚙️ 대진표 편성 마법사</h3>
+          <h3 class="modal-title" style="font-size:14px;">⚙️ 대진표 설정 & 수동 작성</h3>
         </div>
         <button type="button" class="modal-close" onclick="app.closeModal('matchmakerModal')">✕ 닫기</button>
       </div>
       <div class="modal-body">
-        <!-- Court & Schedule Settings Form (#1, #2) -->
+        <!-- Court & Schedule Settings Form -->
         <div style="background:#090f1d; padding:12px; border-radius:8px; border:1px solid #1e3358; margin-bottom:12px;">
-          <h4 style="font-size:13px; color:var(--neon-cyan); margin-bottom:8px;">🏟️ 코트 번호 & 게임 시간표 기본 설정</h4>
+          <h4 style="font-size:13px; color:var(--neon-cyan); margin-bottom:8px;">🏟️ 코트 번호 & 게임 시간표 설정</h4>
           <div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:11px; color:#38bdf8;">
-            💡 <b>당일 참석 인원 안내</b>: 64명 중 당일 참석 인원(보통 20~32명, 30~50%)만 <b>[👥 A~D조 직접 편성]</b>에서 조를 배정하고 불참자는 <code>❌ 불참</code>으로 설정하시면, 불참자를 자동 제외하고 최적의 밸런스로 대진표가 자동 생성됩니다.
+            💡 아래 설정을 적용하면 전광판 타임라인에 코트 x 시간 빈 칸이 생성됩니다. 각 빈 칸의 <b>[+ 경기 배정]</b>을 클릭해 대진표를 직접 작성하세요.
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -612,116 +612,16 @@
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <!-- Option 1 -->
-          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">① 경기이사 수동 매치 배정</div>
-              <div style="font-size: 11px; color: #94a3b8;">원하는 코트와 시간대 빈 슬롯을 클릭하여 선수를 직접 배치합니다.</div>
-            </div>
-            <button class="btn-primary" onclick="app.closeModal('matchmakerModal'); alert('코트 타임라인에서 [+ 경기 배정] 빈 칸을 터치하세요!');">수동 배정</button>
+        <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">경기이사 수동 매치 배정</div>
+            <div style="font-size: 11px; color: #94a3b8;">설정을 적용한 뒤 코트/시간대 빈 슬롯을 클릭하여 선수를 직접 배치합니다.</div>
           </div>
-
-          <!-- Option 2 (1차 자동 편성 후 경기이사 수동 조정 #3) -->
-          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div style="font-weight: 800; font-size: 13px; color: #34d399;">② 개인 레벨(NTRP) 밸런스 자동 대진 (1차 드래프트)</div>
-              <div style="font-size: 11px; color: #94a3b8;">1차 자동 페어링 후 경기이사가 화면에서 선수를 직접 교체/수정할 수 있습니다.</div>
-            </div>
-            <button class="btn-primary" style="background: #059669;" onclick="app.generateDraftMatches('level_balanced')">드래프트 생성</button>
-          </div>
-
-          <!-- Option 3 -->
-          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div style="font-weight: 800; font-size: 13px; color: #c084fc;">③ A~D 4개조 조별 대항전 매치 생성</div>
-              <div style="font-size: 11px; color: #94a3b8;">회원 명단을 기준으로 A~D조를 직접 선택하여 구성한 뒤 매치를 생성합니다.</div>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="app.closeModal('matchmakerModal'); app.openGroupManagerModal();">👥 A~D조 직접 편성</button>
-              <button class="btn-primary" style="background: #7c3aed;" onclick="app.generateDraftMatches('group_matches')">조별 편성</button>
-            </div>
-          </div>
-
-          <!-- Option 4 (이벤트 경기: 조별 조원 랜덤 복식 페어링 #4) -->
-          <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div style="font-weight: 800; font-size: 13px; color: #fbbf24;">④ 이벤트 경기: 조별 조원 랜덤 복식 페어링</div>
-              <div style="font-size: 11px; color: #94a3b8;">조장이 조원을 선택하여 버튼을 누르면 랜덤 복식조가 생성되고 최종 수정 가능합니다.</div>
-            </div>
-            <button class="btn-primary" style="background: #d97706;" onclick="app.openEventMatchmakerModal()">랜덤 복식 생성</button>
-          </div>
+          <button class="btn-primary" style="background: #059669;" onclick="app.applyCourtScheduleSettings()">설정 적용</button>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('matchmakerModal')">닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3-1. Draft Review Modal (경기이사 대진 초안 검토 & 수동 수정 #3) -->
-  <div id="draftReviewModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width: 780px;">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button type="button" class="btn-modal-back" onclick="app.closeModal('draftReviewModal')">← 뒤로</button>
-          <div>
-            <h3 class="modal-title" style="font-size:14px;">📋 대진표 1차 드래프트 검토</h3>
-            <div style="font-size:11px; color:var(--text-muted);">경기이사가 선수를 변경하거나 조정한 후 최종 확정합니다.</div>
-          </div>
-        </div>
-        <button type="button" class="modal-close" onclick="app.closeModal('draftReviewModal')">✕ 닫기</button>
-      </div>
-      <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
-        <div id="draftMatchListContainer" class="draft-matches-container">
-          <!-- Populated dynamically with match cards & player dropdowns -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="app.closeModal('draftReviewModal')">취소</button>
-        <button class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.commitDraftMatches()">대진 최종 확정 및 전광판 반영 (경기이사 확정)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3-2. Event Matchmaker Modal (조별 조원 선택 및 랜덤 복식 생성 #4) -->
-  <div id="eventMatchmakerModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width: 600px;">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button type="button" class="btn-modal-back" onclick="app.closeModal('eventMatchmakerModal')">← 뒤로</button>
-          <h3 class="modal-title" style="font-size:14px;">🎲 이벤트 랜덤 복식 페어링</h3>
-        </div>
-        <button type="button" class="modal-close" onclick="app.closeModal('eventMatchmakerModal')">✕ 닫기</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>이벤트 경기 명칭 / 조 이름</label>
-          <input type="text" id="eventGroupNameInput" class="form-input" value="이벤트 친선 리그">
-        </div>
-        <div style="margin: 10px 0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label style="font-size:12px; color:var(--text-muted);">조원 필터 선택:</label>
-            <button class="btn-xs" style="background:#059669;" onclick="app.closeModal('eventMatchmakerModal'); app.openGroupManagerModal();">⚙️ A~D조 직접 편성/변경</button>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button class="btn-xs" onclick="app.filterEventMembersByGroup('ALL')">전체 선택</button>
-            <button class="btn-xs" onclick="app.filterEventMembersByGroup('A조')">A조만</button>
-            <button class="btn-xs" onclick="app.filterEventMembersByGroup('B조')">B조만</button>
-            <button class="btn-xs" onclick="app.filterEventMembersByGroup('C조')">C조만</button>
-            <button class="btn-xs" onclick="app.filterEventMembersByGroup('D조')">D조만</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>참가 조원 선택 (최소 4명 이상 체크)</label>
-          <div id="eventMemberCheckboxes" class="checkbox-grid" style="max-height: 200px; overflow-y: auto; background:#090f1d; padding:10px; border-radius:6px; border:1px solid #1e3358;">
-            <!-- Populated -->
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="app.closeModal('eventMatchmakerModal')">취소</button>
-        <button class="btn-primary" style="background:#d97706; font-weight:800;" onclick="app.generateEventDoublesFromModal()">🎲 랜덤 복식조 자동 생성</button>
       </div>
     </div>
   </div>

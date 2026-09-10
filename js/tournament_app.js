@@ -24,7 +24,6 @@ class TournamentApp {
     this.selectedPlayerFilter = "";
     this.audioEnabled = true;
     this.editingMatchId = null;
-    this.draftMatches = []; // 1차 자동 생성 임시 드래프트 대진 목록
 
     this.initAudioContext();
     this.initClock();
@@ -891,17 +890,15 @@ class TournamentApp {
     this.tournament.timeSlots = this.matchmaker.generateTimeSlots("08:00", 40, 5);
     this.tournament.status = "ongoing";
 
-    // Generate balanced new matches with 64 members
-    const active = this.memberManager.getActiveMembers();
-    const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
-    this.tournament.matches = this.matchmaker.generateLevelBalancedMatches(active, courts, this.tournament.timeSlots);
+    // 대진표는 자동 생성하지 않고 빈 상태로 시작 (경기이사가 수동 배정)
+    this.tournament.matches = [];
     this.leaderboard.resetIndividualRanks();
     this.tournament.breakingNews = `[신규 대회] ${this.tournament.title}가 시작되었습니다!`;
 
     this.saveTournament();
     this.render();
     this.renderHistoryTab();
-    alert(`🎾 새로운 대회 [${this.tournament.title}]가 시작되었습니다! (08:00 시작 40분 슬롯 편성 완료)`);
+    alert(`🎾 새로운 대회 [${this.tournament.title}]가 시작되었습니다! (08:00 시작 40분 슬롯 편성 완료)\n\n전광판 타임라인에서 [+ 경기 배정] 빈 칸을 눌러 대진표를 직접 작성하세요.`);
   }
 
   openHistoryModal() {
@@ -1224,13 +1221,13 @@ class TournamentApp {
   }
 
   /**
-   * 1차 자동 대진 드래프트 생성 (경기이사 수동 조정 화면으로 연결)
+   * 코트/시간표 설정을 적용해 빈 대진표 그리드를 만듭니다.
+   * (선수 배정은 경기이사가 코트 타임라인의 빈 칸을 클릭해 직접 입력합니다)
    */
-  generateDraftMatches(type) {
+  applyCourtScheduleSettings() {
     const dateInput = document.getElementById("mmTournamentDate");
     if (dateInput && dateInput.value) {
       this.tournament.date = dateInput.value;
-      this.renderHeader();
     }
     const startTime = document.getElementById("mmStartTime").value || "08:00";
     const duration = parseInt(document.getElementById("mmDuration").value) || 40;
@@ -1242,162 +1239,22 @@ class TournamentApp {
       return;
     }
 
-    const timeSlots = this.matchmaker.generateTimeSlots(startTime, duration, 5);
-    const allActive = this.memberManager.getActiveMembers();
-    const attendees = allActive.filter(m => m.group !== "미참석");
-    const active = attendees.length >= 4 ? attendees : allActive;
-
-    let draft = [];
-    if (type === "level_balanced") {
-      draft = this.matchmaker.generateLevelBalancedMatches(active, courts, timeSlots);
-    } else if (type === "group_matches") {
-      const byGroup = {};
-      active.forEach(m => {
-        if (m.group && m.group !== "미참석") {
-          if (!byGroup[m.group]) byGroup[m.group] = [];
-          byGroup[m.group].push(m);
-        }
-      });
-      draft = this.matchmaker.generateGroupMatches(byGroup, courts, timeSlots);
+    if (this.tournament.matches && this.tournament.matches.length > 0) {
+      if (!confirm("코트/시간표 설정을 변경하면 기존에 배정된 대진표가 모두 비워집니다.\n계속하시겠습니까?")) {
+        return;
+      }
     }
 
-    this.draftMatches = draft;
-    this.draftCourts = courts;
-    this.draftTimeSlots = timeSlots;
-    this.draftDuration = duration;
-    this.draftStartTime = startTime;
-    this.draftMode = type === "group_matches" ? "regular_group" : "regular_individual";
-
-    this.closeModal("matchmakerModal");
-    this.openDraftReviewModal();
-  }
-
-  /**
-   * 경기이사 1차 드래프트 검토 & 수동 변경 모달 열기
-   */
-  openDraftReviewModal() {
-    const container = document.getElementById("draftMatchListContainer");
-    if (!container) return;
-
-    const members = this.memberManager.getActiveMembers();
-    const memberOptions = members.map(m => `<option value="${m.name}">${m.name} (${m.level})</option>`).join("");
-
-    let html = "";
-    this.draftMatches.forEach((m, idx) => {
-      const slot = this.draftTimeSlots[m.timeSlotIndex] || { start: "-", end: "-" };
-      html += `
-        <div class="draft-match-card" data-idx="${idx}">
-          <div class="draft-card-header">
-            <span class="draft-badge">${m.court} 코트 #${m.matchNo}</span>
-            <span class="draft-time">${slot.start} ~ ${slot.end}</span>
-          </div>
-          <div class="draft-teams-grid">
-            <div class="draft-team-box">
-              <span class="team-label text-cyan">Team A (복식)</span>
-              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamA', 0, this.value)">
-                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamA[0] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
-              </select>
-              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamA', 1, this.value)">
-                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamA[1] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
-              </select>
-            </div>
-            <div class="draft-vs-divider">VS</div>
-            <div class="draft-team-box">
-              <span class="team-label text-red">Team B (복식)</span>
-              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamB', 0, this.value)">
-                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamB[0] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
-              </select>
-              <select class="form-select draft-select" onchange="app.updateDraftPlayer(${idx}, 'teamB', 1, this.value)">
-                ${members.map(mb => `<option value="${mb.name}" ${mb.name === m.teamB[1] ? "selected" : ""}>${mb.name} (${mb.level})</option>`).join("")}
-              </select>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-    this.showModal("draftReviewModal");
-  }
-
-  updateDraftPlayer(matchIdx, team, playerIdx, newName) {
-    if (!this.draftMatches[matchIdx]) return;
-    this.draftMatches[matchIdx][team][playerIdx] = newName;
-  }
-
-  commitDraftMatches() {
-    if (!this.draftMatches || this.draftMatches.length === 0) return;
-    this.tournament.matches = JSON.parse(JSON.stringify(this.draftMatches));
-    this.tournament.courts = this.draftCourts;
-    this.tournament.timeSlots = this.draftTimeSlots;
-    this.tournament.gameDurationMinutes = this.draftDuration;
-    this.tournament.startTime = this.draftStartTime;
-    this.tournament.mode = this.draftMode;
+    this.tournament.courts = courts;
+    this.tournament.timeSlots = this.matchmaker.generateTimeSlots(startTime, duration, 5);
+    this.tournament.gameDurationMinutes = duration;
+    this.tournament.startTime = startTime;
+    this.tournament.matches = [];
 
     this.saveTournament();
-    this.closeModal("draftReviewModal");
-    this.render();
-    alert(`🎉 경기이사 최종 검토 완료! ${this.tournament.matches.length}개 대진표가 전광판에 즉시 반영되었습니다.`);
-  }
-
-  /**
-   * 4) 이벤트 경기: 조별 조원 랜덤 복식 페어링 모달 열기
-   */
-  openEventMatchmakerModal() {
     this.closeModal("matchmakerModal");
-    const active = this.memberManager.getActiveMembers();
-    const memberCheckboxes = document.getElementById("eventMemberCheckboxes");
-    if (memberCheckboxes) {
-      let html = "";
-      active.forEach(m => {
-        html += `
-          <label class="checkbox-pill">
-            <input type="checkbox" name="eventMember" value="${m.name}" checked>
-            <span>${m.name} <b style="color:var(--neon-cyan);">[${m.group || "A조"}]</b> (${m.clubLevel || 2}등급)</span>
-          </label>
-        `;
-      });
-      memberCheckboxes.innerHTML = html;
-    }
-    this.showModal("eventMatchmakerModal");
-  }
-
-  filterEventMembersByGroup(groupName) {
-    const checkboxes = document.querySelectorAll("input[name='eventMember']");
-    const members = this.memberManager.getActiveMembers();
-    checkboxes.forEach(cb => {
-      if (groupName === "ALL") {
-        cb.checked = true;
-      } else {
-        const mem = members.find(m => m.name === cb.value);
-        cb.checked = mem ? (mem.group === groupName) : false;
-      }
-    });
-  }
-
-  generateEventDoublesFromModal() {
-    const checkedBoxes = Array.from(document.querySelectorAll("input[name='eventMember']:checked"));
-    const selectedNames = checkedBoxes.map(cb => cb.value);
-
-    if (selectedNames.length < 4) {
-      alert("복식 경기를 생성하려면 최소 4명 이상의 조원을 선택해주세요.");
-      return;
-    }
-
-    const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
-    const timeSlots = this.tournament.timeSlots || [];
-    const groupName = document.getElementById("eventGroupNameInput").value || "이벤트조";
-
-    const draft = this.matchmaker.generateEventRandomDoubles(selectedNames, courts, timeSlots, groupName);
-    this.draftMatches = draft;
-    this.draftCourts = courts;
-    this.draftTimeSlots = timeSlots;
-    this.draftDuration = this.tournament.gameDurationMinutes || 40;
-    this.draftStartTime = this.tournament.startTime || "10:00";
-    this.draftMode = "event";
-
-    this.closeModal("eventMatchmakerModal");
-    this.openDraftReviewModal();
+    this.render();
+    alert("✅ 코트/시간표가 설정되었습니다! 전광판 타임라인에서 [+ 경기 배정] 빈 칸을 눌러 대진표를 직접 작성하세요.");
   }
 
   // 회원 관리 모달 액션
