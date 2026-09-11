@@ -833,26 +833,74 @@ class TournamentApp {
   }
 
   startNewTournamentPrompt() {
-    const defaultTitle = new Date().getFullYear() + "년 " + (new Date().getMonth() + 1) + "월 정기대회";
-    const newTitle = prompt("새로운 대회 공식 명칭을 입력하세요:", defaultTitle);
-    if (!newTitle) return;
+    // 1. 경기이사 / 운영진 권한 체크 (일반 회원 모드일 경우 PIN 1234 검증)
+    if (this.appMode !== "staff") {
+      const pin = prompt("🔐 새로운 대회를 생성하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
+      if (pin === null) return;
+      if (pin.trim() !== this.staffPin) {
+        alert("❌ PIN 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      this.appMode = "staff";
+      try {
+        localStorage.setItem("tennis_app_mode", this.appMode);
+      } catch(e) {}
+      this.applyAppModeUi();
+    }
 
-    // Reset current tournament to fresh state
+    // 2. 현재 진행 중인 미종료 대회 데이터 보호 (경기 기록 유실 방지)
+    if (this.tournament && Array.isArray(this.tournament.matches) && this.tournament.matches.length > 0) {
+      const hasOngoingMatches = this.tournament.matches.some(m => m.status !== "finished");
+      const warningText = hasOngoingMatches
+        ? `⚠️ [주의: 진행 중인 경기 기록 감지]\n\n현재 대회(${this.tournament.title})에 총 ${this.tournament.matches.length}개의 경기 데이터가 있습니다.\n\n새 대회를 시작하면 현재 경기 기록과 당월 순위표가 초기화됩니다.\n(대회 결과를 연간 랭킹 및 대회 내역에 영구 보존하시려면 먼저 [🏁 대회 종료]를 진행해 주세요.)\n\n정말로 현재 대회를 초기화하고 새로운 대회를 개막하시겠습니까?`
+        : `ℹ️ [새 대회 개막 안내]\n\n현재 대회(${this.tournament.title})를 초기화하고 새로운 정기대회를 개막하시겠습니까?\n(종료된 기록은 '대회 내역' 및 연간 랭킹에 이미 안전하게 보존되어 있습니다.)`;
+      if (!confirm(warningText)) {
+        return;
+      }
+    }
+
+    // 3. 대회 명칭 입력 (안전한 기본값 제공)
+    const now = new Date();
+    const defaultTitle = `${now.getFullYear()}년 ${now.getMonth() + 1}월 정기대회`;
+    const newTitle = prompt("🏆 새로운 대회 공식 명칭을 입력하세요:", defaultTitle);
+    if (!newTitle || !newTitle.trim()) {
+      return; // 사용자가 취소했거나 빈 값 입력 시 안전 종료
+    }
+
+    // 4. 새 대회 객체 초기화 (데이터 무결성 보장)
     this.tournament.title = newTitle.trim();
-    this.tournament.date = new Date().toISOString().slice(0, 10);
+    this.tournament.date = now.toISOString().slice(0, 10);
     this.tournament.startTime = "08:00";
-    this.tournament.timeSlots = this.matchmaker.generateTimeSlots("08:00", 40, 5);
+    this.tournament.gameDuration = 40;
+    this.tournament.courts = ["15번", "16번", "17번", "18번"];
     this.tournament.status = "ongoing";
-
-    // 대진표는 자동 생성하지 않고 빈 상태로 시작 (경기이사가 수동 배정)
+    this.tournament.timeSlots = this.matchmaker.generateTimeSlots("08:00", 40, 5);
     this.tournament.matches = [];
-    this.leaderboard.resetIndividualRanks();
-    this.tournament.breakingNews = `[신규 대회] ${this.tournament.title}가 시작되었습니다!`;
+    this.tournament.isMasterReset = true; // 새로고침 시 데모 데이터 덮어쓰기 방지
+    this.tournament.breakingNews = `[공식 개막] ${this.tournament.title}가 공식 시작되었습니다! 전 코트 경기 배정 가능.`;
 
+    // 5. 당월 개인 순위표 리셋 (연간 누적 랭킹은 안전하게 보존됨)
+    if (this.leaderboard && typeof this.leaderboard.resetIndividualRanks === "function") {
+      this.leaderboard.resetIndividualRanks();
+    }
+
+    // 6. 개인 필터 초기화
+    this.selectedPlayerFilter = "";
+
+    // 7. 로컬스토리지 영구 저장 및 모달 정리
     this.saveTournament();
+    this.closeModal("historyModal");
+
+    // 8. 전체 UI 뷰 안전 리렌더링
     this.render();
     this.renderHistoryTab();
-    alert(`🎾 새로운 대회 [${this.tournament.title}]가 시작되었습니다! (08:00 시작 40분 슬롯 편성 완료)\n\n전광판 타임라인에서 [+ 경기 배정] 빈 칸을 눌러 대진표를 직접 작성하세요.`);
+    this.renderTimeline();
+
+    // 9. 완료 안내 메시지
+    alert(
+      `🎾 새로운 대회 [${this.tournament.title}]가 성공적으로 시작되었습니다!\n\n` +
+      `타임라인 코트의 [+ 배정] 칸을 터치하거나 상단 [⚙️ 대진 편성] 버튼을 눌러 새 대진표를 작성하세요.`
+    );
   }
 
   openHistoryModal() {

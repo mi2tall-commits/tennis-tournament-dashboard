@@ -186,6 +186,17 @@ body {
   color: #000;
 }
 
+.btn-action-new {
+  border-color: #059669;
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+  font-weight: 800;
+}
+.btn-action-new:hover {
+  background: #059669;
+  color: #fff;
+}
+
 /* ==========================================
    Dashboard Main Container
    ========================================== */

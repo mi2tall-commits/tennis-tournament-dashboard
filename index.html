@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=v18_cleanup_annual_tab">
+  <link rel="stylesheet" href="styles.css?v=v19_staff_new_tournament">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -33,6 +33,10 @@
         <button class="btn-header btn-mode-toggle" id="btnAppModeToggle" onclick="app.toggleAppMode()" title="일반 회원 뷰 / 경기이사 모드 전환">
           <span>👤</span>
           <span class="btn-text">회원 모드</span>
+        </button>
+        <button class="btn-header btn-action-new btn-desktop-only staff-only" onclick="app.startNewTournamentPrompt()" title="새로운 공식 대회 개막">
+          <span>➕</span>
+          <span class="btn-text">새 대회</span>
         </button>
         <button class="btn-header btn-action-mm staff-only" onclick="app.openMatchmakerModal()">
           <span>⚙️</span>
@@ -395,14 +399,21 @@
         </div>
 
         <!-- 운영진/경기이사 모드 토글 카드 -->
-        <div style="margin-top: 14px; background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-size: 13px; font-weight: 800; color: #fbbf24;">🛠️ 경기이사 / 운영진 전용 모드</div>
-            <div style="font-size: 11px; color: #94a3b8;">대진표 작성, 대회 종료, 순위 리셋 등 관리 도구</div>
+        <div style="margin-top: 14px; background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #fbbf24;">🛠️ 경기이사 / 운영진 전용 모드</div>
+              <div style="font-size: 11px; color: #94a3b8;">대진표 작성, 대회 종료, 순위 리셋 등 관리 도구</div>
+            </div>
+            <button type="button" class="btn-primary" id="btnMoreModeToggle" style="background:#d97706; font-size:11px; padding:6px 10px; font-weight:800;" onclick="app.toggleAppMode()">
+              모드 전환
+            </button>
           </div>
-          <button type="button" class="btn-primary" id="btnMoreModeToggle" style="background:#d97706; font-size:11px; padding:6px 10px; font-weight:800;" onclick="app.toggleAppMode()">
-            모드 전환
-          </button>
+          <div class="staff-only" style="display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #1e3358;">
+            <button type="button" class="btn-xs" style="flex:1; background:#059669; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#0284c7; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.openMatchmakerModal()">⚙️ 대진 편성</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#f59e0b; color:#000; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
+          </div>
         </div>
       </div>
     </section>
@@ -829,11 +840,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v18_cleanup_annual_tab"></script>
-  <script src="js/member_manager.js?v=v18_cleanup_annual_tab"></script>
-  <script src="js/matchmaker_engine.js?v=v18_cleanup_annual_tab"></script>
-  <script src="js/leaderboard_engine.js?v=v18_cleanup_annual_tab"></script>
-  <script src="js/tournament_app.js?v=v18_cleanup_annual_tab"></script>
+  <script src="sample_tournament_data.js?v=v19_staff_new_tournament"></script>
+  <script src="js/member_manager.js?v=v19_staff_new_tournament"></script>
+  <script src="js/matchmaker_engine.js?v=v19_staff_new_tournament"></script>
+  <script src="js/leaderboard_engine.js?v=v19_staff_new_tournament"></script>
+  <script src="js/tournament_app.js?v=v19_staff_new_tournament"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -1012,8 +1023,10 @@
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
-          <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:5px 8px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
-          <button class="btn-xs" style="background:#059669; font-weight:800; padding:5px 8px;" onclick="app.startNewTournamentPrompt()">➕ 새대회</button>
+          <div class="staff-only" style="display:flex; align-items:center; gap:6px;">
+            <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:5px 8px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
+            <button class="btn-xs" style="background:#059669; font-weight:800; padding:5px 8px;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+          </div>
           <button class="modal-close" onclick="app.closeModal('historyModal')">✕ 닫기</button>
         </div>
       </div>
