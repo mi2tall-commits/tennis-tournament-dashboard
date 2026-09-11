@@ -277,67 +277,11 @@ class TournamentApp {
     if (monthlyTbody) monthlyTbody.innerHTML = monthlyHtml;
     if (annualTbody) annualTbody.innerHTML = annualHtml;
 
-    // 5. Handle Mobile View Mode Switching
-    if (this.leaderboardViewMode === "annual") {
-      const annualDesc = "👑 [연간 종합 랭킹] 2026 시즌 역대 월별 대회 누적 성적 및 명예의 전당";
-      if (modeBadgeEl) modeBadgeEl.textContent = annualDesc;
-      if (mobModeText) mobModeText.textContent = annualDesc;
-      if (resetBtn) resetBtn.style.display = "none";
-      if (mobResetBtn) mobResetBtn.style.display = "none";
-
-      const bannerHtml = `
-        <div class="ranking-mode-banner banner-annual">
-          <div style="font-weight:900; font-size:13px; color:#fbbf24;">👑 2026 시즌 연간 종합 누적 순위표 (명예의 전당)</div>
-          <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">역대 종료된 모든 정기전 성적이 누적 합산된 공식 시즌 랭킹입니다.</div>
-        </div>
-      `;
-      if (bannerEl) bannerEl.innerHTML = bannerHtml;
-      if (mobBannerEl) mobBannerEl.innerHTML = bannerHtml;
-
-      if (mobThead) {
-        mobThead.innerHTML = `
-          <tr>
-            <th style="width: 38px; text-align: center;">순위</th>
-            <th>선수명</th>
-            <th style="text-align: center; color:#fbbf24;">누적승점</th>
-            <th style="text-align: center;">통산전적</th>
-            <th style="text-align: center;">우승/준우승</th>
-          </tr>
-        `;
-      }
-      if (mobTbody) mobTbody.innerHTML = mobAnnualHtml;
-      if (legacyTbody) legacyTbody.innerHTML = annualHtml;
-    } else {
-      const monthlyDesc = "👤 [당월 개인 리그전] 이번 대회 복식 경기 개인별 승점 집계 (승:3점 / 무:1점 / 패:0점)";
-      if (modeBadgeEl) modeBadgeEl.textContent = monthlyDesc;
-      if (mobModeText) mobModeText.textContent = monthlyDesc;
-      if (resetBtn) resetBtn.style.display = "inline-flex";
-      if (mobResetBtn) mobResetBtn.style.display = "inline-flex";
-
-      const bannerMonthlyHtml = `
-        <div class="ranking-mode-banner banner-monthly">
-          <div style="font-weight:900; font-size:13px; color:#38bdf8;">🏆 당월 정기전 개인 리그 순위표</div>
-          <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">모든 게임은 복식으로 진행되며, 각 개인의 승점 및 득실 결과를 실시간 누적합니다.</div>
-        </div>
-      `;
-      if (bannerEl) bannerEl.innerHTML = bannerMonthlyHtml;
-      if (mobBannerEl) mobBannerEl.innerHTML = bannerMonthlyHtml;
-
-      if (mobThead) {
-        mobThead.innerHTML = `
-          <tr>
-            <th style="width: 40px; text-align: center;">순위</th>
-            <th style="width: 45px;">변동</th>
-            <th>선수명</th>
-            <th>전적</th>
-            <th>승점</th>
-            <th>득실차</th>
-          </tr>
-        `;
-      }
-      if (mobTbody) mobTbody.innerHTML = mobMonthlyHtml;
-      if (legacyTbody) legacyTbody.innerHTML = monthlyHtml;
-    }
+    // 5. Populate Mobile Dual Leaderboards (Both rendered simultaneously without tabs)
+    const mobAnnualTbody = document.getElementById("mobileAnnualLeaderboardBody");
+    if (mobTbody) mobTbody.innerHTML = mobMonthlyHtml;
+    if (mobAnnualTbody) mobAnnualTbody.innerHTML = mobAnnualHtml;
+    if (legacyTbody) legacyTbody.innerHTML = monthlyHtml;
   }
   setLeaderboardMode(mode) {
     this.leaderboardViewMode = mode;

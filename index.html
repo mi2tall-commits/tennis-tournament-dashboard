@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=v15_coffee_fix">
+  <link rel="stylesheet" href="styles.css?v=v18_cleanup_annual_tab">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -234,29 +234,23 @@
       </div>
     </section>
 
-    <!-- Tab 2: 순위보드 (모바일 듀얼 탭 및 리셋) -->
+    <!-- Tab 2: 순위보드 (모바일 듀얼 순위표: 당월 개인리그 & 연간 종합 랭킹) -->
     <section id="tab-leaderboard" class="mobile-view-section">
+      <!-- 1. 당월 정기전 개인 리그 순위표 -->
       <div class="panel-card">
-        <div class="panel-header" style="display:flex; flex-direction:column; gap:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <div class="lb-tab-group">
-              <button id="mobTabBtnMonthlyLeague" class="lb-tab-btn active" onclick="app.setLeaderboardMode('monthly')">
-                <span>🏆 당월 개인 리그</span>
-              </button>
-              <button id="mobTabBtnAnnualSeason" class="lb-tab-btn" onclick="app.setLeaderboardMode('annual')">
-                <span>👑 연간 랭킹</span>
-              </button>
-            </div>
-            <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
-              <span>🔄</span>
-              <span>순위 리셋</span>
-            </button>
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="color:var(--neon-gold); font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>🏆</span>
+            <span>당월 정기전 개인 리그 순위표</span>
           </div>
-          <div id="mobLeaderboardModeText" style="font-size:11px; color:var(--text-muted); font-weight:700;">
-            👤 당월 개인 리그전 (복식 경기 개인 승점 집계)
-          </div>
+          <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
+            <span>🔄</span>
+            <span>순위 리셋</span>
+          </button>
         </div>
-        <div id="mobLeaderboardBannerNotice"></div>
+        <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
+          👤 복식 경기 개인별 실시간 승점 (승:3점 / 무:1점 / 패:0점)
+        </div>
         <div class="leaderboard-table-wrap">
           <table class="leaderboard-table">
             <thead id="mobileLeaderboardThead">
@@ -271,6 +265,36 @@
             </thead>
             <tbody id="mobileLeaderboardBody">
               <!-- Synchronized with desktop leaderboard -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. 연간 종합 랭킹 (시즌 누적) -->
+      <div class="panel-card" style="margin-top: 14px;">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="color:#38bdf8; font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>👑</span>
+            <span>연간 종합 랭킹 (2026 시즌 누적)</span>
+          </div>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700;">누적 승점 기준</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
+          ⭐ 역대 정기전 대회 누적 성적 및 명예의 전당
+        </div>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 38px; text-align: center;">순위</th>
+                <th>선수명</th>
+                <th style="text-align: center; color:#fbbf24;">누적승점</th>
+                <th style="text-align: center;">통산전적</th>
+                <th style="text-align: center; color:#f59e0b;">입상 (🥇/🥈)</th>
+              </tr>
+            </thead>
+            <tbody id="mobileAnnualLeaderboardBody">
+              <!-- Populated dynamically -->
             </tbody>
           </table>
         </div>
@@ -805,11 +829,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v17_manual_matchmaker_pin"></script>
-  <script src="js/member_manager.js?v=v17_manual_matchmaker_pin"></script>
-  <script src="js/matchmaker_engine.js?v=v17_manual_matchmaker_pin"></script>
-  <script src="js/leaderboard_engine.js?v=v17_manual_matchmaker_pin"></script>
-  <script src="js/tournament_app.js?v=v17_manual_matchmaker_pin"></script>
+  <script src="sample_tournament_data.js?v=v18_cleanup_annual_tab"></script>
+  <script src="js/member_manager.js?v=v18_cleanup_annual_tab"></script>
+  <script src="js/matchmaker_engine.js?v=v18_cleanup_annual_tab"></script>
+  <script src="js/leaderboard_engine.js?v=v18_cleanup_annual_tab"></script>
+  <script src="js/tournament_app.js?v=v18_cleanup_annual_tab"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -818,17 +842,9 @@
       app.render = function() {
         origRender();
 
-        const mobLb = document.getElementById("mobileLeaderboardBody");
-        const dtLb = document.getElementById("leaderboardBody");
-        if (mobLb && dtLb) mobLb.innerHTML = dtLb.innerHTML;
-
         const mobRoster = document.getElementById("mobileRosterTableBody");
         const dtRoster = document.getElementById("rosterTableBody");
         if (mobRoster && dtRoster) mobRoster.innerHTML = dtRoster.innerHTML;
-
-        const mobPodium = document.getElementById("mobileCoffeeCouponPodium");
-        const dtPodium = document.getElementById("coffeeCouponPodium");
-        if (mobPodium && dtPodium) mobPodium.innerHTML = dtPodium.innerHTML;
 
         // Render mobile court cards
         const mobCourts = document.getElementById("mobileCourtsContainer");
