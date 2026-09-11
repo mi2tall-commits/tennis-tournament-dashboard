@@ -10,28 +10,28 @@ class LeaderboardEngine {
   constructor() {
     this.seasonStorageKey = "tennis_season_tournaments_v2";
     this.bookingStorageKey = "tennis_court_bookings_v2";
+    this.leagueCumulativeKey = "tennis_league_cumulative_stats_v2";
     this.previousRanks = {};
   }
 
   /**
-   * 실시간 개인 리그전 순위표 산출
+   * 🏆 운영진 리셋 전까지 누적되는 리그전 누적 전적 가져오기
    */
-  calculateIndividualLeaderboard(matches, players, pointsRule = { win: 3, draw: 1, loss: 0 }) {
-    const stats = {};
+  getLeagueCumulativeStats() {
+    try {
+      const data = localStorage.getItem(this.leagueCumulativeKey);
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch(e) {}
+    return {};
+  }
 
-    players.forEach(p => {
-      stats[p.name] = {
-        name: p.name,
-        played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        points: 0,
-        gamesWon: 0,
-        gamesLost: 0,
-        diff: 0
-      };
-    });
+  /**
+   * 🏆 대회가 공식 종료될 때 리그전 경기 결과를 영구 누적치에 합산 커밋
+   */
+  commitTournamentToLeague(matches, pointsRule = { win: 3, draw: 1, loss: 0 }) {
+    const cumulative = this.getLeagueCumulativeStats();
 
     (matches || []).forEach(m => {
       if (m.status !== "finished" || m.scoreA === null || m.scoreB === null) return;
@@ -42,29 +42,129 @@ class LeaderboardEngine {
       const teamB = m.teamB || [];
 
       teamA.forEach(name => {
-        if (!stats[name]) {
-          stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
+        if (!cumulative[name]) {
+          cumulative[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
         }
-        stats[name].played++;
-        stats[name].gamesWon += sA;
-        stats[name].gamesLost += sB;
-        if (sA > sB) { stats[name].wins++; stats[name].points += pointsRule.win; }
-        else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
-        else { stats[name].losses++; stats[name].points += pointsRule.loss; }
+        cumulative[name].played++;
+        cumulative[name].gamesWon += sA;
+        cumulative[name].gamesLost += sB;
+        if (sA > sB) { cumulative[name].wins++; cumulative[name].points += pointsRule.win; }
+        else if (sA === sB) { cumulative[name].draws++; cumulative[name].points += pointsRule.draw; }
+        else { cumulative[name].losses++; cumulative[name].points += pointsRule.loss; }
       });
 
       teamB.forEach(name => {
-        if (!stats[name]) {
-          stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
+        if (!cumulative[name]) {
+          cumulative[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
         }
-        stats[name].played++;
-        stats[name].gamesWon += sB;
-        stats[name].gamesLost += sA;
-        if (sB > sA) { stats[name].wins++; stats[name].points += pointsRule.win; }
-        else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
-        else { stats[name].losses++; stats[name].points += pointsRule.loss; }
+        cumulative[name].played++;
+        cumulative[name].gamesWon += sB;
+        cumulative[name].gamesLost += sA;
+        if (sB > sA) { cumulative[name].wins++; cumulative[name].points += pointsRule.win; }
+        else if (sA === sB) { cumulative[name].draws++; cumulative[name].points += pointsRule.draw; }
+        else { cumulative[name].losses++; cumulative[name].points += pointsRule.loss; }
       });
     });
+
+    Object.values(cumulative).forEach(s => {
+      s.diff = (s.gamesWon || 0) - (s.gamesLost || 0);
+    });
+
+    try {
+      localStorage.setItem(this.leagueCumulativeKey, JSON.stringify(cumulative));
+    } catch(e) {}
+    return cumulative;
+  }
+
+  /**
+   * 🔄 운영진이 [순위 리셋]을 실행할 때만 누적 리그전 데이터 완전 초기화
+   */
+  resetLeagueCumulativeStats() {
+    try {
+      localStorage.removeItem(this.leagueCumulativeKey);
+    } catch(e) {}
+    this.previousRanks = {};
+  }
+
+  /**
+   * 🏆 개인 리그전 누적 순위표 산출
+   * - isCurrentLeague = true: 현재 진행 중인 대회의 실시간 스코어도 합산
+   * - isCommitted = true: 이미 대회가 종료되어 누적 데이터에 반영 완료된 상태 (중복 합산 방지)
+   * - isCurrentLeague = false: 친선/이벤트전이므로 현재 경기는 제외하고 과거 누적치만 표출
+   */
+  calculateIndividualLeaderboard(matches, players, isCurrentLeague = true, isCommitted = false, pointsRule = { win: 3, draw: 1, loss: 0 }) {
+    const stats = {};
+    const cumulative = this.getLeagueCumulativeStats();
+
+    // 1. 모든 활동 회원에 대해 과거 누적 기록 기본 세팅
+    players.forEach(p => {
+      const past = cumulative[p.name] || {};
+      stats[p.name] = {
+        name: p.name,
+        played: past.played || 0,
+        wins: past.wins || 0,
+        draws: past.draws || 0,
+        losses: past.losses || 0,
+        points: past.points || 0,
+        gamesWon: past.gamesWon || 0,
+        gamesLost: past.gamesLost || 0,
+        diff: past.diff || 0
+      };
+    });
+
+    // 1-1. 누적 데이터에 존재하는 모든 선수(게스트 및 이전 참가자 포함) 기본 세팅
+    Object.keys(cumulative).forEach(name => {
+      if (!stats[name]) {
+        const past = cumulative[name];
+        stats[name] = {
+          name: name,
+          played: past.played || 0,
+          wins: past.wins || 0,
+          draws: past.draws || 0,
+          losses: past.losses || 0,
+          points: past.points || 0,
+          gamesWon: past.gamesWon || 0,
+          gamesLost: past.gamesLost || 0,
+          diff: past.diff || 0
+        };
+      }
+    });
+
+    // 2. 현재 대회가 리그전 반영 대회이고, 아직 영구 누적치에 합산되지 않은 경우에만 실시간 진행 경기 점수 합산
+    if (isCurrentLeague && !isCommitted) {
+      (matches || []).forEach(m => {
+        if (m.status !== "finished" || m.scoreA === null || m.scoreB === null) return;
+
+        const sA = m.scoreA;
+        const sB = m.scoreB;
+        const teamA = m.teamA || [];
+        const teamB = m.teamB || [];
+
+        teamA.forEach(name => {
+          if (!stats[name]) {
+            stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
+          }
+          stats[name].played++;
+          stats[name].gamesWon += sA;
+          stats[name].gamesLost += sB;
+          if (sA > sB) { stats[name].wins++; stats[name].points += pointsRule.win; }
+          else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
+          else { stats[name].losses++; stats[name].points += pointsRule.loss; }
+        });
+
+        teamB.forEach(name => {
+          if (!stats[name]) {
+            stats[name] = { name, played: 0, wins: 0, draws: 0, losses: 0, points: 0, gamesWon: 0, gamesLost: 0, diff: 0 };
+          }
+          stats[name].played++;
+          stats[name].gamesWon += sB;
+          stats[name].gamesLost += sA;
+          if (sB > sA) { stats[name].wins++; stats[name].points += pointsRule.win; }
+          else if (sA === sB) { stats[name].draws++; stats[name].points += pointsRule.draw; }
+          else { stats[name].losses++; stats[name].points += pointsRule.loss; }
+        });
+      });
+    }
 
     Object.values(stats).forEach(s => {
       s.diff = s.gamesWon - s.gamesLost;

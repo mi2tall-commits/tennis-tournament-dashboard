@@ -162,14 +162,19 @@ class TournamentApp {
     const modeBadgeEl = document.getElementById("tournamentModeBadge");
     if (modeBadgeEl) {
       const mode = this.tournament.mode || "regular_individual";
-      if (mode === "event") {
-        modeBadgeEl.textContent = "🎉 이벤트 게임 (조별 랜덤 복식)";
+      const isLeague = this.tournament.isLeagueMatch !== false;
+
+      if (!isLeague) {
+        modeBadgeEl.textContent = "🎉 친선 / 이벤트전 (개인 리그 순위 미반영)";
+        modeBadgeEl.className = "mode-pill mode-event";
+      } else if (mode === "event") {
+        modeBadgeEl.textContent = "🎉 이벤트 게임 (조별 랜덤 복식 · 리그 반영)";
         modeBadgeEl.className = "mode-pill mode-event";
       } else if (mode === "regular_group") {
-        modeBadgeEl.textContent = "👥 정기전: 조별 대항전 (A~D 4개조)";
+        modeBadgeEl.textContent = "👥 정기전: 조별 대항전 (A~D 4개조 · 리그 반영)";
         modeBadgeEl.className = "mode-pill mode-group";
       } else {
-        modeBadgeEl.textContent = "👤 정기전: 개인 리그전 (전 경기 복식 · 개인 승점 누적)";
+        modeBadgeEl.textContent = "👤 정기전: 개인 리그전 (리그 순위 반영 · 승점 누적)";
         modeBadgeEl.className = "mode-pill mode-individual";
       }
     }
@@ -197,13 +202,30 @@ class TournamentApp {
       mobTabAnnualBtn.classList.toggle("active", this.leaderboardViewMode === "annual");
     }
 
-    // 2. Calculate Monthly Rankings
+    // 2. Calculate Cumulative League Rankings
     const activePlayers = this.memberManager.getActiveMembers();
+    const isLeague = this.tournament.isLeagueMatch !== false;
+    const isCommitted = !!this.tournament.leagueCommitted;
     const ranked = this.leaderboard.calculateIndividualLeaderboard(
       this.tournament.matches, 
       activePlayers, 
+      isLeague,
+      isCommitted,
       { win: this.tournament.pointsWin || 3, draw: this.tournament.pointsDraw || 1, loss: this.tournament.pointsLoss || 0 }
     );
+
+    // Update Subtitles regarding cumulative status
+    const deskSubtitle = document.getElementById("desktopLeaderboardSubtitle");
+    if (deskSubtitle) {
+      deskSubtitle.textContent = isLeague 
+        ? (this.tournament.status === "completed" ? "운영진 리셋 전까지 지속 누적 (대회 완료 커밋됨)" : "운영진 리셋 전까지 지속 누적 (현재 경기 실시간 합산 중)")
+        : "운영진 리셋 전까지 지속 누적 (현재 대회 미반영 · 이전 누적 유지)";
+    }
+    if (mobModeText) {
+      mobModeText.textContent = isLeague 
+        ? (this.tournament.status === "completed" ? "👤 리그전 누적 순위 (대회 완료 커밋됨 · 운영진 리셋 전까지 누적)" : "👤 리그전 반영 대회 진행 중 (실시간 합산 · 운영진 리셋 전까지 누적)")
+        : "👤 친선/이벤트전 (현재 경기 미반영 · 기존 누적 순위 유지)";
+    }
 
     let monthlyHtml = "";
     let mobMonthlyHtml = "";
@@ -289,27 +311,47 @@ class TournamentApp {
   }
 
   /**
-   * 🔄 개인 리그전 순위 리셋 (사용자 요청 #5)
-   * - 당월 대회 경기 스코어를 초기화하여 처음부터 다시 랭킹 산출
-   * - 연간 누적 랭킹은 안전하게 보존
+   * 🔄 개인 리그전 순위 리셋
+   * - 운영진 전용 (PIN 1234 검증)
+   * - 운영진 리셋 전까지 누적된 리그전 전체 데이터(승점/전적)를 0으로 초기화
+   * - 연간 누적 랭킹 및 대회 내역 보관함은 안전하게 보존
    */
   resetCurrentLeague() {
-    if (!confirm("⚠️ [개인 리그전 순위 리셋]\n\n이번 대회의 경기 스코어와 순위표를 초기화하시겠습니까?\n(연간 종합 랭킹 데이터는 안전하게 보존됩니다)")) {
+    if (this.appMode !== "staff") {
+      const pin = prompt("🔐 개인 리그전 순위를 리셋하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
+      if (pin === null) return;
+      if (pin.trim() !== this.staffPin) {
+        alert("❌ PIN 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      this.appMode = "staff";
+      try {
+        localStorage.setItem("tennis_app_mode", this.appMode);
+      } catch(e) {}
+      this.applyAppModeUi();
+    }
+
+    if (!confirm("⚠️ [개인 리그전 순위 리셋]\n\n운영진 리셋 전까지 누적된 개인 리그전 전체 승점과 전적을 초기화하시겠습니까?\n\n(※ 연간 종합 랭킹과 보관된 대회 내역은 안전하게 보존됩니다)")) {
       return;
     }
 
+    // 1. 누적 리그전 저장소 완전 리셋
+    this.leaderboard.resetLeagueCumulativeStats();
+    this.leaderboard.resetIndividualRanks();
+
+    // 2. 현재 대회 경기 스코어도 대기 상태로 초기화
     (this.tournament.matches || []).forEach(m => {
       m.scoreA = null;
       m.scoreB = null;
       m.tieBreak = null;
       m.status = "waiting";
     });
+    this.tournament.leagueCommitted = false;
 
-    this.leaderboard.resetIndividualRanks();
-    this.tournament.breakingNews = "개인 리그전 순위가 리셋되었습니다. 1경기부터 새롭게 시작합니다.";
+    this.tournament.breakingNews = "운영진에 의해 개인 리그전 누적 순위가 리셋되었습니다. 1경기부터 새롭게 시작합니다.";
     this.saveTournament();
     this.render();
-    alert("✅ 개인 리그전 순위가 성공적으로 리셋되었습니다. 새로운 경기를 진행해주세요!");
+    alert("✅ 개인 리그전 누적 순위가 성공적으로 리셋되었습니다!");
   }
 
   renderNewsTicker() {
@@ -819,7 +861,14 @@ class TournamentApp {
     }
 
     const activePlayers = this.memberManager.getActiveMembers();
-    const finalRanks = this.leaderboard.calculateIndividualLeaderboard(this.tournament.matches, activePlayers);
+    const isLeague = this.tournament.isLeagueMatch !== false;
+    const finalRanks = this.leaderboard.calculateIndividualLeaderboard(
+      this.tournament.matches, 
+      activePlayers, 
+      isLeague, 
+      false, 
+      { win: this.tournament.pointsWin || 3, draw: this.tournament.pointsDraw || 1, loss: this.tournament.pointsLoss || 0 }
+    );
     const top1 = finalRanks[0] ? finalRanks[0].name : "-";
     const top2 = finalRanks[1] ? finalRanks[1].name : "-";
     const top3 = finalRanks[2] ? finalRanks[2].name : "-";
@@ -830,11 +879,12 @@ class TournamentApp {
       date: this.tournament.date || new Date().toISOString().slice(0, 10),
       mode: this.tournament.mode || "regular_individual",
       status: "completed",
+      isLeagueMatch: isLeague,
       matchesCount: (this.tournament.matches || []).filter(m => m.status === "finished").length,
       firstPlace: top1,
       secondPlace: top2,
       thirdPlace: top3,
-      summary: `${this.tournament.title} 공식 완료: 우승 ${top1}, 준우승 ${top2}, 3위 ${top3}.`,
+      summary: `${this.tournament.title} 공식 완료: 우승 ${top1}, 준우승 ${top2}, 3위 ${top3}. (${isLeague ? "리그 순위 반영" : "친선전 미반영"})`,
       ranks: finalRanks.slice(0, 10)
     };
 
@@ -843,6 +893,15 @@ class TournamentApp {
 
     // Save snapshot to Season Cumulative storage
     this.leaderboard.saveTournamentToSeason(this.tournament, finalRanks);
+
+    // 🏆 If this tournament is a League tournament, commit match results to persistent leagueCumulativeKey!
+    if (isLeague && !this.tournament.leagueCommitted) {
+      this.leaderboard.commitTournamentToLeague(
+        this.tournament.matches,
+        { win: this.tournament.pointsWin || 3, draw: this.tournament.pointsDraw || 1, loss: this.tournament.pointsLoss || 0 }
+      );
+      this.tournament.leagueCommitted = true;
+    }
 
     this.tournament.status = "completed";
     this.tournament.breakingNews = `[대회 공식 종료] ${this.tournament.title}가 성황리에 종료되었습니다! 🥇 우승: ${top1}`;
@@ -880,47 +939,78 @@ class TournamentApp {
       return;
     }
 
-    // 3. 대회 명칭 입력 (안전한 기본값 제공)
+    // 3. 새 대회 전용 모달 열기 및 기본값 세팅
     const now = new Date();
     const defaultTitle = `${now.getFullYear()}년 ${now.getMonth() + 1}월 정기대회`;
-    const newTitle = prompt("🏆 새로운 대회 공식 명칭을 입력하세요:", defaultTitle);
-    if (!newTitle || !newTitle.trim()) {
-      return; // 사용자가 취소했거나 빈 값 입력 시 안전 종료
-    }
+    const titleInput = document.getElementById("newTourneyTitleInput");
+    const dateInput = document.getElementById("newTourneyDateInput");
+    const timeInput = document.getElementById("newTourneyStartTimeInput");
+    const radYes = document.getElementById("radNewTourneyLeagueYes");
+    const radNo = document.getElementById("radNewTourneyLeagueNo");
 
-    // 4. 새 대회 객체 초기화 (데이터 무결성 보장)
-    this.tournament.title = newTitle.trim();
-    this.tournament.date = now.toISOString().slice(0, 10);
-    this.tournament.startTime = "08:00";
-    this.tournament.gameDuration = 40;
-    this.tournament.courts = ["15번", "16번", "17번", "18번"];
-    this.tournament.status = "ongoing";
-    this.tournament.timeSlots = this.matchmaker.generateTimeSlots("08:00", 40, 5);
-    this.tournament.matches = [];
-    this.tournament.isMasterReset = true; // 새로고침 시 데모 데이터 덮어쓰기 방지
-    this.tournament.breakingNews = `[공식 개막] ${this.tournament.title}가 공식 시작되었습니다! 전 코트 경기 배정 가능.`;
+    if (titleInput) titleInput.value = defaultTitle;
+    if (dateInput) dateInput.value = now.toISOString().slice(0, 10);
+    if (timeInput) timeInput.value = "08:00";
+    if (radYes) radYes.checked = true;
+    if (radNo) radNo.checked = false;
 
-    // 5. 당월 개인 순위표 리셋 (연간 누적 랭킹은 안전하게 보존됨)
+    this.showModal("newTournamentModal");
+  }
+
+  confirmCreateNewTournament() {
+    const titleInput = document.getElementById("newTourneyTitleInput");
+    const dateInput = document.getElementById("newTourneyDateInput");
+    const timeInput = document.getElementById("newTourneyStartTimeInput");
+    const radYes = document.getElementById("radNewTourneyLeagueYes");
+
+    const now = new Date();
+    const newTitle = (titleInput && titleInput.value.trim()) || `${now.getFullYear()}년 ${now.getMonth() + 1}월 정기대회`;
+    const newDate = (dateInput && dateInput.value) || now.toISOString().slice(0, 10);
+    const newStartTime = (timeInput && timeInput.value) || "08:00";
+    const isLeague = radYes ? radYes.checked : true;
+
+    // 새 대회 객체 초기화 (데이터 무결성 보장: 역대 대회 history 보존, 누적 리그 기록 보존)
+    const existingHistory = (this.tournament && this.tournament.history) || [];
+    this.tournament = {
+      id: "tourney_" + Date.now(),
+      title: newTitle,
+      date: newDate,
+      startTime: newStartTime,
+      gameDuration: 40,
+      courts: ["15번", "16번", "17번", "18번"],
+      status: "ongoing",
+      isLeagueMatch: isLeague,
+      leagueCommitted: false,
+      timeSlots: this.matchmaker.generateTimeSlots(newStartTime, 40, 5),
+      matches: [],
+      history: existingHistory,
+      isMasterReset: true,
+      breakingNews: `[공식 개막] ${newTitle}가 공식 개막되었습니다! (${isLeague ? "🏆 개인 리그전 승점 누적" : "✕ 친선/이벤트전 - 리그 미반영"})`
+    };
+
+    // 개인 순위 변동 캐시만 정리 (누적 승점/전적은 LeaderboardEngine에 안전 보존)
     if (this.leaderboard && typeof this.leaderboard.resetIndividualRanks === "function") {
       this.leaderboard.resetIndividualRanks();
     }
 
-    // 6. 개인 필터 초기화
+    // 개인 필터 초기화
     this.selectedPlayerFilter = "";
 
-    // 7. 로컬스토리지 영구 저장 및 모달 정리
+    // 로컬스토리지 영구 저장 및 모달 정리
     this.saveTournament();
+    this.closeModal("newTournamentModal");
     this.closeModal("historyModal");
 
-    // 8. 전체 UI 뷰 안전 리렌더링
+    // 전체 UI 뷰 안전 리렌더링
     this.render();
     this.renderHistoryTab();
     this.renderTimeline();
 
-    // 9. 완료 안내 메시지
+    // 완료 안내 메시지
     alert(
       `🎾 새로운 대회 [${this.tournament.title}]가 성공적으로 시작되었습니다!\n\n` +
-      `타임라인 코트의 [+ 배정] 칸을 터치하거나 상단 [⚙️ 대진 편성] 버튼을 눌러 새 대진표를 작성하세요.`
+      `• 리그전 반영: ${isLeague ? "🏆 개인 리그전 순위표 반영 (승점 누적)" : "✕ 친선/이벤트전 (개인 리그 순위 미반영)"}\n` +
+      `• 코트 배정: 타임라인 코트의 [+ 배정] 칸을 터치하거나 상단 [⚙️ 대진 편성] 버튼을 눌러 새 대진표를 작성하세요.`
     );
   }
 
@@ -1758,6 +1848,10 @@ class TournamentApp {
     document.getElementById("setTourneyTitle").value = this.tournament.title;
     document.getElementById("setTourneyDate").value = this.tournament.date || "";
     document.getElementById("setTourneyMode").value = this.tournament.mode || "regular_individual";
+    const leagueSelect = document.getElementById("setTourneyIsLeague");
+    if (leagueSelect) {
+      leagueSelect.value = this.tournament.isLeagueMatch !== false ? "true" : "false";
+    }
     this.showModal("settingsModal");
   }
 
@@ -1765,6 +1859,10 @@ class TournamentApp {
     this.tournament.title = document.getElementById("setTourneyTitle").value.trim() || "월례회 대회";
     this.tournament.date = document.getElementById("setTourneyDate").value;
     this.tournament.mode = document.getElementById("setTourneyMode").value;
+    const leagueSelect = document.getElementById("setTourneyIsLeague");
+    if (leagueSelect) {
+      this.tournament.isLeagueMatch = leagueSelect.value === "true";
+    }
     this.saveTournament();
     this.closeModal("settingsModal");
     this.render();
@@ -1790,8 +1888,14 @@ class TournamentApp {
       courtBookings: [],
       history: [],
       status: "ready",
+      isLeagueMatch: true,
+      leagueCommitted: false,
       isMasterReset: true
     };
+
+    if (this.leaderboard && typeof this.leaderboard.resetLeagueCumulativeStats === "function") {
+      this.leaderboard.resetLeagueCumulativeStats();
+    }
 
     this.tournament = cleanTournament;
     try {

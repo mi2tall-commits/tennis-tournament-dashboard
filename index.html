@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=v19_staff_new_tournament">
+  <link rel="stylesheet" href="styles.css?v=v20_cumulative_league_option">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -142,16 +142,16 @@
 
     <!-- Bottom Stadium Row: Dual Simultaneous Leaderboards (Monthly League Left, Annual Season Right) -->
     <div class="stadium-bottom-grid">
-      <!-- Left: Real-time Monthly League Leaderboard -->
+      <!-- Left: Real-time Cumulative League Leaderboard -->
       <section class="panel-card">
         <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <div class="panel-title" style="color:var(--neon-gold);">
             <span>🏆</span>
-            <span>당월 개인 리그전 실시간 순위</span>
+            <span>개인 리그전 순위표 (누적 승점)</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">승점 &gt; 득실차 &gt; 다득점</span>
-            <button id="btnResetLeagueUi" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
+            <span id="desktopLeaderboardSubtitle" style="font-size:11px; color:var(--text-muted); font-weight:700;">운영진 리셋 전까지 지속 누적</span>
+            <button id="btnResetLeagueUi" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="누적된 개인리그전 결과를 초기화하고 새로 시작합니다">
               <span>🔄</span>
               <span>순위 리셋</span>
             </button>
@@ -238,22 +238,22 @@
       </div>
     </section>
 
-    <!-- Tab 2: 순위보드 (모바일 듀얼 순위표: 당월 개인리그 & 연간 종합 랭킹) -->
+    <!-- Tab 2: 순위보드 (모바일 듀얼 순위표: 개인 리그전 & 연간 종합 랭킹) -->
     <section id="tab-leaderboard" class="mobile-view-section">
-      <!-- 1. 당월 정기전 개인 리그 순위표 -->
+      <!-- 1. 개인 리그전 누적 순위표 -->
       <div class="panel-card">
         <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
           <div class="panel-title" style="color:var(--neon-gold); font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;">
             <span>🏆</span>
-            <span>당월 정기전 개인 리그 순위표</span>
+            <span>개인 리그전 순위표 (누적 승점)</span>
           </div>
-          <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
+          <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="누적된 개인리그전 순위 리셋">
             <span>🔄</span>
             <span>순위 리셋</span>
           </button>
         </div>
-        <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
-          👤 복식 경기 개인별 실시간 승점 (승:3점 / 무:1점 / 패:0점)
+        <div id="mobLeaderboardModeText" style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
+          👤 리그전 반영 대회 전적 누적 (운영진 리셋 전까지 지속 누적)
         </div>
         <div class="leaderboard-table-wrap">
           <table class="leaderboard-table">
@@ -796,11 +796,78 @@
           </div>
         </div>
 
+        <div class="form-group" style="margin-top:8px;">
+          <label style="font-weight:700; color:#fbbf24;">개인 리그전 순위표 반영 여부</label>
+          <select id="setTourneyIsLeague" class="form-select">
+            <option value="true">🏆 개인 리그전에 반영 (정기 리그전 승점 누적)</option>
+            <option value="false">✕ 개인 리그전에 미반영 (친선 / 이벤트전)</option>
+          </select>
+          <span style="font-size:10px; color:var(--text-muted); margin-top:3px; display:block;">* 미반영 선택 시 해당 대회의 경기 결과는 개인 리그 순위표에 합산되지 않습니다.</span>
+        </div>
 
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('settingsModal')">취소</button>
         <button class="btn-primary" onclick="app.saveSettings()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Tournament Modal (새 대회 개막 전용 모달: 리그전 반영 여부 선택 필수) -->
+  <div id="newTournamentModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('newTournamentModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:15px; color:#34d399;">➕ 새로운 대회 개막</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('newTournamentModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-weight:700; color:#fff;">대회 공식 명칭</label>
+          <input type="text" id="newTourneyTitleInput" class="form-input" placeholder="예: 2026년 11월 정기대회">
+        </div>
+        <div class="form-row" style="margin-bottom: 14px;">
+          <div class="form-group">
+            <label style="font-weight:700; color:#fff;">대회 일자</label>
+            <input type="date" id="newTourneyDateInput" class="form-input">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; color:#fff;">최초 시작 시간</label>
+            <input type="time" id="newTourneyStartTimeInput" class="form-input" value="08:00">
+          </div>
+        </div>
+
+        <!-- 🌟 개인리그전 순위표 반영 여부 선택 (사용자 핵심 요구사항) -->
+        <div style="background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 800; color: #fbbf24; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+            <span>🏆</span> <span>개인 리그전 순위표 반영 여부 선택</span>
+          </div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.5; margin-bottom: 10px;">
+            이 대회의 경기 결과를 <b>[개인 리그전 순위표]</b>에 계속 누적 합산할지 선택합니다. (운영진 리셋 전까지 지속 누적)
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:8px 12px; border-radius:6px;">
+              <input type="radio" id="radNewTourneyLeagueYes" name="newTourneyLeagueOption" value="true" checked style="accent-color:#10b981;">
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#34d399;">✓ 개인 리그전에 반영 (정기 리그전)</div>
+                <div style="font-size:10px; color:#cbd5e1;">복식 경기 개인 승점이 기존 리그 순위표에 계속 누적됩니다.</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); padding:8px 12px; border-radius:6px;">
+              <input type="radio" id="radNewTourneyLeagueNo" name="newTourneyLeagueOption" value="false" style="accent-color:#94a3b8;">
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#cbd5e1;">✕ 개인 리그전에 미반영 (이벤트 / 친선 / 번외 경기)</div>
+                <div style="font-size:10px; color:#94a3b8;">개인 리그전 순위표에 영향을 주지 않고 당일 단독 경기만 진행합니다.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn-secondary" onclick="app.closeModal('newTournamentModal')">취소</button>
+        <button type="button" class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.confirmCreateNewTournament()">➕ 새 대회 공식 개막</button>
       </div>
     </div>
   </div>
@@ -840,11 +907,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v19_staff_new_tournament"></script>
-  <script src="js/member_manager.js?v=v19_staff_new_tournament"></script>
-  <script src="js/matchmaker_engine.js?v=v19_staff_new_tournament"></script>
-  <script src="js/leaderboard_engine.js?v=v19_staff_new_tournament"></script>
-  <script src="js/tournament_app.js?v=v19_staff_new_tournament"></script>
+  <script src="sample_tournament_data.js?v=v20_cumulative_league_option"></script>
+  <script src="js/member_manager.js?v=v20_cumulative_league_option"></script>
+  <script src="js/matchmaker_engine.js?v=v20_cumulative_league_option"></script>
+  <script src="js/leaderboard_engine.js?v=v20_cumulative_league_option"></script>
+  <script src="js/tournament_app.js?v=v20_cumulative_league_option"></script>
 
   <!-- Mobile View Syncer -->
   <script>
