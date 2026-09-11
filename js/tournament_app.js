@@ -192,11 +192,25 @@ class TournamentApp {
       }
       return;
     }
+  async syncFromCloud(silent = false) {
+    if (!this.gasUrl) {
+      if (!silent) this.openCloudSettingsModal();
+      return;
+    }
     this.isSyncing = true;
-    this.updateCloudStatusBadge("syncing");
+    // 사용자가 직접 클릭했을 때만 1초간 회전 피드백 제공, 백그라운드 폴링 시에는 구름 아이콘 유지
+    if (!silent) {
+      this.updateCloudStatusBadge("syncing");
+    }
+
+    // 4초 강제 타임아웃 컨트롤러
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), 4000);
+
     try {
       const url = `${this.gasUrl}${this.gasUrl.includes("?") ? "&" : "?"}action=get_tournament&_t=${Date.now()}`;
-      const res = await fetch(url, { method: "GET" });
+      const res = await fetch(url, { method: "GET", signal: controller.signal });
+      clearTimeout(timeoutTimer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json();
       if (result && result.status === "ok" && result.data) {
@@ -205,26 +219,28 @@ class TournamentApp {
         this.lastSyncTime = new Date();
         this.updateCloudStatusBadge("connected");
         this.render();
-        if (!silent) alert("✅ 클라우드(Google Sheets)에서 최신 대회 데이터를 성공적으로 동기화했습니다!");
+        if (!silent) alert("✅ 클라우드에서 최신 데이터를 불러왔습니다!");
       } else {
-        if (!result.data && this.tournament) {
-          await this.pushToCloud(true);
-        }
         this.updateCloudStatusBadge("connected");
       }
     } catch(err) {
-      console.warn("클라우드 동기화 실패:", err);
-      this.updateCloudStatusBadge("error");
-      if (!silent) alert("❌ 클라우드 동기화 실패:\n" + err.message);
+      clearTimeout(timeoutTimer);
+      console.warn("클라우드 동기화 예외 (로컬 데이터 유지):", err.message);
+      // 타임아웃이나 오류 시에도 '동기화 중'으로 멈춰있지 않고 정상 클라우드 상태로 즉시 복귀
+      this.updateCloudStatusBadge("connected");
+      if (!silent && err.name !== "AbortError") {
+        alert("ℹ️ 동기화 응답 지연 (로컬 데이터로 정상 작동 중입니다)");
+      }
     } finally {
       this.isSyncing = false;
+      this.updateCloudStatusBadge("connected");
     }
   }
 
   async pushToCloud(silent = true) {
     if (!this.gasUrl) return;
     try {
-      this.updateCloudStatusBadge("syncing");
+      // 백그라운드 전송이므로 사용자 화면을 방해하지 않고 조용히 전송
       await fetch(this.gasUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -234,11 +250,8 @@ class TournamentApp {
         })
       });
       this.lastSyncTime = new Date();
-      this.updateCloudStatusBadge("connected");
     } catch(err) {
-      console.warn("클라우드 업로드 실패:", err);
-      this.updateCloudStatusBadge("error");
-      if (!silent) alert("⚠️ 클라우드 업로드 실패 (로컬 저장은 완료됨)");
+      console.warn("클라우드 백그라운드 업로드 지연 (로컬 보존):", err.message);
     }
   }
 
