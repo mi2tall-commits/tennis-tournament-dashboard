@@ -30,11 +30,15 @@
           <span>📖</span>
           <span class="btn-text">매뉴얼</span>
         </a>
-        <button class="btn-header btn-action-mm" onclick="app.openMatchmakerModal()">
+        <button class="btn-header btn-mode-toggle" id="btnAppModeToggle" onclick="app.toggleAppMode()" title="일반 회원 뷰 / 경기이사 모드 전환">
+          <span>👤</span>
+          <span class="btn-text">회원 모드</span>
+        </button>
+        <button class="btn-header btn-action-mm staff-only" onclick="app.openMatchmakerModal()">
           <span>⚙️</span>
           <span class="btn-text">대진 편성</span>
         </button>
-        <button class="btn-header btn-action-finish btn-desktop-only" onclick="app.finishCurrentTournament()">
+        <button class="btn-header btn-action-finish btn-desktop-only staff-only" onclick="app.finishCurrentTournament()">
           <span>🏁</span>
           <span class="btn-text">대회 종료</span>
         </button>
@@ -54,7 +58,7 @@
           <span>🏆</span>
           <span class="btn-text">연간 랭킹</span>
         </button>
-        <button class="btn-header btn-desktop-only" id="btnToggleAudio" onclick="app.toggleAudio()">
+        <button class="btn-header btn-desktop-only staff-only" id="btnToggleAudio" onclick="app.toggleAudio()">
           <span>🔔</span>
           <span class="btn-text">알림음</span>
         </button>
@@ -62,7 +66,7 @@
           <span>📺</span>
           <span class="btn-text">전광판</span>
         </button>
-        <button class="btn-header" onclick="app.openSettingsModal()" title="환경 설정">
+        <button class="btn-header staff-only" onclick="app.openSettingsModal()" title="환경 설정">
           <span>🛠️</span>
           <span class="btn-text btn-desktop-only">설정</span>
         </button>
@@ -151,7 +155,7 @@
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; color:var(--text-muted); font-weight:700;">승점 &gt; 득실차 &gt; 다득점</span>
-            <button id="btnResetLeagueUi" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
+            <button id="btnResetLeagueUi" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="현재 진행 중인 개인리그전 결과를 초기화하고 새로 시작합니다">
               <span>🔄</span>
               <span>순위 리셋</span>
             </button>
@@ -215,6 +219,9 @@
   <div class="mobile-container">
     <!-- Tab 1: 코트 현황 (모바일 최우선 배치) -->
     <section id="tab-courts" class="mobile-view-section active">
+      <!-- Sticky "My Next Match" Quick Card (상단 고정 내 다음 경기 안내) -->
+      <div id="myNextMatchBannerMobile"></div>
+
       <!-- Quick Manual Access Banner -->
       <a href="manual.html" target="_blank" class="mobile-manual-quickbar" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(2, 132, 199, 0.15) 100%); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:7px 12px; margin-bottom:8px; text-decoration:none; color:#f8fafc;">
         <div style="display:flex; align-items:center; gap:8px;">
@@ -248,7 +255,7 @@
                 <span>👑 연간 랭킹</span>
               </button>
             </div>
-            <button id="mobBtnResetLeague" class="btn-reset-league" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
+            <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="개인리그전 순위 리셋">
               <span>🔄</span>
               <span>순위 리셋</span>
             </button>
@@ -299,10 +306,11 @@
 
     <!-- Tab 4: 커피쿠폰 & 예약 현황 (#6) -->
     <section id="tab-booking" class="mobile-view-section">
+      <button type="button" class="btn-subview-back" onclick="app.switchMobileTab('tab-more')">← 더보기 메뉴로 돌아가기</button>
       <div class="panel-card">
         <div class="panel-header">
           <div class="panel-title">☕ 월별 코트 예약 커피쿠폰</div>
-          <button class="btn-xs" style="background:#0284c7; font-weight:800; padding:5px 10px;" onclick="app.openCourtBookingModal()">⚙️ 예약 관리 &amp; 등록</button>
+          <button class="btn-xs staff-only" style="background:#0284c7; font-weight:800; padding:5px 10px;" onclick="app.openCourtBookingModal()">⚙️ 예약 관리 &amp; 등록</button>
         </div>
         <div class="podium-grid" id="mobileCoffeeCouponPodium" style="margin-top:10px;">
           <!-- Coffee coupon top 3 podium -->
@@ -316,13 +324,13 @@
       </div>
     </section>
 
-    
     <!-- Tab 6: 대회 내역 요약 (#3) -->
     <section id="tab-history" class="mobile-view-section">
+      <button type="button" class="btn-subview-back" onclick="app.switchMobileTab('tab-more')">← 더보기 메뉴로 돌아가기</button>
       <div class="panel-card">
         <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
           <div class="panel-title">📜 대회 내역 &amp; 명예의 전당</div>
-          <div style="display:flex; gap:4px;">
+          <div style="display:flex; gap:4px;" class="staff-only">
             <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800;" onclick="app.finishCurrentTournament()">🏁 현 대회 종료</button>
             <button class="btn-xs" style="background:#059669;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
           </div>
@@ -335,10 +343,14 @@
 
     <!-- Tab 5: 동호회 명단 -->
     <section id="tab-roster" class="mobile-view-section">
+      <button type="button" class="btn-subview-back" onclick="app.switchMobileTab('tab-more')">← 더보기 메뉴로 돌아가기</button>
       <div class="panel-card">
         <div class="panel-header">
           <div class="panel-title">👥 참가 회원 명단</div>
-          <div style="display:flex; gap:4px;"><button class="btn-xs" style="background:#059669;" onclick="app.syncOfficialRoster()">🔄 최신화</button><button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button></div>
+          <div style="display:flex; gap:4px;" class="staff-only">
+            <button class="btn-xs" style="background:#059669;" onclick="app.syncOfficialRoster()">🔄 최신화</button>
+            <button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button>
+          </div>
         </div>
         <div style="overflow-x: auto; margin-top: 8px;">
           <table class="leaderboard-table" style="font-size: 12px;">
@@ -359,37 +371,67 @@
         </div>
       </div>
     </section>
+
+    <!-- Tab 7: 더보기 메뉴 (커피쿠폰, 회원명단, 대회내역, 매뉴얼, 운영진 모드) -->
+    <section id="tab-more" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">⋯ 추가 메뉴 및 클럽 서비스</div>
+        </div>
+        <div class="more-menu-grid">
+          <div class="more-menu-card" onclick="app.switchMobileTab('tab-booking')">
+            <span class="more-card-icon">☕</span>
+            <span class="more-card-title">코트 예약 &amp; 커피쿠폰</span>
+            <span class="more-card-desc">월별 코트 대관 실적 및 1~3위 쿠폰 현황</span>
+          </div>
+          <div class="more-menu-card" onclick="app.switchMobileTab('tab-roster')">
+            <span class="more-card-icon">👥</span>
+            <span class="more-card-title">동호회 정회원 명부</span>
+            <span class="more-card-desc">전체 64명 회원 명단, 레벨, 직책</span>
+          </div>
+          <div class="more-menu-card" onclick="app.switchMobileTab('tab-history')">
+            <span class="more-card-icon">📜</span>
+            <span class="more-card-title">대회 내역 &amp; 명예의전당</span>
+            <span class="more-card-desc">역대 월례대회 순위 및 우승자 아카이브</span>
+          </div>
+          <a href="manual.html" target="_blank" class="more-menu-card">
+            <span class="more-card-icon">📖</span>
+            <span class="more-card-title">공식 웹앱 사용 매뉴얼</span>
+            <span class="more-card-desc">초보자 이용법, 스코어 입력, FAQ 안내</span>
+          </a>
+        </div>
+
+        <!-- 운영진/경기이사 모드 토글 카드 -->
+        <div style="margin-top: 14px; background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 13px; font-weight: 800; color: #fbbf24;">🛠️ 경기이사 / 운영진 전용 모드</div>
+            <div style="font-size: 11px; color: #94a3b8;">대진표 작성, 대회 종료, 순위 리셋 등 관리 도구</div>
+          </div>
+          <button type="button" class="btn-primary" id="btnMoreModeToggle" style="background:#d97706; font-size:11px; padding:6px 10px; font-weight:800;" onclick="app.toggleAppMode()">
+            모드 전환
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <!-- Mobile Bottom Navigation Bar (명확한 리그전 & 연간 랭킹 분리 #5) -->
+  <!-- Mobile Bottom Navigation Bar (회원 친화형 4대 핵심 탭) -->
   <nav class="mobile-nav-bar">
+    <button class="mobile-nav-btn" id="navBtnMyMatches" data-tab="tab-mymatches" onclick="app.switchMobileTab('tab-mymatches')">
+      <span class="nav-icon">📅</span>
+      <span>내 경기</span>
+    </button>
     <button class="mobile-nav-btn active" id="navBtnCourts" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
       <span class="nav-icon">📊</span>
       <span>코트</span>
     </button>
-    <button class="mobile-nav-btn" id="navBtnLeague" data-tab="tab-leaderboard" onclick="app.setLeaderboardMode('monthly'); app.switchMobileTab('tab-leaderboard')">
+    <button class="mobile-nav-btn" id="navBtnLeaderboard" data-tab="tab-leaderboard" onclick="app.switchMobileTab('tab-leaderboard')">
       <span class="nav-icon">🏆</span>
-      <span>개인리그</span>
+      <span>순위표</span>
     </button>
-    <button class="mobile-nav-btn" id="navBtnAnnual" data-tab="tab-annual-direct" onclick="app.setLeaderboardMode('annual'); app.switchMobileTab('tab-leaderboard')">
-      <span class="nav-icon">👑</span>
-      <span>연간랭킹</span>
-    </button>
-    <button class="mobile-nav-btn" data-tab="tab-mymatches" onclick="app.switchMobileTab('tab-mymatches')">
-      <span class="nav-icon">📅</span>
-      <span>내 경기</span>
-    </button>
-    <button class="mobile-nav-btn" data-tab="tab-booking" onclick="app.switchMobileTab('tab-booking')">
-      <span class="nav-icon">☕</span>
-      <span>커피쿠폰</span>
-    </button>
-    <button class="mobile-nav-btn" data-tab="tab-roster" onclick="app.switchMobileTab('tab-roster')">
-      <span class="nav-icon">👥</span>
-      <span>명단</span>
-    </button>
-    <button class="mobile-nav-btn" data-tab="tab-history" onclick="app.switchMobileTab('tab-history')">
-      <span class="nav-icon">📜</span>
-      <span>대회내역</span>
+    <button class="mobile-nav-btn" id="navBtnMore" data-tab="tab-more" onclick="app.switchMobileTab('tab-more')">
+      <span class="nav-icon">⋯</span>
+      <span>더보기</span>
     </button>
   </nav>
 
@@ -612,16 +654,72 @@
           </div>
         </div>
 
-        <div style="background: #111b33; border: 1px solid #233c6e; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">경기이사 수동 매치 배정</div>
-            <div style="font-size: 11px; color: #94a3b8;">설정을 적용한 뒤 코트/시간대 빈 슬롯을 클릭하여 선수를 직접 배치합니다.</div>
+        <div style="background: #111b33; border: 1px solid #233c6e; padding: 14px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">📝 대진표 수동 배정 마법사</div>
+              <div style="font-size: 11px; color: #94a3b8;">코트×시간 슬롯을 한눈에 보며 4인 복식을 직접 지정하거나 1차 초안을 추천받습니다.</div>
+            </div>
+            <button type="button" class="btn-primary" style="background: #0284c7; font-weight:800; padding: 8px 14px;" onclick="app.applyCourtScheduleSettings(true)">
+              📝 대진표 작성창 열기
+            </button>
           </div>
-          <button class="btn-primary" style="background: #059669;" onclick="app.applyCourtScheduleSettings()">설정 적용</button>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #1a2d50; padding-top: 8px;">
+            <button type="button" class="btn-secondary" style="font-size: 11px;" onclick="app.applyCourtScheduleSettings(false)">
+              💾 코트/시간표 설정만 저장
+            </button>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" onclick="app.closeModal('matchmakerModal')">닫기</button>
+        <button type="button" class="btn-secondary" onclick="app.closeModal('matchmakerModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.1. Manual Match Builder Modal (대진표 수동 배정 및 일괄 편집기) -->
+  <div id="manualMatchBuilderModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 960px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('manualMatchBuilderModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:15px;">📝 대진표 수동 배정 &amp; 편집기</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('manualMatchBuilderModal')">✕ 닫기</button>
+      </div>
+
+      <div class="manual-builder-toolbar">
+        <div class="builder-stats">
+          <span>출전 가능 선수: <b id="builderActiveCount">0명</b></span>
+          <span class="toolbar-sep">|</span>
+          <span>편성 완료 경기: <b id="builderMatchCount">0경기</b></span>
+        </div>
+        <div class="builder-actions">
+          <button type="button" class="btn-builder-tool" onclick="app.autoFillManualDraft()" title="출전 선수 레벨과 경기 수를 고려하여 빈 슬롯을 자동으로 균형 있게 채웁니다.">
+            ⚡ 1차 초안 자동 추천 채우기
+          </button>
+          <button type="button" class="btn-builder-tool danger" onclick="app.clearAllMatchesPrompt()">
+            🗑️ 전체 슬롯 비우기
+          </button>
+        </div>
+      </div>
+
+      <div class="builder-guide-banner">
+        💡 각 코트/시간대별로 팀A(2명) vs 팀B(2명)를 선택하세요. 같은 시간대에 중복 배정된 선수가 있으면 <span style="color:#ef4444; font-weight:800;">⚠️[중복]</span>으로 표시됩니다.
+      </div>
+
+      <div class="modal-body" id="manualBuilderBody" style="flex: 1; overflow-y: auto; padding: 12px;">
+        <!-- Populated dynamically by app.renderManualMatchBuilder() -->
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div id="builderCollisionNotice" style="font-size: 12px; font-weight: 700;"></div>
+        <div style="display:flex; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="app.closeModal('manualMatchBuilderModal')">취소</button>
+          <button type="button" class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.saveManualMatches()">
+            ✅ 대진표 확정 및 전광판 반영
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -810,11 +908,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v16_manual_header_fix"></script>
-  <script src="js/member_manager.js?v=v16_manual_header_fix"></script>
-  <script src="js/matchmaker_engine.js?v=v16_manual_header_fix"></script>
-  <script src="js/leaderboard_engine.js?v=v16_manual_header_fix"></script>
-  <script src="js/tournament_app.js?v=v16_manual_header_fix"></script>
+  <script src="sample_tournament_data.js?v=v17_manual_matchmaker_pin"></script>
+  <script src="js/member_manager.js?v=v17_manual_matchmaker_pin"></script>
+  <script src="js/matchmaker_engine.js?v=v17_manual_matchmaker_pin"></script>
+  <script src="js/leaderboard_engine.js?v=v17_manual_matchmaker_pin"></script>
+  <script src="js/tournament_app.js?v=v17_manual_matchmaker_pin"></script>
 
   <!-- Mobile View Syncer -->
   <script>

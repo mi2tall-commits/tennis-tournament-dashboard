@@ -1807,3 +1807,321 @@ body.force-stadium-mode .dashboard-container {
   background: #dc2626;
   color: #fff;
 }
+
+/* ==============================================================================
+   🌟 Member Mode vs Staff Mode Separation (일반 회원 모드 & 경기이사 모드 분리)
+   ============================================================================== */
+body.mode-member .staff-only {
+  display: none !important;
+}
+
+.btn-mode-toggle {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+.btn-mode-toggle:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #fbbf24;
+}
+body.mode-staff .btn-mode-toggle {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+/* ==============================================================================
+   📝 Manual Match Builder Modal (대진표 수동 배정 마법사 전용 스타일)
+   ============================================================================== */
+.manual-builder-toolbar {
+  background: #0d172e;
+  border-bottom: 1px solid #1e3358;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.builder-stats {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.builder-stats b {
+  color: var(--neon-cyan);
+}
+.toolbar-sep {
+  color: #334155;
+}
+.builder-actions {
+  display: flex;
+  gap: 6px;
+}
+.btn-builder-tool {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-builder-tool:hover {
+  background: #334155;
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+.btn-builder-tool.danger {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.btn-builder-tool.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+.builder-guide-banner {
+  background: rgba(56, 189, 248, 0.08);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #38bdf8;
+  line-height: 1.4;
+}
+.builder-slot-section {
+  background: #090f1d;
+  border: 1px solid #1a2c4e;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.builder-slot-header {
+  background: #111d38;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1a2c4e;
+}
+.builder-slot-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--neon-gold);
+}
+.builder-slot-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.builder-courts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+.builder-court-card {
+  background: #0e172a;
+  border: 1px solid #1e3358;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.builder-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 4px;
+}
+.builder-court-pill {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.builder-match-num {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.btn-clear-court-slot {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.btn-clear-court-slot:hover {
+  color: #f87171;
+  text-decoration: underline;
+}
+.builder-teams-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.builder-team-box {
+  background: #090e1a;
+  border: 1px solid #16243f;
+  border-radius: 4px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.team-tag {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.team-a-tag { color: var(--neon-cyan); }
+.team-b-tag { color: #f87171; }
+.team-avg {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.builder-vs-center {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #475569;
+  letter-spacing: 1px;
+  margin: -2px 0;
+}
+.builder-select {
+  font-size: 11px;
+  padding: 4px 6px;
+  height: 28px;
+  background: #0e1726;
+  border: 1px solid #1e3358;
+  color: #f8fafc;
+}
+.builder-select.collision-alert {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+/* ==============================================================================
+   📱 Simplified Mobile 4-Tab & More Menu (모바일 4대 탭 및 더보기 서브뷰)
+   ============================================================================== */
+.more-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.more-menu-card {
+  background: #091224;
+  border: 1px solid #1e3358;
+  border-radius: 8px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.more-menu-card:hover, .more-menu-card:active {
+  background: #111e3b;
+  border-color: var(--neon-cyan);
+  transform: translateY(-2px);
+}
+.more-card-icon {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+.more-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+.more-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.btn-subview-back {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-subview-back:hover {
+  background: #334155;
+}
+
+/* ==============================================================================
+   🎾 Sticky "My Next Match" Quick Card (상단 고정 내 경기 안내 카드)
+   ============================================================================== */
+.my-next-match-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.15) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.my-next-match-card:hover {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(56, 189, 248, 0.25) 100%);
+}
+.my-next-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.my-next-details {
+  font-size: 13px;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+.my-next-details b {
+  color: var(--neon-gold);
+}
+.my-next-vs {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: 6px;
+}
+.my-next-arrow {
+  font-size: 11px;
+  color: var(--neon-cyan);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
