@@ -146,7 +146,6 @@ class TournamentApp {
     this.renderMyMatchesView();
     this.renderMyNextMatchBanner();
     this.renderRosterTable();
-    this.renderBookingTable();
     this.renderHistoryTab();
     this.renderQrCode();
   }
