@@ -7,12 +7,18 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=20261018_v99">
+  <link rel="stylesheet" href="styles.css?v=20261018_v100">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     /* 🛡️ 강제 컴팩트 아이콘 모드 (캐시 우회용 인라인 가드) */
+    .btn-cloud-sync {
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      cursor: pointer;
+    }
     .cloud-status-badge {
       width: 32px !important;
       max-width: 32px !important;
@@ -30,7 +36,7 @@
     }
   </style>
 </head>
-<body>
+<body class="mode-member">
 
   <!-- ==========================================
        Top Header
@@ -49,10 +55,6 @@
       <div class="header-controls">
         <button class="btn-header btn-cloud-sync" id="btnCloudSync" onclick="app.syncFromCloud(false)" title="Google Sheets 클라우드 동기화">
           <span id="cloudSyncBadge" class="cloud-status-badge badge-cloud-connected" title="☁️ 클라우드 연결됨">☁️</span>
-        </button>
-        <button class="btn-header staff-only" onclick="app.openCloudSettingsModal()" title="Google Apps Script 클라우드 연동 설정">
-          <span>☁️</span>
-          <span class="btn-text btn-desktop-only">클라우드 설정</span>
         </button>
         <a href="manual.html" target="_blank" class="btn-header btn-manual-top" title="웹앱 공식 사용 매뉴얼">
           <span>📖</span>
@@ -838,6 +840,11 @@
           <span style="font-size:10px; color:var(--text-muted); margin-top:3px; display:block;">* 미반영 선택 시 해당 대회의 경기 결과는 개인 리그 순위표에 합산되지 않습니다.</span>
         </div>
 
+        <div class="form-group" style="margin-top:12px; padding-top:10px; border-top:1px solid #1e3358;">
+          <label style="font-weight:700; color:var(--neon-cyan);">☁️ Google Sheets 클라우드 동기화</label>
+          <button type="button" class="btn-secondary" style="width:100%; font-size:12px; margin-top:4px;" onclick="app.closeModal('settingsModal'); app.openCloudSettingsModal();">☁️ 클라우드 동기화 설정 (URL 변경/연결 테스트)</button>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" onclick="app.closeModal('settingsModal')">취소</button>
@@ -939,71 +946,12 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v99) -->
-  <script src="sample_tournament_data.js?v=20261018_v99"></script>
-  <script src="js/member_manager.js?v=20261018_v99"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v99"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v99"></script>
-  <script src="js/tournament_app.js?v=20261018_v99"></script>
-
-  <!-- Mobile View Syncer -->
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      const origRender = app.render.bind(app);
-      app.render = function() {
-        origRender();
-
-        const mobRoster = document.getElementById("mobileRosterTableBody");
-        const dtRoster = document.getElementById("rosterTableBody");
-        if (mobRoster && dtRoster) mobRoster.innerHTML = dtRoster.innerHTML;
-
-        // Render mobile court cards
-        const mobCourts = document.getElementById("mobileCourtsContainer");
-        if (mobCourts) {
-          let html = "";
-          const matches = app.tournament.matches || [];
-          if (matches.length === 0) {
-            mobCourts.innerHTML = `
-              <div style="text-align:center; padding:36px 16px; background:#0e1726; border-radius:8px; border:1px dashed #1e3358;">
-                <div style="font-size:36px; margin-bottom:10px;">🎾</div>
-                <div style="font-weight:800; font-size:15px; color:#fff;">현재 진행 중인 경기가 없습니다</div>
-                <div style="font-size:12px; color:#94a3b8; margin-top:6px;">상단 <b>[⚙️ 대진 편성]</b> 버튼을 터치하여 새 대진표를 생성하세요.</div>
-              </div>
-            `;
-          } else {
-            matches.forEach(m => {
-            const slot = (app.tournament.timeSlots || [])[m.timeSlotIndex] || { start: "-", end: "-" };
-            const statusText = app.getStatusText(m.status);
-            const teamAStr = (m.teamA || []).join(", ");
-            const teamBStr = (m.teamB || []).join(", ");
-            const scoreStr = m.scoreA !== null && m.scoreB !== null ? `${m.scoreA} : ${m.scoreB}` : "- : -";
-            const tieBreakStr = m.tieBreak ? `(${m.tieBreak})` : "";
-
-            html += `
-              <div class="match-card" style="margin-bottom: 8px;" onclick="app.openScoreModal('${m.id}')">
-                <div class="match-card-top">
-                  <span class="match-no" style="color:var(--neon-cyan);">${m.court} 코트 #${m.matchNo} (${slot.start}~${slot.end})</span>
-                  <span class="match-status-badge status-${m.status}">${statusText}</span>
-                </div>
-                <div class="match-players" style="font-size: 13px; margin: 6px 0;">
-                  <span style="color:#fff;">${app.escape(teamAStr)}</span>
-                  <span style="color:var(--text-muted); font-size:10px;"> vs </span>
-                  <span style="color:#fff;">${app.escape(teamBStr)}</span>
-                </div>
-                <div class="match-score-row">
-                  <span class="score-label">스코어</span>
-                  <div class="score-box">${scoreStr} <span class="tiebreak-tag">${tieBreakStr}</span></div>
-                </div>
-              </div>
-            `;
-          });
-          mobCourts.innerHTML = html;
-          }
-        }
-      };
-      app.render();
-    });
-  </script>
+  <!-- Scripts (Cache Buster v100) -->
+  <script src="sample_tournament_data.js?v=20261018_v100"></script>
+  <script src="js/member_manager.js?v=20261018_v100"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v100"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v100"></script>
+  <script src="js/tournament_app.js?v=20261018_v100"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">

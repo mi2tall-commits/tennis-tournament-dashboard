@@ -187,13 +187,6 @@ class TournamentApp {
 
   async syncFromCloud(silent = false) {
     if (!this.gasUrl) {
-      if (!silent) {
-        this.openCloudSettingsModal();
-      }
-      return;
-    }
-  async syncFromCloud(silent = false) {
-    if (!this.gasUrl) {
       if (!silent) this.openCloudSettingsModal();
       return;
     }
@@ -416,6 +409,7 @@ class TournamentApp {
     this.renderBreakingBanner();
     this.renderMyMatchesView();
     this.renderMyNextMatchBanner();
+    this.renderMobileCourts();
     this.renderRosterTable();
     this.renderHistoryTab();
     this.renderQrCode();
@@ -731,6 +725,52 @@ class TournamentApp {
     }
   }
 
+  renderMobileCourts() {
+    const mobCourts = document.getElementById("mobileCourtsContainer");
+    if (!mobCourts) return;
+
+    const matches = (this.tournament && this.tournament.matches) || [];
+    if (matches.length === 0) {
+      mobCourts.innerHTML = `
+        <div style="text-align:center; padding:36px 16px; background:#0e1726; border-radius:8px; border:1px dashed #1e3358;">
+          <div style="font-size:36px; margin-bottom:10px;">🎾</div>
+          <div style="font-weight:800; font-size:15px; color:#fff;">현재 진행 중인 경기가 없습니다</div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">상단 <b>[⚙️ 대진 편성]</b> 버튼을 터치하여 새 대진표를 생성하세요.</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+    matches.forEach(m => {
+      const slot = (this.tournament.timeSlots || [])[m.timeSlotIndex] || { start: "-", end: "-" };
+      const statusText = this.getStatusText(m.status);
+      const teamAStr = (m.teamA || []).map(p => this.formatPlayerName(p)).join(", ");
+      const teamBStr = (m.teamB || []).map(p => this.formatPlayerName(p)).join(", ");
+      const scoreStr = m.scoreA !== null && m.scoreB !== null ? `${m.scoreA} : ${m.scoreB}` : "- : -";
+      const tieBreakStr = m.tieBreak ? `(${m.tieBreak})` : "";
+
+      html += `
+        <div class="match-card" style="margin-bottom: 8px;" onclick="app.openScoreModal('${m.id}')">
+          <div class="match-card-top">
+            <span class="match-no" style="color:var(--neon-cyan);">${m.court} 코트 #${m.matchNo} (${slot.start}~${slot.end})</span>
+            <span class="match-status-badge status-${m.status}">${statusText}</span>
+          </div>
+          <div class="match-players" style="font-size: 13px; margin: 6px 0;">
+            <span style="color:#fff;">${this.escape(teamAStr)}</span>
+            <span style="color:var(--text-muted); font-size:10px;"> vs </span>
+            <span style="color:#fff;">${this.escape(teamBStr)}</span>
+          </div>
+          <div class="match-score-row">
+            <span class="score-label">스코어</span>
+            <div class="score-box">${scoreStr} <span class="tiebreak-tag">${tieBreakStr}</span></div>
+          </div>
+        </div>
+      `;
+    });
+    mobCourts.innerHTML = html;
+  }
+
   renderBreakingBanner() {
     const bannerText = document.getElementById("breakingNewsText");
     if (bannerText) {
@@ -856,6 +896,8 @@ class TournamentApp {
       `;
     });
     tbody.innerHTML = html;
+    const mobRoster = document.getElementById("mobileRosterTableBody");
+    if (mobRoster) mobRoster.innerHTML = html;
   }
 
   updateMemberClubLevel(id, newLevel) {
