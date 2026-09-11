@@ -1968,7 +1968,7 @@ class TournamentApp {
     const btnDesktop = document.getElementById("btnAppModeToggle");
     if (btnDesktop) {
       if (isStaff) {
-        btnDesktop.innerHTML = `<span>🛠️</span><span class="btn-text" style="color:var(--neon-gold); font-weight:800;">운영진 모드 ON</span>`;
+        btnDesktop.innerHTML = `<span>🛠️</span><span class="btn-text" style="color:var(--neon-gold); font-weight:800;">운영진 모드</span>`;
         btnDesktop.style.borderColor = "var(--neon-gold)";
         btnDesktop.title = "클릭 시 일반 회원 모드로 전환합니다";
       } else {
