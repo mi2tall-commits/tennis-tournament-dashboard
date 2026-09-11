@@ -311,30 +311,30 @@ class TournamentApp {
     const mobBadge = document.getElementById("mobCloudSyncBadge");
     if (!badge && !mobBadge) return;
 
-    let text = "☁️ 로컬 단독";
+    let icon = "💾"; // 로컬 단독 아이콘
     let cls = "badge-cloud-local";
-    let title = "클라우드 URL 미설정 (클릭하여 설정)";
+    let title = "💾 로컬 단독 모드 (클릭하여 클라우드 설정)";
 
     if (this.gasUrl) {
       if (state === "syncing" || this.isSyncing) {
-        text = "🔄 동기화 중";
+        icon = "🔄";
         cls = "badge-cloud-syncing";
-        title = "Google Sheets와 데이터 동기화 중...";
+        title = "🔄 Google Sheets 실시간 동기화 중...";
       } else if (state === "error") {
-        text = "⚠️ 동기화 실패";
+        icon = "⚠️";
         cls = "badge-cloud-error";
-        title = "동기화 오류 발생 (클릭하여 재시도 또는 URL 변경)";
+        title = "⚠️ 동기화 오류 (클릭하여 재시도)";
       } else {
-        text = "☁️ 클라우드 연결됨";
+        icon = "☁️";
         cls = "badge-cloud-connected";
-        title = `Google Sheets 연결됨 (최근: ${this.lastSyncTime ? this.lastSyncTime.toLocaleTimeString() : '방금'})`;
+        title = `☁️ 클라우드 연결됨 (최근: ${this.lastSyncTime ? this.lastSyncTime.toLocaleTimeString() : '방금'})`;
       }
     }
 
     [badge, mobBadge].forEach(el => {
       if (el) {
         el.className = `cloud-status-badge ${cls}`;
-        el.innerHTML = text;
+        el.innerHTML = icon;
         el.title = title;
       }
     });
