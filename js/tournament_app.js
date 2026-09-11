@@ -793,6 +793,27 @@ class TournamentApp {
   // 🏁 대회 종료 & 대회 내역 요약 관리 (#3)
   // ==============================================================================
   finishCurrentTournament() {
+    // 1. 경기이사 / 운영진 권한 체크 (PIN 1234)
+    if (this.appMode !== "staff") {
+      const pin = prompt("🔐 대회를 공식 종료하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
+      if (pin === null) return;
+      if (pin.trim() !== this.staffPin) {
+        alert("❌ PIN 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      this.appMode = "staff";
+      try {
+        localStorage.setItem("tennis_app_mode", this.appMode);
+      } catch(e) {}
+      this.applyAppModeUi();
+    }
+
+    // 2. 이미 종료된 대회인지 확인
+    if (this.tournament.status === "completed") {
+      alert(`ℹ️ 현재 대회 [${this.tournament.title}]는 이미 공식 종료되어 [대회 내역]에 안전하게 보관된 상태입니다.\n\n새로운 대회를 시작하시려면 상단 [➕ 새 대회] 버튼을 눌러주세요.`);
+      return;
+    }
+
     if (!confirm(`🏁 [${this.tournament.title}] 대회를 최종 완료하시겠습니까?\n\n확인을 누르시면 현재 대진 및 순위 결과가 '대회 내역' 탭에 영구 보관되며, 연간 종합 랭킹에 자동 누적 반영됩니다.`)) {
       return;
     }
@@ -829,7 +850,7 @@ class TournamentApp {
     this.render();
     this.renderHistoryTab();
 
-    alert(`🎉 [${this.tournament.title}] 대회가 성공적으로 종료되었습니다!\n\n🥇 1위: ${top1}\n🥈 2위: ${top2}\n🥉 3위: ${top3}\n\n결과가 [대회 내역] 탭 및 연간 랭킹에 영구 보관되었습니다.`);
+    alert(`🎉 [${this.tournament.title}] 대회가 성공적으로 종료되었습니다!\n\n🥇 1위: ${top1}\n🥈 2위: ${top2}\n🥉 3위: ${top3}\n\n결과가 [대회 내역] 탭 및 연간 랭킹에 영구 보관되었습니다.\n다음 정기대회를 개막하시려면 [➕ 새 대회] 버튼을 눌러주세요.`);
   }
 
   startNewTournamentPrompt() {
@@ -848,15 +869,15 @@ class TournamentApp {
       this.applyAppModeUi();
     }
 
-    // 2. 현재 진행 중인 미종료 대회 데이터 보호 (경기 기록 유실 방지)
-    if (this.tournament && Array.isArray(this.tournament.matches) && this.tournament.matches.length > 0) {
-      const hasOngoingMatches = this.tournament.matches.some(m => m.status !== "finished");
-      const warningText = hasOngoingMatches
-        ? `⚠️ [주의: 진행 중인 경기 기록 감지]\n\n현재 대회(${this.tournament.title})에 총 ${this.tournament.matches.length}개의 경기 데이터가 있습니다.\n\n새 대회를 시작하면 현재 경기 기록과 당월 순위표가 초기화됩니다.\n(대회 결과를 연간 랭킹 및 대회 내역에 영구 보존하시려면 먼저 [🏁 대회 종료]를 진행해 주세요.)\n\n정말로 현재 대회를 초기화하고 새로운 대회를 개막하시겠습니까?`
-        : `ℹ️ [새 대회 개막 안내]\n\n현재 대회(${this.tournament.title})를 초기화하고 새로운 정기대회를 개막하시겠습니까?\n(종료된 기록은 '대회 내역' 및 연간 랭킹에 이미 안전하게 보존되어 있습니다.)`;
-      if (!confirm(warningText)) {
-        return;
-      }
+    // 2. 현재 진행 중인 미종료 대회 엄격 보호: 반드시 [대회 종료] 완료 후 새 대회 생성 가능
+    if (this.tournament && this.tournament.status !== "completed" && Array.isArray(this.tournament.matches) && this.tournament.matches.length > 0) {
+      alert(
+        `⚠️ [대회 종료 필수 안내]\n\n` +
+        `현재 진행 중인 대회 [${this.tournament.title}](${this.tournament.matches.length}경기)가 아직 공식 종료되지 않았습니다.\n\n` +
+        `경기 기록과 개인 순위를 [대회 내역]과 [연간 종합 랭킹]에 안전하게 영구 보관하기 위해,\n` +
+        `먼저 [🏁 대회 종료] 버튼을 눌러 대회를 공식 완료한 후에 새로운 대회를 개막해 주세요.`
+      );
+      return;
     }
 
     // 3. 대회 명칭 입력 (안전한 기본값 제공)
