@@ -12,18 +12,32 @@
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v7";
+    this.storageKey = "tennis_active_tournament_v8";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
     
+    // 🛡️ 보안 강화: 평문 PIN 제거 및 SHA-256 해시 인증
+    this.defaultPinHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+    this.staffPinHash = localStorage.getItem("tennis_staff_pin_hash") || this.defaultPinHash;
+    localStorage.removeItem("tennis_staff_pin");
+
+    // ☁️ Google Apps Script 클라우드 DB 동기화 (라이브 엔드포인트 영구 내장)
+    this.defaultGasUrl = "https://script.google.com/macros/s/AKfycbz4kNhi6_JkN8l8iOuYltZk-99tRIPcTBm5jU86RPvWav-KweYtsMPX1hzMCuo1WqZk/exec";
+    this.gasUrl = localStorage.getItem("tennis_gas_url") || this.defaultGasUrl;
+    this.isSyncing = false;
+    this.lastSyncTime = null;
+    this.cloudSyncTimer = null;
+
+    // 🛡️ 개인정보 보호 마스킹 모드 (기본값 활성화)
+    this.maskingEnabled = localStorage.getItem("tennis_privacy_masking") !== "false";
+
     this.tournament = this.loadTournament();
     this.activeMobileTab = "tab-courts";
     this.selectedBookingMonth = new Date().toISOString().slice(0, 7);
     this.leaderboardViewMode = "monthly"; // monthly (개인리그전) vs annual (연간 종합 랭킹)
     this.selectedPlayerFilter = localStorage.getItem("tennis_my_player_name") || "";
     this.appMode = localStorage.getItem("tennis_app_mode") || "member";
-    this.staffPin = localStorage.getItem("tennis_staff_pin") || "1234";
     this.audioEnabled = true;
     this.editingMatchId = null;
     this.builderMatches = [];
@@ -32,8 +46,10 @@ class TournamentApp {
 
     this.initAudioContext();
     this.initClock();
+    this.initCloudSync();
     this.bindEvents();
     this.applyAppModeUi();
+    this.updateCloudStatusBadge();
     this.render();
   }
 
@@ -44,26 +60,29 @@ class TournamentApp {
       localStorage.removeItem("tennis_active_tournament_v3");
       localStorage.removeItem("tennis_active_tournament_v4");
       localStorage.removeItem("tennis_active_tournament_v5");
+      localStorage.removeItem("tennis_active_tournament_v6");
+      localStorage.removeItem("tennis_active_tournament_v7");
 
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed) {
-          // If master reset or explicitly zero matches, preserve clean state
+          // 🛡️ 기존 로컬 데이터 자동 마스킹 위생 처리
+          if (Array.isArray(parsed.players)) {
+            parsed.players.forEach(p => {
+              if (p && p.name && window.maskName) p.name = window.maskName(p.name);
+            });
+          }
+          if (Array.isArray(parsed.matches)) {
+            parsed.matches.forEach(m => {
+              if (m.teamA && window.maskName) m.teamA = m.teamA.map(n => window.maskName(n));
+              if (m.teamB && window.maskName) m.teamB = m.teamB.map(n => window.maskName(n));
+            });
+          }
           if (parsed.isMasterReset || (Array.isArray(parsed.matches) && parsed.matches.length === 0)) {
             return parsed;
           }
-          if (Array.isArray(parsed.matches) && parsed.matches.length > 0) {
-            const validNames = new Set(this.memberManager.getAllMembers().map(m => m.name));
-            const hasLegacy = parsed.matches.some(m => 
-              (m.teamA || []).some(name => !validNames.has(name)) ||
-              (m.teamB || []).some(name => !validNames.has(name))
-            );
-            if (!hasLegacy) {
-              return parsed;
-            }
-            console.warn("기존 레거시 명단 경기 감지됨, 공식 64명 명단으로 자동 교체합니다.");
-          }
+          return parsed;
         }
       }
     } catch(e) {
@@ -79,9 +98,246 @@ class TournamentApp {
   saveTournament() {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.tournament));
+      // ☁️ 백그라운드 클라우드 자동 동기화
+      this.pushToCloud(true);
     } catch(e) {
       console.error("대회 데이터 저장 실패:", e);
     }
+  }
+
+  // 🛡️ 개인정보 보호: 이름 마스킹 포맷터
+  formatPlayerName(name) {
+    if (!name) return "";
+    if (this.maskingEnabled && window.maskName) {
+      return window.maskName(name);
+    }
+    return name;
+  }
+
+  formatPairNames(pairStr) {
+    if (!pairStr) return "";
+    if (this.maskingEnabled && window.maskPairNames) {
+      return window.maskPairNames(pairStr);
+    }
+    return pairStr;
+  }
+
+  // 🛡️ 보안 강화: SHA-256 단방향 암호화 해시 및 PIN 검증
+  async hashPin(pin) {
+    if (!pin) return "";
+    try {
+      const msgUint8 = new TextEncoder().encode(pin.trim());
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch(e) {
+      let h = 0;
+      for (let i = 0; i < pin.length; i++) {
+        h = ((h << 5) - h) + pin.charCodeAt(i);
+        h |= 0;
+      }
+      return String(h);
+    }
+  }
+
+  async verifyPin(inputPin) {
+    if (!inputPin) return false;
+    const inputHash = await this.hashPin(inputPin);
+    return inputHash === this.staffPinHash;
+  }
+
+  async changeStaffPin() {
+    const currentPin = prompt("🔐 현재 관리자 PIN 비밀번호를 입력하세요:");
+    if (currentPin === null) return;
+    if (!(await this.verifyPin(currentPin))) {
+      alert("❌ 현재 PIN 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    const newPin = prompt("🔑 새로 설정할 4자리 이상 관리자 PIN 비밀번호를 입력하세요:");
+    if (!newPin || newPin.trim().length < 4) {
+      alert("⚠️ PIN 비밀번호는 4자리 이상이어야 합니다.");
+      return;
+    }
+    const confirmPin = prompt("🔑 새 PIN 비밀번호를 한 번 더 입력하세요:");
+    if (newPin !== confirmPin) {
+      alert("❌ 새 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    const newHash = await this.hashPin(newPin);
+    this.staffPinHash = newHash;
+    localStorage.setItem("tennis_staff_pin_hash", newHash);
+    alert("✅ 관리자 PIN 비밀번호가 안전하게 변경되었습니다!");
+  }
+
+  // ☁️ Google Apps Script 클라우드 DB 동기화 메소드
+  initCloudSync() {
+    if (this.cloudSyncTimer) clearInterval(this.cloudSyncTimer);
+    this.cloudSyncTimer = setInterval(() => {
+      if (this.gasUrl && !this.isSyncing) {
+        this.syncFromCloud(true);
+      }
+    }, 30000);
+
+    setTimeout(() => {
+      if (this.gasUrl) {
+        this.syncFromCloud(true);
+      }
+    }, 1500);
+  }
+
+  async syncFromCloud(silent = false) {
+    if (!this.gasUrl) {
+      if (!silent) {
+        this.openCloudSettingsModal();
+      }
+      return;
+    }
+    this.isSyncing = true;
+    this.updateCloudStatusBadge("syncing");
+    try {
+      const url = `${this.gasUrl}${this.gasUrl.includes("?") ? "&" : "?"}action=get_tournament&_t=${Date.now()}`;
+      const res = await fetch(url, { method: "GET" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
+      if (result && result.status === "ok" && result.data) {
+        this.tournament = result.data;
+        localStorage.setItem(this.storageKey, JSON.stringify(this.tournament));
+        this.lastSyncTime = new Date();
+        this.updateCloudStatusBadge("connected");
+        this.render();
+        if (!silent) alert("✅ 클라우드(Google Sheets)에서 최신 대회 데이터를 성공적으로 동기화했습니다!");
+      } else {
+        if (!result.data && this.tournament) {
+          await this.pushToCloud(true);
+        }
+        this.updateCloudStatusBadge("connected");
+      }
+    } catch(err) {
+      console.warn("클라우드 동기화 실패:", err);
+      this.updateCloudStatusBadge("error");
+      if (!silent) alert("❌ 클라우드 동기화 실패:\n" + err.message);
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  async pushToCloud(silent = true) {
+    if (!this.gasUrl) return;
+    try {
+      this.updateCloudStatusBadge("syncing");
+      await fetch(this.gasUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "save_tournament",
+          tournament: this.tournament
+        })
+      });
+      this.lastSyncTime = new Date();
+      this.updateCloudStatusBadge("connected");
+    } catch(err) {
+      console.warn("클라우드 업로드 실패:", err);
+      this.updateCloudStatusBadge("error");
+      if (!silent) alert("⚠️ 클라우드 업로드 실패 (로컬 저장은 완료됨)");
+    }
+  }
+
+  openCloudSettingsModal() {
+    const inputEl = document.getElementById("inputGasUrl");
+    if (inputEl) {
+      inputEl.value = this.gasUrl || "";
+      this.showModal("cloudSettingsModal");
+    } else {
+      const curUrl = this.gasUrl || "";
+      const input = prompt(
+        "☁️ [Google Apps Script 클라우드 동기화 설정]\n\n" +
+        "배포하신 Google Apps Script 웹 앱 URL을 입력하세요:\n" +
+        "(비워둘 경우 로컬 단독 모드로 작동합니다)",
+        curUrl
+      );
+      if (input === null) return;
+      this.gasUrl = input.trim();
+      try {
+        localStorage.setItem("tennis_gas_url", this.gasUrl);
+      } catch(e) {}
+      this.updateCloudStatusBadge();
+      if (this.gasUrl) {
+        alert("✅ 클라우드 URL이 저장되었습니다. 즉시 동기화를 시도합니다.");
+        this.syncFromCloud(false);
+      } else {
+        alert("ℹ️ 클라우드 연동이 해제되었으며 로컬 단독 모드로 작동합니다.");
+      }
+    }
+  }
+
+  async testGasConnection() {
+    const url = (document.getElementById("inputGasUrl")?.value || this.gasUrl || "").trim();
+    if (!url) {
+      alert("⚠️ 먼저 웹 앱 URL을 입력해 주세요.");
+      return;
+    }
+    try {
+      const pingUrl = `${url}${url.includes("?") ? "&" : "?"}action=ping&_t=${Date.now()}`;
+      const res = await fetch(pingUrl);
+      const json = await res.json();
+      if (json && json.status === "ok") {
+        alert("✅ 연결 성공!\n\nGoogle Apps Script 백엔드가 정상 응답합니다:\n" + json.message);
+      } else {
+        alert("⚠️ 응답을 받았으나 데이터 형식이 올바르지 않습니다:\n" + JSON.stringify(json));
+      }
+    } catch(e) {
+      alert("❌ 연결 실패:\n" + e.message + "\n\n(Apps Script 배포 시 '액세스 권한: 모든 사용자/Anyone'으로 설정되었는지 확인하세요)");
+    }
+  }
+
+  saveCloudUrlFromModal() {
+    const url = document.getElementById("inputGasUrl")?.value.trim() || "";
+    this.gasUrl = url;
+    try {
+      localStorage.setItem("tennis_gas_url", this.gasUrl);
+    } catch(e) {}
+    this.updateCloudStatusBadge();
+    this.closeModal("cloudSettingsModal");
+    if (this.gasUrl) {
+      alert("✅ 클라우드 URL이 저장되었습니다. Google Sheets 동기화를 시작합니다.");
+      this.syncFromCloud(false);
+    } else {
+      alert("ℹ️ 클라우드 연동이 해제되어 로컬 단독 모드로 전환되었습니다.");
+    }
+  }
+
+  updateCloudStatusBadge(state) {
+    const badge = document.getElementById("cloudSyncBadge");
+    const mobBadge = document.getElementById("mobCloudSyncBadge");
+    if (!badge && !mobBadge) return;
+
+    let text = "☁️ 로컬 단독";
+    let cls = "badge-cloud-local";
+    let title = "클라우드 URL 미설정 (클릭하여 설정)";
+
+    if (this.gasUrl) {
+      if (state === "syncing" || this.isSyncing) {
+        text = "🔄 동기화 중";
+        cls = "badge-cloud-syncing";
+        title = "Google Sheets와 데이터 동기화 중...";
+      } else if (state === "error") {
+        text = "⚠️ 동기화 실패";
+        cls = "badge-cloud-error";
+        title = "동기화 오류 발생 (클릭하여 재시도 또는 URL 변경)";
+      } else {
+        text = "☁️ 클라우드 연결됨";
+        cls = "badge-cloud-connected";
+        title = `Google Sheets 연결됨 (최근: ${this.lastSyncTime ? this.lastSyncTime.toLocaleTimeString() : '방금'})`;
+      }
+    }
+
+    [badge, mobBadge].forEach(el => {
+      if (el) {
+        el.className = `cloud-status-badge ${cls}`;
+        el.innerHTML = text;
+        el.title = title;
+      }
+    });
   }
 
   initClock() {
@@ -246,7 +502,7 @@ class TournamentApp {
         <tr class="${rowClass}">
           <td style="text-align: center;"><span class="rank-pill ${rankClass}">${p.rank}</span></td>
           <td style="text-align: center;">${deltaHtml}</td>
-          <td class="player-name-cell"><b>${p.name}</b></td>
+          <td class="player-name-cell"><b>${this.formatPlayerName(p.name)}</b></td>
           <td>${p.record}</td>
           <td style="text-align: center;"><span class="pts-badge">${p.points}점</span></td>
           <td style="text-align: center;"><span class="${diffClass}">${diffStr}</span></td>
@@ -257,7 +513,7 @@ class TournamentApp {
         <tr class="${rowClass}">
           <td style="text-align: center;"><span class="rank-pill ${rankClass}">${p.rank}</span></td>
           <td style="text-align: center;">${deltaHtml}</td>
-          <td class="player-name-cell"><b>${p.name}</b></td>
+          <td class="player-name-cell"><b>${this.formatPlayerName(p.name)}</b></td>
           <td style="font-size: 11px;">${p.record}</td>
           <td style="text-align: center;"><span class="pts-badge">${p.points}점</span></td>
           <td style="text-align: center;"><span class="${diffClass}">${diffStr}</span></td>
@@ -278,7 +534,7 @@ class TournamentApp {
         <tr class="${rowClass}">
           <td style="text-align: center;"><span class="rank-pill ${rankClass}">${rank}</span></td>
           <td style="text-align: center;"><span class="diff-tag diff-${c.trend || 'same'}">${c.trend === 'up' ? '▲' : c.trend === 'down' ? '▼' : '-'}</span></td>
-          <td class="player-name-cell"><b>${c.name}</b></td>
+          <td class="player-name-cell"><b>${this.formatPlayerName(c.name)}</b></td>
           <td style="text-align: center;"><span class="pts-badge" style="background:rgba(251,191,36,0.2); color:#fbbf24; border:1px solid rgba(251,191,36,0.4);">${c.totalPoints}점</span></td>
           <td style="text-align: center;">${c.totalWins}승 ${c.totalDraws}무 ${c.totalLosses}패</td>
           <td style="text-align: center; font-weight:800; color:#fbbf24;">🥇 ${c.championships}회 / 🥈 ${c.runnerUps}회</td>
@@ -289,7 +545,7 @@ class TournamentApp {
       mobAnnualHtml += `
         <tr class="${rowClass}">
           <td style="text-align: center;"><span class="rank-pill ${rankClass}">${rank}</span></td>
-          <td class="player-name-cell"><b>${c.name}</b></td>
+          <td class="player-name-cell"><b>${this.formatPlayerName(c.name)}</b></td>
           <td style="text-align: center;"><span class="pts-badge" style="background:rgba(251,191,36,0.2); color:#fbbf24;">${c.totalPoints}점</span></td>
           <td style="text-align: center; font-size:11px;">${c.totalWins}승 ${c.totalLosses}패</td>
           <td style="text-align: center; font-size:11px; font-weight:800; color:#fbbf24;">🥇${c.championships} 🥈${c.runnerUps}</td>
@@ -314,15 +570,15 @@ class TournamentApp {
 
   /**
    * 🔄 개인 리그전 순위 리셋
-   * - 운영진 전용 (PIN 1234 검증)
+   * - 운영진 전용 (암호화 PIN 검증)
    * - 운영진 리셋 전까지 누적된 리그전 전체 데이터(승점/전적)를 0으로 초기화
    * - 연간 누적 랭킹 및 대회 내역 보관함은 안전하게 보존
    */
-  resetCurrentLeague() {
+  async resetCurrentLeague() {
     if (this.appMode !== "staff") {
       const pin = prompt("🔐 개인 리그전 순위를 리셋하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
       if (pin === null) return;
-      if (pin.trim() !== this.staffPin) {
+      if (!(await this.verifyPin(pin))) {
         alert("❌ PIN 비밀번호가 일치하지 않습니다.");
         return;
       }
@@ -404,8 +660,8 @@ class TournamentApp {
         if (match) {
           const statusText = this.getStatusText(match.status);
           const statusClass = `status-${match.status}`;
-          const teamAStr = (match.teamA || []).join(", ");
-          const teamBStr = (match.teamB || []).join(", ");
+          const teamAStr = (match.teamA || []).map(p => this.formatPlayerName(p)).join(", ");
+          const teamBStr = (match.teamB || []).map(p => this.formatPlayerName(p)).join(", ");
           const scoreStr = match.scoreA !== null && match.scoreB !== null ? `${match.scoreA} : ${match.scoreB}` : "- : -";
           const tieBreakStr = match.tieBreak ? `<span class="tiebreak-tag">(${match.tieBreak})</span>` : "";
 
@@ -478,7 +734,7 @@ class TournamentApp {
     let optHtml = `<option value="">-- 내 이름 선택 (출전 경기 모아보기) --</option>`;
     members.forEach(m => {
       const selected = m.name === this.selectedPlayerFilter ? "selected" : "";
-      optHtml += `<option value="${m.name}" ${selected}>${m.name} (NTRP ${m.level})</option>`;
+      optHtml += `<option value="${m.name}" ${selected}>${this.formatPlayerName(m.name)} (NTRP ${m.level || '-'})</option>`;
     });
     selectEl.innerHTML = optHtml;
 
@@ -493,7 +749,7 @@ class TournamentApp {
     });
 
     if (myMatches.length === 0) {
-      containerEl.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-muted);">[${myName}] 님의 배정된 경기가 없습니다.</div>`;
+      containerEl.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-muted);">[${this.formatPlayerName(myName)}] 님의 배정된 경기가 없습니다.</div>`;
       return;
     }
 
@@ -502,8 +758,10 @@ class TournamentApp {
       const slot = (this.tournament.timeSlots || [])[m.timeSlotIndex] || { start: "-", end: "-" };
       const statusText = this.getStatusText(m.status);
       const isTeamA = (m.teamA || []).includes(myName);
-      const partner = isTeamA ? (m.teamA || []).filter(p => p !== myName).join(", ") : (m.teamB || []).filter(p => p !== myName).join(", ");
-      const opponents = isTeamA ? (m.teamB || []).join(", ") : (m.teamA || []).join(", ");
+      const partnerRaw = isTeamA ? (m.teamA || []).filter(p => p !== myName) : (m.teamB || []).filter(p => p !== myName);
+      const partner = partnerRaw.map(p => this.formatPlayerName(p)).join(", ");
+      const opponentsRaw = isTeamA ? (m.teamB || []) : (m.teamA || []);
+      const opponents = opponentsRaw.map(p => this.formatPlayerName(p)).join(", ");
       const scoreStr = m.scoreA !== null && m.scoreB !== null ? `${m.scoreA} : ${m.scoreB}` : "대기 중";
 
       cardsHtml += `
@@ -571,7 +829,7 @@ class TournamentApp {
       html += `
         <tr>
           <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#94a3b8;">${m.no || idx + 1}</td>
-          <td><b>${m.name}</b></td>
+          <td><b>${this.formatPlayerName(m.name)}</b></td>
           <td style="text-align:center; font-family:var(--font-mono); font-size:11px; color:#cbd5e1;">${m.joinDate || "-"}</td>
           <td style="text-align:center;">${ntrpDisplay}</td>
           <td style="text-align:center;">${levelSelectHtml}</td>
@@ -836,12 +1094,12 @@ class TournamentApp {
   // ==============================================================================
   // 🏁 대회 종료 & 대회 내역 요약 관리 (#3)
   // ==============================================================================
-  finishCurrentTournament() {
-    // 1. 경기이사 / 운영진 권한 체크 (PIN 1234)
+  async finishCurrentTournament() {
+    // 1. 경기이사 / 운영진 권한 체크 (암호화 PIN)
     if (this.appMode !== "staff") {
-      const pin = prompt("🔐 대회를 공식 종료하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
+      const pin = prompt("🔐 대회를 공식 종료하려면 경기이사/운영진 PIN 비밀번호를 입력하세요:");
       if (pin === null) return;
-      if (pin.trim() !== this.staffPin) {
+      if (!(await this.verifyPin(pin))) {
         alert("❌ PIN 비밀번호가 일치하지 않습니다.");
         return;
       }
@@ -858,52 +1116,39 @@ class TournamentApp {
       return;
     }
 
-    if (!confirm(`🏁 [${this.tournament.title}] 대회를 최종 완료하시겠습니까?\n\n확인을 누르시면 현재 대진 및 순위 결과가 '대회 내역' 탭에 영구 보관되며, 연간 종합 랭킹에 자동 누적 반영됩니다.`)) {
-      return;
+    const matches = this.tournament.matches || [];
+    const finishedMatches = matches.filter(m => m.status === "finished");
+    const unfinMatches = matches.filter(m => m.status !== "finished");
+
+    if (unfinMatches.length > 0) {
+      const proceed = confirm(`⚠️ 아직 결과가 입력되지 않은 경기(${unfinMatches.length}개)가 남아있습니다.\n대회를 종료하면 현재 입력된 경기 결과까지만 반영됩니다.\n\n정말로 대회를 공식 종료하시겠습니까?`);
+      if (!proceed) return;
     }
 
+    // 1. 개인 순위 계산하여 상위 1~3위 파악
     const activePlayers = this.memberManager.getActiveMembers();
     const isLeague = this.tournament.isLeagueMatch !== false;
-    const finalRanks = this.leaderboard.calculateIndividualLeaderboard(
-      this.tournament.matches, 
+    const isCommitted = !!this.tournament.leagueCommitted;
+    const ranked = this.leaderboard.calculateIndividualLeaderboard(
+      matches, 
       activePlayers, 
-      isLeague, 
-      false, 
+      isLeague,
+      isCommitted,
       { win: this.tournament.pointsWin || 3, draw: this.tournament.pointsDraw || 1, loss: this.tournament.pointsLoss || 0 }
     );
-    const top1 = finalRanks[0] ? finalRanks[0].name : "-";
-    const top2 = finalRanks[1] ? finalRanks[1].name : "-";
-    const top3 = finalRanks[2] ? finalRanks[2].name : "-";
 
-    const completedTourney = {
-      id: "tourney_" + Date.now(),
-      title: this.tournament.title,
-      date: this.tournament.date || new Date().toISOString().slice(0, 10),
-      mode: this.tournament.mode || "regular_individual",
-      status: "completed",
-      isLeagueMatch: isLeague,
-      matchesCount: (this.tournament.matches || []).filter(m => m.status === "finished").length,
-      firstPlace: top1,
-      secondPlace: top2,
-      thirdPlace: top3,
-      summary: `${this.tournament.title} 공식 완료: 우승 ${top1}, 준우승 ${top2}, 3위 ${top3}. (${isLeague ? "리그 순위 반영" : "친선전 미반영"})`,
-      ranks: finalRanks.slice(0, 10)
-    };
+    const top1 = ranked[0] ? `${this.formatPlayerName(ranked[0].name)}(${ranked[0].points}점)` : "없음";
+    const top2 = ranked[1] ? `${this.formatPlayerName(ranked[1].name)}(${ranked[1].points}점)` : "없음";
+    const top3 = ranked[2] ? `${this.formatPlayerName(ranked[2].name)}(${ranked[2].points}점)` : "없음";
 
-    if (!this.tournament.history) this.tournament.history = [];
-    this.tournament.history.unshift(completedTourney);
-
-    // Save snapshot to Season Cumulative storage
-    this.leaderboard.saveTournamentToSeason(this.tournament, finalRanks);
-
-    // 🏆 If this tournament is a League tournament, commit match results to persistent leagueCumulativeKey!
+    // 2. 리그전 점수 누적 커밋 (개인 리그 순위 누적 영구 반영)
     if (isLeague && !this.tournament.leagueCommitted) {
-      this.leaderboard.commitTournamentToLeague(
-        this.tournament.matches,
-        { win: this.tournament.pointsWin || 3, draw: this.tournament.pointsDraw || 1, loss: this.tournament.pointsLoss || 0 }
-      );
+      this.leaderboard.commitTournamentToLeague(matches, isLeague);
       this.tournament.leagueCommitted = true;
     }
+
+    // 3. 연간 종합 랭킹에 대회 우승/준우승 및 경기 전적 누적 반영
+    this.leaderboard.recordTournamentSummary(this.tournament, ranked);
 
     this.tournament.status = "completed";
     this.tournament.breakingNews = `[대회 공식 종료] ${this.tournament.title}가 성황리에 종료되었습니다! 🥇 우승: ${top1}`;
@@ -914,12 +1159,12 @@ class TournamentApp {
     alert(`🎉 [${this.tournament.title}] 대회가 성공적으로 종료되었습니다!\n\n🥇 1위: ${top1}\n🥈 2위: ${top2}\n🥉 3위: ${top3}\n\n결과가 [대회 내역] 탭 및 연간 랭킹에 영구 보관되었습니다.\n다음 정기대회를 개막하시려면 [➕ 새 대회] 버튼을 눌러주세요.`);
   }
 
-  startNewTournamentPrompt() {
-    // 1. 경기이사 / 운영진 권한 체크 (일반 회원 모드일 경우 PIN 1234 검증)
+  async startNewTournamentPrompt() {
+    // 1. 경기이사 / 운영진 권한 체크 (암호화 PIN 검증)
     if (this.appMode !== "staff") {
-      const pin = prompt("🔐 새로운 대회를 생성하려면 경기이사/운영진 PIN 비밀번호(4자리)를 입력하세요:");
+      const pin = prompt("🔐 새로운 대회를 생성하려면 경기이사/운영진 PIN 비밀번호를 입력하세요:");
       if (pin === null) return;
-      if (pin.trim() !== this.staffPin) {
+      if (!(await this.verifyPin(pin))) {
         alert("❌ PIN 비밀번호가 일치하지 않습니다.");
         return;
       }
@@ -1638,14 +1883,11 @@ class TournamentApp {
     alert(`✅ 대진표가 성공적으로 저장되어 전광판에 반영되었습니다! (총 ${validMatches.length}경기)`);
   }
 
-  // ==============================================================================
-  // 🌟 일반 회원 모드 vs 경기이사 모드 토글 & 스티키 알림
-  // ==============================================================================
-  toggleAppMode() {
+  async toggleAppMode() {
     if (this.appMode === "member") {
-      const inputPin = prompt("🔐 경기이사/운영진 관리 모드 PIN 비밀번호 4자리를 입력하세요:");
+      const inputPin = prompt("🔐 경기이사/운영진 관리 모드 PIN 비밀번호를 입력하세요:");
       if (inputPin === null) return; // 취소 누름
-      if (inputPin.trim() !== this.staffPin) {
+      if (!(await this.verifyPin(inputPin))) {
         alert("❌ PIN 비밀번호가 일치하지 않습니다.");
         return;
       }
