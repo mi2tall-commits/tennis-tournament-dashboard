@@ -27,6 +27,8 @@ class TournamentApp {
     this.audioEnabled = true;
     this.editingMatchId = null;
     this.builderMatches = [];
+    this.modalStack = [];
+    this.isProgrammaticBack = false;
 
     this.initAudioContext();
     this.initClock();
@@ -1946,28 +1948,59 @@ class TournamentApp {
   showModal(id) {
     const el = document.getElementById(id);
     if (!el) return;
+
+    if (!Array.isArray(this.modalStack)) this.modalStack = [];
+    
+    // Remove if already in stack, then push to top
+    this.modalStack = this.modalStack.filter(mId => mId !== id);
+    this.modalStack.push(id);
+
+    // Dynamic z-index layering so stacked/child modals overlay parent modals
+    el.style.zIndex = (100 + this.modalStack.length * 10).toString();
     el.classList.add("active");
+
     // Mobile native Back button support
     try {
       if (!history.state || history.state.modalId !== id) {
-        history.pushState({ modalId: id }, "");
+        history.pushState({ modalId: id, stackDepth: this.modalStack.length }, "");
       }
     } catch(e) {}
   }
 
   closeModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.remove("active");
-    // Pop history state if closing programmatically
+    if (el) {
+      el.classList.remove("active");
+      el.style.zIndex = "";
+    }
+    if (Array.isArray(this.modalStack)) {
+      this.modalStack = this.modalStack.filter(mId => mId !== id);
+    }
+
+    // Pop history state if closing programmatically without triggering popstate modal wipe
     try {
       if (history.state && history.state.modalId === id) {
+        this.isProgrammaticBack = true;
         history.back();
       }
     } catch(e) {}
   }
 
   closeAllActiveModals() {
-    document.querySelectorAll(".modal-backdrop.active").forEach(m => m.classList.remove("active"));
+    if (Array.isArray(this.modalStack)) {
+      this.modalStack.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove("active");
+          el.style.zIndex = "";
+        }
+      });
+    }
+    document.querySelectorAll(".modal-backdrop.active").forEach(m => {
+      m.classList.remove("active");
+      m.style.zIndex = "";
+    });
+    this.modalStack = [];
   }
 
   switchMobileTab(tabId) {
@@ -2001,16 +2034,43 @@ class TournamentApp {
   bindEvents() {
     // 1. Mobile Phone Native Back Button Listener (popstate)
     window.addEventListener("popstate", (e) => {
-      const activeModals = document.querySelectorAll(".modal-backdrop.active");
-      if (activeModals.length > 0) {
-        activeModals.forEach(m => m.classList.remove("active"));
+      // If triggered programmatically by closeModal(), ignore to preserve parent modals
+      if (this.isProgrammaticBack) {
+        this.isProgrammaticBack = false;
+        return;
+      }
+
+      // If user pressed mobile hardware Back button:
+      // Close ONLY the topmost active modal, keeping parent modals intact!
+      if (Array.isArray(this.modalStack) && this.modalStack.length > 0) {
+        const topModalId = this.modalStack.pop();
+        const topEl = document.getElementById(topModalId);
+        if (topEl) {
+          topEl.classList.remove("active");
+          topEl.style.zIndex = "";
+        }
+      } else {
+        const activeModals = document.querySelectorAll(".modal-backdrop.active");
+        if (activeModals.length > 0) {
+          activeModals.forEach(m => {
+            m.classList.remove("active");
+            m.style.zIndex = "";
+          });
+        }
       }
     });
 
-    // 2. Click outside (backdrop tap) to close modal
+    // 2. Click outside (backdrop tap) to close ONLY the topmost active modal
     document.addEventListener("click", (e) => {
       if (e.target && e.target.classList.contains("modal-backdrop") && e.target.classList.contains("active")) {
-        this.closeModal(e.target.id);
+        const topModalId = Array.isArray(this.modalStack) && this.modalStack.length > 0
+          ? this.modalStack[this.modalStack.length - 1]
+          : e.target.id;
+        if (topModalId && e.target.id === topModalId) {
+          this.closeModal(topModalId);
+        } else {
+          this.closeModal(e.target.id);
+        }
       }
     });
 

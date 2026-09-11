@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=v20_cumulative_league_option">
+  <link rel="stylesheet" href="styles.css?v=v21_modal_stack_fix">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -515,6 +515,7 @@
     <div class="modal-window" style="max-width: 680px;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('rosterModal')">← 뒤로</button>
           <h3 class="modal-title">👥 동호회 공식 회원 명단 (<span id="rosterMemberCount">64</span>명)</h3>
           <button class="btn-xs" style="background:#059669; font-weight:800;" onclick="app.syncOfficialRoster()">🔄 64명 명부 최신화</button>
         </div>
@@ -907,11 +908,11 @@
   </div>
 
   <!-- Scripts -->
-  <script src="sample_tournament_data.js?v=v20_cumulative_league_option"></script>
-  <script src="js/member_manager.js?v=v20_cumulative_league_option"></script>
-  <script src="js/matchmaker_engine.js?v=v20_cumulative_league_option"></script>
-  <script src="js/leaderboard_engine.js?v=v20_cumulative_league_option"></script>
-  <script src="js/tournament_app.js?v=v20_cumulative_league_option"></script>
+  <script src="sample_tournament_data.js?v=v21_modal_stack_fix"></script>
+  <script src="js/member_manager.js?v=v21_modal_stack_fix"></script>
+  <script src="js/matchmaker_engine.js?v=v21_modal_stack_fix"></script>
+  <script src="js/leaderboard_engine.js?v=v21_modal_stack_fix"></script>
+  <script src="js/tournament_app.js?v=v21_modal_stack_fix"></script>
 
   <!-- Mobile View Syncer -->
   <script>
@@ -976,7 +977,10 @@
   <div id="editMemberModalWindow" class="modal-backdrop">
     <div class="modal-window" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 class="modal-title">✏️ 회원 정보 & LEVEL 수정</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('editMemberModalWindow')">← 회원 명단</button>
+          <h3 class="modal-title">✏️ 회원 정보 &amp; LEVEL 수정</h3>
+        </div>
         <button class="modal-close" onclick="app.closeModal('editMemberModalWindow')">&times;</button>
       </div>
       <div class="modal-body">
