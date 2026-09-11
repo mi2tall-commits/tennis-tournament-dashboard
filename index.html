@@ -26,6 +26,13 @@
       </div>
 
       <div class="header-controls">
+        <button class="btn-header btn-cloud-sync" id="btnCloudSync" onclick="app.syncFromCloud(false)" title="Google Sheets 클라우드 동기화">
+          <span id="cloudSyncBadge" class="cloud-status-badge badge-cloud-local">☁️ 로컬 단독</span>
+        </button>
+        <button class="btn-header staff-only" onclick="app.openCloudSettingsModal()" title="Google Apps Script 클라우드 연동 설정">
+          <span>☁️</span>
+          <span class="btn-text btn-desktop-only">클라우드 설정</span>
+        </button>
         <a href="manual.html" target="_blank" class="btn-header btn-manual-top" title="웹앱 공식 사용 매뉴얼">
           <span>📖</span>
           <span class="btn-text">매뉴얼</span>
@@ -33,6 +40,10 @@
         <button class="btn-header btn-mode-toggle" id="btnAppModeToggle" onclick="app.toggleAppMode()" title="일반 회원 뷰 / 경기이사 모드 전환">
           <span>👤</span>
           <span class="btn-text">회원 모드</span>
+        </button>
+        <button class="btn-header staff-only" onclick="app.changeStaffPin()" title="운영진 관리자 PIN 비밀번호 안전 변경">
+          <span>🔑</span>
+          <span class="btn-text btn-desktop-only">PIN 변경</span>
         </button>
         <button class="btn-header btn-action-new btn-desktop-only staff-only" onclick="app.startNewTournamentPrompt()" title="새로운 공식 대회 개막">
           <span>➕</span>
@@ -1112,7 +1123,33 @@
     </div>
   </div>
 
-
+  <!-- 11. Cloud Settings Modal (Google Apps Script 클라우드 연동 설정) -->
+  <div id="cloudSettingsModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ Google Apps Script 클라우드 동기화 설정</h3>
+        <button class="modal-close" onclick="app.closeModal('cloudSettingsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+          구글 스프레드시트의 Apps Script로 배포된 웹 앱 URL을 입력하면 전 회원 스마트폰과 실시간 점수 및 순위가 자동 동기화됩니다.<br>
+          <span style="color:var(--neon-cyan);">(※ 비워둘 경우 단일 기기 로컬 단독 모드로 동작합니다)</span>
+        </div>
+        <div class="form-group">
+          <label style="color:var(--neon-cyan); font-weight:800;">Google Apps Script 웹 앱 URL</label>
+          <input type="text" id="inputGasUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:var(--font-mono); font-size:12px;">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button type="button" class="btn-xs" style="background:#0284c7; padding:6px 12px; font-weight:800; cursor:pointer;" onclick="app.testGasConnection()">⚡ 연결 테스트</button>
+          <button type="button" class="btn-xs" style="background:#334155; padding:6px 12px; cursor:pointer;" onclick="document.getElementById('inputGasUrl').value=''">연동 해제 (로컬 모드)</button>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between;">
+        <button type="button" class="btn-secondary" onclick="app.closeModal('cloudSettingsModal')">닫기</button>
+        <button type="button" class="btn-primary" onclick="app.saveCloudUrlFromModal()">저장 및 동기화</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
