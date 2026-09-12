@@ -1496,8 +1496,7 @@ class TournamentApp {
       pool.forEach((m, idx) => {
         const isSel = idx === defaultIdx ? "selected" : "";
         const groupBadge = m.group ? `[${m.group}] ` : "";
-        const realLabel = m.realName ? ` (${m.realName})` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} - ${m.clubLevel || 2}등/NTRP ${m.level || 3.0}</option>`;
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
       });
       el.innerHTML = opts;
     };
@@ -1528,8 +1527,7 @@ class TournamentApp {
       matches.forEach(m => {
         const isSel = (matches.length === 1 || m.name === currentVal) ? "selected" : "";
         const groupBadge = m.group ? `[${m.group}] ` : "";
-        const realLabel = m.realName ? ` (${m.realName})` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} - ${m.clubLevel || 2}등/NTRP ${m.level || 3.0}</option>`;
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
       });
     }
 
@@ -1906,15 +1904,14 @@ class TournamentApp {
             const realLabel = curM?.realName ? ` (${curM.realName})` : "";
             const isColl = hasCollision(selectedName);
             const collBadge = isColl ? " ⚠️[중복]" : "";
-            opts += `<option value="${selectedName}" selected style="color:#f59e0b;">${groupBadge}${selectedName}${realLabel} (선택 유지)${collBadge}</option>`;
+            opts += `<option value="${selectedName}" selected style="color:#f59e0b;">${groupBadge}${selectedName} (선택 유지)${collBadge}</option>`;
           }
           filterPool.forEach(m => {
             const isSel = m.name === selectedName ? "selected" : "";
             const isColl = hasCollision(m.name);
             const collBadge = isColl ? " ⚠️[중복]" : "";
             const groupBadge = m.group ? `[${m.group}] ` : "";
-            const realLabel = m.realName ? ` (${m.realName})` : "";
-            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
+            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
           });
           return opts;
         };
