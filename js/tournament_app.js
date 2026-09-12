@@ -12,7 +12,7 @@
 
 class TournamentApp {
   constructor() {
-    this.storageKey = "tennis_active_tournament_v8";
+    this.storageKey = "tennis_active_tournament_v9";
     this.memberManager = new MemberManager();
     this.matchmaker = new MatchmakerEngine(this.memberManager);
     this.leaderboard = new LeaderboardEngine();
@@ -62,6 +62,7 @@ class TournamentApp {
       localStorage.removeItem("tennis_active_tournament_v5");
       localStorage.removeItem("tennis_active_tournament_v6");
       localStorage.removeItem("tennis_active_tournament_v7");
+      localStorage.removeItem("tennis_active_tournament_v8");
 
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
