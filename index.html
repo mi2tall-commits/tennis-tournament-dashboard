@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=20261018_v103">
+  <link rel="stylesheet" href="styles.css?v=20261018_v105">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -718,7 +718,7 @@
 
   <!-- 3.1. Manual Match Builder Modal (대진표 수동 배정 및 일괄 편집기) -->
   <div id="manualMatchBuilderModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width: 960px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+    <div class="modal-window" style="max-width: 1240px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <div style="display:flex; align-items:center; gap:8px;">
           <button type="button" class="btn-modal-back" onclick="app.closeModal('manualMatchBuilderModal')">← 뒤로</button>
@@ -747,7 +747,7 @@
         💡 각 코트/시간대별로 팀A(2명) vs 팀B(2명)를 선택하세요. 같은 시간대에 중복 배정된 선수가 있으면 <span style="color:#ef4444; font-weight:800;">⚠️[중복]</span>으로 표시됩니다.
       </div>
 
-      <div class="modal-body" id="manualBuilderBody" style="flex: 1; overflow-y: auto; padding: 12px;">
+      <div class="modal-body" id="manualBuilderBody" style="flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 14px;">
         <!-- Populated dynamically by app.renderManualMatchBuilder() -->
       </div>
 
@@ -946,12 +946,12 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v104) -->
-  <script src="sample_tournament_data.js?v=20261018_v104"></script>
-  <script src="js/member_manager.js?v=20261018_v104"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v104"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v104"></script>
-  <script src="js/tournament_app.js?v=20261018_v104"></script>
+  <!-- Scripts (Cache Buster v105) -->
+  <script src="sample_tournament_data.js?v=20261018_v105"></script>
+  <script src="js/member_manager.js?v=20261018_v105"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v105"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v105"></script>
+  <script src="js/tournament_app.js?v=20261018_v105"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">

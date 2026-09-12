@@ -1910,7 +1910,9 @@ body.mode-staff .btn-mode-toggle {
   border: 1px solid #1a2c4e;
   border-radius: 8px;
   margin-bottom: 14px;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
+  min-height: min-content;
 }
 .builder-slot-header {
   background: #111d38;
@@ -1935,7 +1937,7 @@ body.mode-staff .btn-mode-toggle {
 }
 .builder-courts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 10px;
   padding: 10px;
 }
@@ -2023,12 +2025,103 @@ body.mode-staff .btn-mode-toggle {
   background: #0e1726;
   border: 1px solid #1e3358;
   color: #f8fafc;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .builder-select.collision-alert {
   border-color: #ef4444 !important;
   background: rgba(239, 68, 68, 0.15) !important;
   color: #fca5a5 !important;
 }
+
+#manualMatchBuilderModal .modal-window {
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  #manualMatchBuilderModal .modal-window {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .manual-builder-toolbar {
+    padding: 8px 10px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .builder-stats {
+    justify-content: center;
+    font-size: 11px;
+  }
+  .builder-actions {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+  .builder-actions .btn-builder-tool {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  #manualBuilderBody {
+    padding: 6px !important;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .builder-slot-section {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    min-width: 0;
+  }
+  .builder-slot-header {
+    padding: 6px 8px;
+  }
+  .builder-slot-title {
+    font-size: 12px;
+  }
+  .builder-courts-grid {
+    grid-template-columns: 100%;
+    gap: 8px;
+    padding: 4px;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  .builder-court-card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    min-width: 0;
+  }
+  .builder-teams-grid, .builder-team-box {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .builder-team-box {
+    padding: 4px;
+  }
+  .builder-select {
+    font-size: 11px;
+    height: 32px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+
+
 
 /* ==============================================================================
    📱 Simplified Mobile 4-Tab & More Menu (모바일 4대 탭 및 더보기 서브뷰)
