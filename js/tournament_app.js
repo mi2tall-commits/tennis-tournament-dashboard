@@ -248,6 +248,23 @@ class TournamentApp {
     }
   }
 
+  async pushMatchToCloud(match) {
+    if (!this.gasUrl || !match || !match.id) return;
+    try {
+      await fetch(this.gasUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "update_match",
+          match: match
+        })
+      });
+      this.lastSyncTime = new Date();
+    } catch(err) {
+      console.warn("개별 경기 클라우드 동기화 지연:", err.message);
+    }
+  }
+
   openCloudSettingsModal() {
     const inputEl = document.getElementById("inputGasUrl");
     if (inputEl) {
@@ -1444,10 +1461,13 @@ class TournamentApp {
       this.tournament.breakingNews = `[속보] ${match.court} #${match.matchNo}경기 [${sA} : ${sB}] 확정!`;
       this.playChime("score");
     } else if (status === "calling") {
-      this.tournament.breakingNews = `[호출] ${match.court} #${match.matchNo}경기: ${(match.teamA || []).join(",")} vs ${(match.teamB || []).join(",")} 선수 코트 입장 바랍니다!`;
+      const teamANames = (match.teamA || []).map(n => this.formatPlayerName(n)).join(", ");
+      const teamBNames = (match.teamB || []).map(n => this.formatPlayerName(n)).join(", ");
+      this.tournament.breakingNews = `[호출] ${match.court} #${match.matchNo}경기: ${teamANames} vs ${teamBNames} 선수 코트 입장 바랍니다!`;
       this.playChime("call");
     }
 
+    this.pushMatchToCloud(match);
     this.saveTournament();
     this.closeModal("scoreModal");
     this.render();

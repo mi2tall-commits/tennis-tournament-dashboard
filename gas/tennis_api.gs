@@ -106,7 +106,10 @@ function doGet(e) {
  * - action=save_members : 회원 명단 저장
  */
 function doPost(e) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000); // 15초 동시성 락 대기
+
     let payload = {};
     if (e && e.postData && e.postData.contents) {
       payload = JSON.parse(e.postData.contents);
@@ -224,6 +227,10 @@ function doPost(e) {
       status: "error",
       message: err.toString()
     }, 500);
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
   }
 }
 

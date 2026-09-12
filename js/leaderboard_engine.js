@@ -305,25 +305,58 @@ class LeaderboardEngine {
     });
   }
 
-  saveTournamentToSeason(tournament, rankedList) {
+  recordTournamentSummary(tournament, rankedList) {
+    if (!tournament) return [];
     let history = this.getSeasonHistory();
     const existingIdx = history.findIndex(t => t.id === tournament.id);
+
+    const topRanks = Array.isArray(rankedList) ? rankedList : [];
+    const top1 = topRanks[0] ? topRanks[0].name : "-";
+    const top2 = topRanks[1] ? topRanks[1].name : "-";
+    const top3 = topRanks[2] ? topRanks[2].name : "-";
+    const finishedCount = Array.isArray(tournament.matches)
+      ? tournament.matches.filter(m => m.status === "finished").length
+      : 0;
+
     const tourneySnapshot = {
       id: tournament.id,
       title: tournament.title,
       date: tournament.date || new Date().toISOString().slice(0, 10),
-      mode: tournament.mode,
-      ranks: rankedList
+      mode: tournament.mode || "regular_individual",
+      firstPlace: top1,
+      secondPlace: top2,
+      thirdPlace: top3,
+      matchesCount: finishedCount || (tournament.matches ? tournament.matches.length : 0),
+      summary: `${tournament.title} 공식 종료 (우승: ${top1})`,
+      ranks: topRanks
     };
 
     if (existingIdx >= 0) {
       history[existingIdx] = tourneySnapshot;
     } else {
-      history.push(tourneySnapshot);
+      history.unshift(tourneySnapshot);
     }
 
-    localStorage.setItem(this.seasonStorageKey, JSON.stringify(history));
+    try {
+      localStorage.setItem(this.seasonStorageKey, JSON.stringify(history));
+    } catch(e) {}
+
+    // tournament 객체 자체의 history 배열에도 동기화
+    if (!Array.isArray(tournament.history)) {
+      tournament.history = [];
+    }
+    const tIdx = tournament.history.findIndex(t => t.id === tournament.id);
+    if (tIdx >= 0) {
+      tournament.history[tIdx] = tourneySnapshot;
+    } else {
+      tournament.history.unshift(tourneySnapshot);
+    }
+
     return history;
+  }
+
+  saveTournamentToSeason(tournament, rankedList) {
+    return this.recordTournamentSummary(tournament, rankedList);
   }
 
   getSeasonHistory(currentTournament = null) {
