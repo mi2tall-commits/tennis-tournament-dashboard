@@ -445,6 +445,7 @@
           </div>
           <div class="staff-only" style="display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #1e3358;">
             <button type="button" class="btn-xs" style="flex:1; background:#059669; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#7c3aed; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.openGroupManagerModal()">👥 조 편성</button>
             <button type="button" class="btn-xs" style="flex:1; background:#0284c7; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.openMatchmakerModal()">⚙️ 대진 편성</button>
             <button type="button" class="btn-xs" style="flex:1; background:#f59e0b; color:#000; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
           </div>
@@ -691,6 +692,17 @@
               <option value="60">60분 단위</option>
             </select>
           </div>
+        </div>
+
+        <!-- A~D 4개조 편성 & 불참자 관리 전용 카드 -->
+        <div style="background: #111a33; border: 1px solid #3b2a6f; padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <div style="font-weight: 800; font-size: 13px; color: #c084fc;">👥 A~D 4개조 조 편성 &amp; 불참자 관리</div>
+            <div style="font-size: 11px; color: #94a3b8;">출석 선수를 A·B·C·D조로 분배하거나 LEVEL 밸런스를 자동 배정합니다.</div>
+          </div>
+          <button type="button" class="btn-primary" style="background: #7c3aed; font-weight:800; padding: 8px 14px;" onclick="app.openGroupManagerModal()">
+            👥 A~D조 직접 편성/관리
+          </button>
         </div>
 
         <div style="background: #111b33; border: 1px solid #233c6e; padding: 14px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
@@ -946,12 +958,12 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v105) -->
-  <script src="sample_tournament_data.js?v=20261018_v105"></script>
-  <script src="js/member_manager.js?v=20261018_v105"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v105"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v105"></script>
-  <script src="js/tournament_app.js?v=20261018_v105"></script>
+  <!-- Scripts (Cache Buster v106) -->
+  <script src="sample_tournament_data.js?v=20261018_v106"></script>
+  <script src="js/member_manager.js?v=20261018_v106"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v106"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v106"></script>
+  <script src="js/tournament_app.js?v=20261018_v106"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">

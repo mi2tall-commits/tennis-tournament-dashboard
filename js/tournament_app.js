@@ -1487,7 +1487,8 @@ class TournamentApp {
       let opts = `<option value="">-- 선수 선택 --</option>`;
       pool.forEach((m, idx) => {
         const isSel = idx === defaultIdx ? "selected" : "";
-        opts += `<option value="${m.name}" ${isSel}>${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
+        const groupBadge = m.group ? `[${m.group}] ` : "";
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
       });
       el.innerHTML = opts;
     };
@@ -1824,7 +1825,8 @@ class TournamentApp {
             const isSel = m.name === selectedName ? "selected" : "";
             const isColl = hasCollision(m.name);
             const collBadge = isColl ? " ⚠️[중복]" : "";
-            opts += `<option value="${m.name}" ${isSel}>${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
+            const groupBadge = m.group ? `[${m.group}] ` : "";
+            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
           });
           return opts;
         };
