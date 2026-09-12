@@ -1708,12 +1708,13 @@ class TournamentApp {
     this.tournament.matches = preservedMatches;
 
     this.saveTournament();
-    this.closeModal("matchmakerModal");
     this.render();
 
     if (openBuilderAfter) {
+      this.closeModal("matchmakerModal", false);
       this.openManualMatchBuilderModal();
     } else {
+      this.closeModal("matchmakerModal", true);
       alert(`✅ 코트/시간표 설정이 적용되었습니다!\n(기존 배정 경기 ${preservedMatches.length}건 안전하게 보존됨)`);
     }
   }
@@ -1722,7 +1723,7 @@ class TournamentApp {
   // 📝 대진표 수동 배정 마법사 (Manual Match Builder)
   // ==============================================================================
   openManualMatchBuilderModal() {
-    this.closeModal("matchmakerModal");
+    this.closeModal("matchmakerModal", false);
     const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
     const timeSlots = this.tournament.timeSlots || [];
 
@@ -2285,7 +2286,7 @@ class TournamentApp {
     } catch(e) {}
   }
 
-  closeModal(id) {
+  closeModal(id, popHistory = true) {
     const el = document.getElementById(id);
     if (el) {
       el.classList.remove("active");
@@ -2296,12 +2297,15 @@ class TournamentApp {
     }
 
     // Pop history state if closing programmatically without triggering popstate modal wipe
-    try {
-      if (history.state && history.state.modalId === id) {
-        this.isProgrammaticBack = true;
-        history.back();
-      }
-    } catch(e) {}
+    if (popHistory) {
+      try {
+        if (history.state && history.state.modalId === id) {
+          this.programmaticBackCount = (this.programmaticBackCount || 0) + 1;
+          this.isProgrammaticBack = true;
+          history.back();
+        }
+      } catch(e) {}
+    }
   }
 
   closeAllActiveModals() {
@@ -2353,6 +2357,11 @@ class TournamentApp {
     // 1. Mobile Phone Native Back Button Listener (popstate)
     window.addEventListener("popstate", (e) => {
       // If triggered programmatically by closeModal(), ignore to preserve parent modals
+      if (this.programmaticBackCount > 0) {
+        this.programmaticBackCount--;
+        this.isProgrammaticBack = false;
+        return;
+      }
       if (this.isProgrammaticBack) {
         this.isProgrammaticBack = false;
         return;
