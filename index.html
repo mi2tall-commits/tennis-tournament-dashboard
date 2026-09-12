@@ -759,6 +759,19 @@
         💡 각 코트/시간대별로 팀A(2명) vs 팀B(2명)를 선택하세요. 같은 시간대에 중복 배정된 선수가 있으면 <span style="color:#ef4444; font-weight:800;">⚠️[중복]</span>으로 표시됩니다.
       </div>
 
+      <!-- 🔍 대진표 작성창 실시간 선수 색인 필터 바 -->
+      <div class="builder-indexer-bar" style="background:#0a1326; border-bottom:1px solid #1e3358; padding:8px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:240px; position:relative;">
+          <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#38bdf8; font-size:12px;">🔍</span>
+          <input type="text" id="builderPlayerSearchInput" class="form-input" 
+                 placeholder="선수 빠른 색인 필터 (성/이름 입력 시 모든 드롭다운 실시간 압축 색인)..." 
+                 style="background:#0c162a; border-color:#2563eb; padding-left:30px; padding-right:60px; font-size:12px; height:32px; width:100%;"
+                 oninput="app.filterBuilderPlayers(this.value)">
+          <button type="button" class="btn-xs" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:#334155; color:#cbd5e1; padding:2px 8px; border-radius:4px; font-size:10px;" onclick="app.clearBuilderPlayerFilter()">초기화</button>
+        </div>
+        <div id="builderSearchMatchCount" style="font-size:11px; color:#38bdf8; font-weight:700; white-space:nowrap;"></div>
+      </div>
+
       <div class="modal-body" id="manualBuilderBody" style="flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 14px;">
         <!-- Populated dynamically by app.renderManualMatchBuilder() -->
       </div>
@@ -935,6 +948,26 @@
         <input type="hidden" id="newMatchCourt">
         <input type="hidden" id="newMatchSlot">
         
+        <!-- 🔍 실시간 선수 색인 & 빠른 자동완성 검색 바 -->
+        <div style="background:#091224; border:1px solid #1e3358; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; font-weight:800; color:#38bdf8; display:flex; align-items:center; gap:5px;">
+              <span>🔍</span> <span>선수 빠른 색인 &amp; 자동완성 검색</span>
+            </label>
+            <span style="font-size:10px; color:#94a3b8;">성(예: '김', '이', '박') 입력</span>
+          </div>
+          <div style="position:relative;">
+            <input type="text" id="newMatchSearchInput" class="form-input" 
+                   placeholder="선수 성/이름 입력 (예: '김', '박', '윤', 'A조')..." 
+                   style="background:#0c162a; border-color:#0284c7; padding-left:32px; font-size:12px;"
+                   oninput="app.filterNewMatchPlayers(this.value)">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; color:#0284c7;">🔍</span>
+          </div>
+          <div id="newMatchSearchChips" style="display:none; margin-top:8px; max-height:100px; overflow-y:auto; gap:6px; flex-wrap:wrap;">
+            <!-- Matching players appear here as clickable chips -->
+          </div>
+        </div>
+
         <div class="form-group">
           <label style="color: var(--neon-cyan);">Team A (2명 복식)</label>
           <div class="form-row">
@@ -958,12 +991,12 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v106) -->
-  <script src="sample_tournament_data.js?v=20261018_v106"></script>
-  <script src="js/member_manager.js?v=20261018_v106"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v106"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v106"></script>
-  <script src="js/tournament_app.js?v=20261018_v106"></script>
+  <!-- Scripts (Cache Buster v107) -->
+  <script src="sample_tournament_data.js?v=20261018_v107"></script>
+  <script src="js/member_manager.js?v=20261018_v107"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v107"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v107"></script>
+  <script src="js/tournament_app.js?v=20261018_v107"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">

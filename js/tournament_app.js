@@ -1477,6 +1477,15 @@ class TournamentApp {
   openNewMatchModal(courtName, timeSlotIndex) {
     document.getElementById("newMatchCourt").value = courtName;
     document.getElementById("newMatchSlot").value = timeSlotIndex;
+
+    // Reset player search indexer input and chips
+    const searchInput = document.getElementById("newMatchSearchInput");
+    if (searchInput) searchInput.value = "";
+    const chipsEl = document.getElementById("newMatchSearchChips");
+    if (chipsEl) {
+      chipsEl.innerHTML = "";
+      chipsEl.style.display = "none";
+    }
     
     const members = this.memberManager.getActiveMembers().filter(m => m.group !== "미참석");
     const pool = members.length >= 4 ? members : this.memberManager.getActiveMembers();
@@ -1499,6 +1508,84 @@ class TournamentApp {
     populateSelect("newTeamB2", 3 % pool.length);
 
     this.showModal("newMatchModal");
+  }
+
+  filterNewMatchPlayers(query) {
+    const q = (query || "").trim().toLowerCase();
+    const members = this.memberManager.getActiveMembers().filter(m => m.group !== "미참석");
+    const pool = members.length >= 4 ? members : this.memberManager.getActiveMembers();
+
+    const matches = q ? pool.filter(m => {
+      const name = (m.name || "").toLowerCase();
+      const group = (m.group || "").toLowerCase();
+      const role = (m.role || "").toLowerCase();
+      const level = `${m.clubLevel || 2}등`;
+      return name.includes(q) || group.includes(q) || role.includes(q) || level.includes(q);
+    }) : pool;
+
+    const chipsEl = document.getElementById("newMatchSearchChips");
+    if (chipsEl) {
+      if (!q) {
+        chipsEl.innerHTML = "";
+        chipsEl.style.display = "none";
+      } else {
+        chipsEl.style.display = "flex";
+        if (matches.length === 0) {
+          chipsEl.innerHTML = `<span style="font-size:11px; color:#ef4444; padding:4px 0;">'${query}' 일치하는 선수가 없습니다.</span>`;
+        } else {
+          chipsEl.innerHTML = matches.map(m => `
+            <button type="button" class="btn-xs" style="background:#1e293b; border:1px solid #38bdf8; color:#f8fafc; border-radius:14px; padding:3px 9px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"
+              onclick="app.assignPlayerToNewMatch('${m.name}')" title="클릭 시 빈 팀 슬롯에 즉시 배정">
+              <span>👤</span> <b>${m.name}</b> <span style="color:#94a3b8; font-size:10px;">(${m.group || '무소속'})</span>
+            </button>
+          `).join("");
+        }
+      }
+    }
+
+    ["newTeamA1", "newTeamA2", "newTeamB1", "newTeamB2"].forEach(selectId => {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      const currentVal = el.value;
+      let opts = `<option value="">-- 선수 선택 --</option>`;
+
+      if (currentVal && !matches.some(m => m.name === currentVal)) {
+        const curM = pool.find(m => m.name === currentVal);
+        const groupBadge = curM?.group ? `[${curM.group}] ` : "";
+        opts += `<option value="${currentVal}" selected style="color:#f59e0b;">${groupBadge}${currentVal} (현재 선택 유지)</option>`;
+      }
+
+      matches.forEach(m => {
+        const isSel = m.name === currentVal ? "selected" : "";
+        const groupBadge = m.group ? `[${m.group}] ` : "";
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
+      });
+      el.innerHTML = opts;
+    });
+  }
+
+  assignPlayerToNewMatch(playerName) {
+    const slots = ["newTeamA1", "newTeamA2", "newTeamB1", "newTeamB2"];
+    let targetSlot = slots.find(id => {
+      const el = document.getElementById(id);
+      return el && !el.value;
+    });
+    if (!targetSlot) {
+      targetSlot = "newTeamA1";
+    }
+    const el = document.getElementById(targetSlot);
+    if (el) {
+      let optExists = Array.from(el.options).some(o => o.value === playerName);
+      if (!optExists) {
+        const opt = document.createElement("option");
+        opt.value = playerName;
+        opt.textContent = playerName;
+        el.appendChild(opt);
+      }
+      el.value = playerName;
+      el.style.outline = "2px solid #38bdf8";
+      setTimeout(() => { if (el) el.style.outline = ""; }, 600);
+    }
   }
 
   saveNewMatch() {
@@ -1756,8 +1843,30 @@ class TournamentApp {
       });
     });
 
+    this.builderSearchQuery = "";
+    const bInput = document.getElementById("builderPlayerSearchInput");
+    if (bInput) bInput.value = "";
+    const matchCountBadge = document.getElementById("builderSearchMatchCount");
+    if (matchCountBadge) matchCountBadge.textContent = "";
+
     this.renderManualMatchBuilder();
     this.showModal("manualMatchBuilderModal");
+  }
+
+  filterBuilderPlayers(query) {
+    this.builderSearchQuery = query;
+    this.renderManualMatchBuilder();
+    const input = document.getElementById("builderPlayerSearchInput");
+    if (input && input.value !== query) {
+      input.value = query;
+    }
+  }
+
+  clearBuilderPlayerFilter() {
+    this.builderSearchQuery = "";
+    const input = document.getElementById("builderPlayerSearchInput");
+    if (input) input.value = "";
+    this.renderManualMatchBuilder();
   }
 
   renderManualMatchBuilder() {
@@ -1769,6 +1878,24 @@ class TournamentApp {
     const activeMembers = this.memberManager.getActiveMembers().filter(m => m.group !== "미참석");
     const pool = activeMembers.length >= 4 ? activeMembers : this.memberManager.getActiveMembers();
     if (activeCountEl) activeCountEl.textContent = `${pool.length}명`;
+
+    const filterQuery = (this.builderSearchQuery || "").trim().toLowerCase();
+    const filterPool = filterQuery ? pool.filter(m => {
+      const name = (m.name || "").toLowerCase();
+      const group = (m.group || "").toLowerCase();
+      const role = (m.role || "").toLowerCase();
+      const level = `${m.clubLevel || 2}등`;
+      return name.includes(filterQuery) || group.includes(filterQuery) || role.includes(filterQuery) || level.includes(filterQuery);
+    }) : pool;
+
+    const matchCountBadge = document.getElementById("builderSearchMatchCount");
+    if (matchCountBadge) {
+      if (filterQuery) {
+        matchCountBadge.textContent = `🔍 '${this.builderSearchQuery}' 색인: ${filterPool.length}명 일치`;
+      } else {
+        matchCountBadge.textContent = "";
+      }
+    }
 
     const courts = this.tournament.courts || ["15번", "16번", "17번", "18번"];
     const timeSlots = this.tournament.timeSlots || [];
@@ -1821,7 +1948,15 @@ class TournamentApp {
 
         const generateOptions = (selectedName) => {
           let opts = `<option value="">-- 선수 선택 --</option>`;
-          pool.forEach(m => {
+          // If selected player is not in filtered list, preserve it at top so match lineup is not broken
+          if (selectedName && !filterPool.some(m => m.name === selectedName)) {
+            const curM = pool.find(p => p.name === selectedName);
+            const groupBadge = curM?.group ? `[${curM.group}] ` : "";
+            const isColl = hasCollision(selectedName);
+            const collBadge = isColl ? " ⚠️[중복]" : "";
+            opts += `<option value="${selectedName}" selected style="color:#f59e0b;">${groupBadge}${selectedName} (선택 유지)${collBadge}</option>`;
+          }
+          filterPool.forEach(m => {
             const isSel = m.name === selectedName ? "selected" : "";
             const isColl = hasCollision(m.name);
             const collBadge = isColl ? " ⚠️[중복]" : "";
@@ -1900,7 +2035,6 @@ class TournamentApp {
     if (!match) return;
     if (!Array.isArray(match[teamKey])) match[teamKey] = [];
     match[teamKey][playerIndex] = playerName;
-    match[teamKey] = [match[teamKey][0] || "", match[teamKey][1] || ""].filter(Boolean);
     this.renderManualMatchBuilder();
   }
 
@@ -1954,7 +2088,13 @@ class TournamentApp {
       }
     }
 
-    const validMatches = (this.builderMatches || []).filter(m => (m.teamA?.length > 0 || m.teamB?.length > 0));
+    const validMatches = (this.builderMatches || [])
+      .map(m => ({
+        ...m,
+        teamA: (m.teamA || []).filter(Boolean),
+        teamB: (m.teamB || []).filter(Boolean)
+      }))
+      .filter(m => m.teamA.length > 0 || m.teamB.length > 0);
     this.tournament.matches = validMatches;
     this.saveTournament();
     this.closeModal("manualMatchBuilderModal");
