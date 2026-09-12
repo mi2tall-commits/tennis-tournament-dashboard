@@ -1035,10 +1035,105 @@ const DEFAULT_MEMBERS = [
   }
 ];
 
+const REAL_NAME_MAP = {
+  "mem_1": "전현덕",
+  "mem_2": "박현숙",
+  "mem_3": "강현지",
+  "mem_4": "임준혁",
+  "mem_5": "설수환",
+  "mem_6": "허혜진",
+  "mem_7": "김성윤(26)",
+  "mem_8": "강선균",
+  "mem_9": "김인혜",
+  "mem_10": "장경찬",
+  "mem_11": "한성호",
+  "mem_12": "김지은",
+  "mem_13": "손정철",
+  "mem_14": "박상현",
+  "mem_15": "임재성",
+  "mem_16": "안은정",
+  "mem_17": "이민우",
+  "mem_18": "김형섭",
+  "mem_19": "이정건",
+  "mem_20": "이동현",
+  "mem_21": "서지원",
+  "mem_22": "이정향",
+  "mem_23": "이영",
+  "mem_24": "이은주",
+  "mem_25": "고다희",
+  "mem_26": "신정기",
+  "mem_27": "안재현",
+  "mem_28": "정우근",
+  "mem_29": "이윤서",
+  "mem_30": "이상헌",
+  "mem_31": "조진호",
+  "mem_32": "권기환",
+  "mem_33": "이효일",
+  "mem_34": "남승민",
+  "mem_35": "이정윤",
+  "mem_36": "송영태",
+  "mem_37": "김형준",
+  "mem_38": "임영자",
+  "mem_39": "김종철",
+  "mem_40": "채상엽",
+  "mem_41": "최미정",
+  "mem_42": "심지후",
+  "mem_43": "심정석",
+  "mem_44": "차흥철",
+  "mem_45": "박순원",
+  "mem_46": "강수정",
+  "mem_47": "하기영",
+  "mem_48": "김병재",
+  "mem_49": "김선미",
+  "mem_50": "이종대",
+  "mem_51": "정승원",
+  "mem_52": "이상민",
+  "mem_53": "김규연",
+  "mem_54": "이윤재",
+  "mem_55": "소재업",
+  "mem_56": "서동원",
+  "mem_57": "김현제",
+  "mem_58": "김동진",
+  "mem_59": "김미진",
+  "mem_60": "송미라",
+  "mem_61": "김성윤(회장)",
+  "mem_62": "엄재용",
+  "mem_63": "윤상화",
+  "mem_64": "김동관"
+};
+
 class MemberManager {
   constructor() {
     this.storageKey = "tennis_club_members_v8";
     this.members = this.loadMembers();
+  }
+
+  static isMatch(member, query) {
+    if (!query) return true;
+    const q = (query || "").trim().toLowerCase();
+    if (!q) return true;
+
+    const name = (member.name || "").toLowerCase();
+    const realName = (member.realName || REAL_NAME_MAP[member.id] || "").toLowerCase();
+    const group = (member.group || "").toLowerCase();
+    const role = (member.role || "").toLowerCase();
+    const level = `${member.clubLevel || 2}등`;
+
+    // 1. Direct contains check in masked name, original realName, group, role, level
+    if (name.includes(q) || realName.includes(q) || group.includes(q) || role.includes(q) || level.includes(q)) {
+      return true;
+    }
+
+    // 2. Compact matching without asterisks or spaces (e.g. "전덕" matches "전*덕")
+    const compactName = name.replace(/[*_ ]/g, "");
+    if (compactName.includes(q)) return true;
+
+    // 3. Masked pattern fuzzy match (e.g. query "전현덕" against "전*덕")
+    if (q.length === 3 && name.length >= 3 && name.includes("*")) {
+      if (q[0] === name[0] && q[2] === name[2]) return true;
+    }
+
+    return false;
   }
 
   loadMembers() {
@@ -1054,9 +1149,10 @@ class MemberManager {
       if (saved) {
         const parsed = json_safe_parse(saved);
         if (Array.isArray(parsed) && parsed.length >= DEFAULT_MEMBERS.length) {
-          // 🛡️ 기존 로컬 데이터 자동 마스킹 위생 처리
+          // 🛡️ 기존 로컬 데이터 자동 마스킹 위생 처리 및 원본 realName 매핑
           return parsed.map(m => ({
             ...m,
+            realName: REAL_NAME_MAP[m.id] || m.realName || m.name,
             name: MemberManager.maskName(m.name),
             rawName: MemberManager.maskName(m.rawName || m.name),
             phone: MemberManager.maskPhone(m.phone || "")
@@ -1066,7 +1162,10 @@ class MemberManager {
     } catch (e) {
       console.warn("회원 로드 오류, 기본값 사용:", e);
     }
-    const fresh = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_MEMBERS)).map(m => ({
+      ...m,
+      realName: REAL_NAME_MAP[m.id] || m.realName || m.name
+    }));
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(fresh));
     } catch(e) {}

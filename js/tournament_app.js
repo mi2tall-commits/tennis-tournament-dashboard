@@ -1478,114 +1478,71 @@ class TournamentApp {
     document.getElementById("newMatchCourt").value = courtName;
     document.getElementById("newMatchSlot").value = timeSlotIndex;
 
-    // Reset player search indexer input and chips
-    const searchInput = document.getElementById("newMatchSearchInput");
-    if (searchInput) searchInput.value = "";
-    const chipsEl = document.getElementById("newMatchSearchChips");
-    if (chipsEl) {
-      chipsEl.innerHTML = "";
-      chipsEl.style.display = "none";
-    }
+    const slots = ["newTeamA1", "newTeamA2", "newTeamB1", "newTeamB2"];
     
+    // Clear slot search inputs
+    slots.forEach(id => {
+      const searchEl = document.getElementById("search_" + id);
+      if (searchEl) searchEl.value = "";
+    });
+
     const members = this.memberManager.getActiveMembers().filter(m => m.group !== "미참석");
     const pool = members.length >= 4 ? members : this.memberManager.getActiveMembers();
 
-    const populateSelect = (id, defaultIdx = 0) => {
+    const populateSlot = (id, defaultIdx = 0) => {
       const el = document.getElementById(id);
       if (!el) return;
       let opts = `<option value="">-- 선수 선택 --</option>`;
       pool.forEach((m, idx) => {
         const isSel = idx === defaultIdx ? "selected" : "";
         const groupBadge = m.group ? `[${m.group}] ` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
+        const realLabel = m.realName ? ` (${m.realName})` : "";
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} - ${m.clubLevel || 2}등/NTRP ${m.level || 3.0}</option>`;
       });
       el.innerHTML = opts;
     };
 
-    populateSelect("newTeamA1", 0);
-    populateSelect("newTeamA2", 1 % pool.length);
-    populateSelect("newTeamB1", 2 % pool.length);
-    populateSelect("newTeamB2", 3 % pool.length);
+    populateSlot("newTeamA1", 0);
+    populateSlot("newTeamA2", 1 % pool.length);
+    populateSlot("newTeamB1", 2 % pool.length);
+    populateSlot("newTeamB2", 3 % pool.length);
 
     this.showModal("newMatchModal");
   }
 
-  filterNewMatchPlayers(query) {
-    const q = (query || "").trim().toLowerCase();
+  filterSlotSelect(slotId, query) {
+    const el = document.getElementById(slotId);
+    if (!el) return;
+
     const members = this.memberManager.getActiveMembers().filter(m => m.group !== "미참석");
     const pool = members.length >= 4 ? members : this.memberManager.getActiveMembers();
+    const currentVal = el.value;
 
-    const matches = q ? pool.filter(m => {
-      const name = (m.name || "").toLowerCase();
-      const group = (m.group || "").toLowerCase();
-      const role = (m.role || "").toLowerCase();
-      const level = `${m.clubLevel || 2}등`;
-      return name.includes(q) || group.includes(q) || role.includes(q) || level.includes(q);
-    }) : pool;
+    const q = (query || "").trim();
+    const matches = q ? pool.filter(m => MemberManager.isMatch(m, q)) : pool;
 
-    const chipsEl = document.getElementById("newMatchSearchChips");
-    if (chipsEl) {
-      if (!q) {
-        chipsEl.innerHTML = "";
-        chipsEl.style.display = "none";
-      } else {
-        chipsEl.style.display = "flex";
-        if (matches.length === 0) {
-          chipsEl.innerHTML = `<span style="font-size:11px; color:#ef4444; padding:4px 0;">'${query}' 일치하는 선수가 없습니다.</span>`;
-        } else {
-          chipsEl.innerHTML = matches.map(m => `
-            <button type="button" class="btn-xs" style="background:#1e293b; border:1px solid #38bdf8; color:#f8fafc; border-radius:14px; padding:3px 9px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"
-              onclick="app.assignPlayerToNewMatch('${m.name}')" title="클릭 시 빈 팀 슬롯에 즉시 배정">
-              <span>👤</span> <b>${m.name}</b> <span style="color:#94a3b8; font-size:10px;">(${m.group || '무소속'})</span>
-            </button>
-          `).join("");
-        }
-      }
+    let opts = `<option value="">-- 선수 선택 --</option>`;
+    if (matches.length === 0) {
+      opts += `<option value="" disabled style="color:#ef4444;">✕ '${q}' 일치 선수 없음</option>`;
+    } else {
+      matches.forEach(m => {
+        const isSel = (matches.length === 1 || m.name === currentVal) ? "selected" : "";
+        const groupBadge = m.group ? `[${m.group}] ` : "";
+        const realLabel = m.realName ? ` (${m.realName})` : "";
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} - ${m.clubLevel || 2}등/NTRP ${m.level || 3.0}</option>`;
+      });
     }
 
-    ["newTeamA1", "newTeamA2", "newTeamB1", "newTeamB2"].forEach(selectId => {
-      const el = document.getElementById(selectId);
-      if (!el) return;
-      const currentVal = el.value;
-      let opts = `<option value="">-- 선수 선택 --</option>`;
-
-      if (currentVal && !matches.some(m => m.name === currentVal)) {
-        const curM = pool.find(m => m.name === currentVal);
-        const groupBadge = curM?.group ? `[${curM.group}] ` : "";
-        opts += `<option value="${currentVal}" selected style="color:#f59e0b;">${groupBadge}${currentVal} (현재 선택 유지)</option>`;
-      }
-
-      matches.forEach(m => {
-        const isSel = m.name === currentVal ? "selected" : "";
-        const groupBadge = m.group ? `[${m.group}] ` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
-      });
-      el.innerHTML = opts;
-    });
+    el.innerHTML = opts;
+    if (matches.length === 1) {
+      el.value = matches[0].name;
+    }
   }
 
-  assignPlayerToNewMatch(playerName) {
-    const slots = ["newTeamA1", "newTeamA2", "newTeamB1", "newTeamB2"];
-    let targetSlot = slots.find(id => {
-      const el = document.getElementById(id);
-      return el && !el.value;
-    });
-    if (!targetSlot) {
-      targetSlot = "newTeamA1";
-    }
-    const el = document.getElementById(targetSlot);
-    if (el) {
-      let optExists = Array.from(el.options).some(o => o.value === playerName);
-      if (!optExists) {
-        const opt = document.createElement("option");
-        opt.value = playerName;
-        opt.textContent = playerName;
-        el.appendChild(opt);
-      }
-      el.value = playerName;
-      el.style.outline = "2px solid #38bdf8";
-      setTimeout(() => { if (el) el.style.outline = ""; }, 600);
-    }
+  clearSlotSearch(slotId) {
+    const searchEl = document.getElementById("search_" + slotId);
+    if (searchEl) searchEl.value = "";
+    this.filterSlotSelect(slotId, "");
   }
 
   saveNewMatch() {
@@ -1879,14 +1836,8 @@ class TournamentApp {
     const pool = activeMembers.length >= 4 ? activeMembers : this.memberManager.getActiveMembers();
     if (activeCountEl) activeCountEl.textContent = `${pool.length}명`;
 
-    const filterQuery = (this.builderSearchQuery || "").trim().toLowerCase();
-    const filterPool = filterQuery ? pool.filter(m => {
-      const name = (m.name || "").toLowerCase();
-      const group = (m.group || "").toLowerCase();
-      const role = (m.role || "").toLowerCase();
-      const level = `${m.clubLevel || 2}등`;
-      return name.includes(filterQuery) || group.includes(filterQuery) || role.includes(filterQuery) || level.includes(filterQuery);
-    }) : pool;
+    const filterQuery = (this.builderSearchQuery || "").trim();
+    const filterPool = filterQuery ? pool.filter(m => MemberManager.isMatch(m, filterQuery)) : pool;
 
     const matchCountBadge = document.getElementById("builderSearchMatchCount");
     if (matchCountBadge) {
@@ -1952,16 +1903,18 @@ class TournamentApp {
           if (selectedName && !filterPool.some(m => m.name === selectedName)) {
             const curM = pool.find(p => p.name === selectedName);
             const groupBadge = curM?.group ? `[${curM.group}] ` : "";
+            const realLabel = curM?.realName ? ` (${curM.realName})` : "";
             const isColl = hasCollision(selectedName);
             const collBadge = isColl ? " ⚠️[중복]" : "";
-            opts += `<option value="${selectedName}" selected style="color:#f59e0b;">${groupBadge}${selectedName} (선택 유지)${collBadge}</option>`;
+            opts += `<option value="${selectedName}" selected style="color:#f59e0b;">${groupBadge}${selectedName}${realLabel} (선택 유지)${collBadge}</option>`;
           }
           filterPool.forEach(m => {
             const isSel = m.name === selectedName ? "selected" : "";
             const isColl = hasCollision(m.name);
             const collBadge = isColl ? " ⚠️[중복]" : "";
             const groupBadge = m.group ? `[${m.group}] ` : "";
-            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
+            const realLabel = m.realName ? ` (${m.realName})` : "";
+            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name}${realLabel} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
           });
           return opts;
         };

@@ -948,39 +948,85 @@
         <input type="hidden" id="newMatchCourt">
         <input type="hidden" id="newMatchSlot">
         
-        <!-- 🔍 실시간 선수 색인 & 빠른 자동완성 검색 바 -->
-        <div style="background:#091224; border:1px solid #1e3358; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label style="font-size:12px; font-weight:800; color:#38bdf8; display:flex; align-items:center; gap:5px;">
-              <span>🔍</span> <span>선수 빠른 색인 &amp; 자동완성 검색</span>
-            </label>
-            <span style="font-size:10px; color:#94a3b8;">성(예: '김', '이', '박') 입력</span>
-          </div>
-          <div style="position:relative;">
-            <input type="text" id="newMatchSearchInput" class="form-input" 
-                   placeholder="선수 성/이름 입력 (예: '김', '박', '윤', 'A조')..." 
-                   style="background:#0c162a; border-color:#0284c7; padding-left:32px; font-size:12px;"
-                   oninput="app.filterNewMatchPlayers(this.value)">
-            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; color:#0284c7;">🔍</span>
-          </div>
-          <div id="newMatchSearchChips" style="display:none; margin-top:8px; max-height:100px; overflow-y:auto; gap:6px; flex-wrap:wrap;">
-            <!-- Matching players appear here as clickable chips -->
-          </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
+          💡 각 선수 드롭다운의 <span style="color:var(--neon-cyan); font-weight:700;">검색창</span>에 선수의 <span style="color:#fbbf24; font-weight:700;">원래 이름(예: 전현덕, 박현숙)</span>이나 성('김', '이')을 입력하면 해당 선수만 즉시 색인되어 빠르게 선택할 수 있습니다.
         </div>
 
         <div class="form-group">
-          <label style="color: var(--neon-cyan);">Team A (2명 복식)</label>
-          <div class="form-row">
-            <select id="newTeamA1" class="form-select"></select>
-            <select id="newTeamA2" class="form-select"></select>
+          <label style="color: var(--neon-cyan); font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span>🔵</span> <span>Team A (2명 복식)</span>
+          </label>
+          <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            <!-- Team A - 1번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #1e3a8a; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8;">A팀 1번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamA1')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamA1" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 전현덕, 김)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #2563eb;"
+                       oninput="app.filterSlotSelect('newTeamA1', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #38bdf8;">🔍</span>
+              </div>
+              <select id="newTeamA1" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+
+            <!-- Team A - 2번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #1e3a8a; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8;">A팀 2번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamA2')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamA2" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 박현숙, 김)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #2563eb;"
+                       oninput="app.filterSlotSelect('newTeamA2', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #38bdf8;">🔍</span>
+              </div>
+              <select id="newTeamA2" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 10px;">
-          <label style="color: #f87171;">Team B (2명 복식)</label>
-          <div class="form-row">
-            <select id="newTeamB1" class="form-select"></select>
-            <select id="newTeamB2" class="form-select"></select>
+        <div class="form-group" style="margin-top: 12px;">
+          <label style="color: #f87171; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span>🔴</span> <span>Team B (2명 복식)</span>
+          </label>
+          <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            <!-- Team B - 1번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #7f1d1d; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #f87171;">B팀 1번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamB1')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamB1" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 강현지, 이)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #b91c1c;"
+                       oninput="app.filterSlotSelect('newTeamB1', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #f87171;">🔍</span>
+              </div>
+              <select id="newTeamB1" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+
+            <!-- Team B - 2번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #7f1d1d; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #f87171;">B팀 2번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamB2')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamB2" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 임준혁, 박)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #b91c1c;"
+                       oninput="app.filterSlotSelect('newTeamB2', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #f87171;">🔍</span>
+              </div>
+              <select id="newTeamB2" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
           </div>
         </div>
       </div>
@@ -991,12 +1037,12 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v107) -->
-  <script src="sample_tournament_data.js?v=20261018_v107"></script>
-  <script src="js/member_manager.js?v=20261018_v107"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v107"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v107"></script>
-  <script src="js/tournament_app.js?v=20261018_v107"></script>
+  <!-- Scripts (Cache Buster v108) -->
+  <script src="sample_tournament_data.js?v=20261018_v108"></script>
+  <script src="js/member_manager.js?v=20261018_v108"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v108"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v108"></script>
+  <script src="js/tournament_app.js?v=20261018_v108"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">
