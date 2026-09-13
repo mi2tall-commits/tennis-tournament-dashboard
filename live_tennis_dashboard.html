@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
+  <link rel="stylesheet" href="styles.css?v=20261018_v105">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* 🛡️ 강제 컴팩트 아이콘 모드 (캐시 우회용 인라인 가드) */
+    .btn-cloud-sync {
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      cursor: pointer;
+    }
+    .cloud-status-badge {
+      width: 32px !important;
+      max-width: 32px !important;
+      min-width: 32px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      font-size: 14px !important;
+      text-align: center !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+    }
+  </style>
+</head>
+<body class="mode-member">
+
+  <!-- ==========================================
+       Top Header
+       ========================================== -->
+      <header class="stadium-header">
+    <!-- Row 1: Status Badges (Left) & Controls (Right) -->
+    <div class="header-top-row">
+      <div class="header-status-group">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <span id="tournamentDateBadge" class="tourney-date-pill">📅 2026-10-18</span>
+      </div>
+
+      <div class="header-controls">
+        <button class="btn-header btn-cloud-sync" id="btnCloudSync" onclick="app.syncFromCloud(false)" title="Google Sheets 클라우드 동기화">
+          <span id="cloudSyncBadge" class="cloud-status-badge badge-cloud-connected" title="☁️ 클라우드 연결됨">☁️</span>
+        </button>
+        <a href="manual.html" target="_blank" class="btn-header btn-manual-top" title="웹앱 공식 사용 매뉴얼">
+          <span>📖</span>
+          <span class="btn-text">매뉴얼</span>
+        </a>
+        <button class="btn-header btn-mode-toggle" id="btnAppModeToggle" onclick="app.toggleAppMode()" title="일반 회원 뷰 / 경기이사 모드 전환">
+          <span>👤</span>
+          <span class="btn-text">회원 모드</span>
+        </button>
+        <button class="btn-header staff-only" onclick="app.changeStaffPin()" title="운영진 관리자 PIN 비밀번호 안전 변경">
+          <span>🔑</span>
+          <span class="btn-text btn-desktop-only">PIN 변경</span>
+        </button>
+        <button class="btn-header btn-action-new btn-desktop-only staff-only" onclick="app.startNewTournamentPrompt()" title="새로운 공식 대회 개막">
+          <span>➕</span>
+          <span class="btn-text">새 대회</span>
+        </button>
+        <button class="btn-header btn-action-mm staff-only" onclick="app.openMatchmakerModal()">
+          <span>⚙️</span>
+          <span class="btn-text">대진 편성</span>
+        </button>
+        <button class="btn-header btn-action-finish btn-desktop-only staff-only" onclick="app.finishCurrentTournament()">
+          <span>🏁</span>
+          <span class="btn-text">대회 종료</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openHistoryModal()">
+          <span>📜</span>
+          <span class="btn-text">대회 내역</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.openRosterModal()">
+          <span>👥</span>
+          <span class="btn-text">회원 명단</span>
+        </button>
+        <button class="btn-header btn-desktop-only staff-only" id="btnToggleAudio" onclick="app.toggleAudio()">
+          <span>🔔</span>
+          <span class="btn-text">알림음</span>
+        </button>
+        <button class="btn-header btn-desktop-only" id="btnToggleView">
+          <span>📺</span>
+          <span class="btn-text">전광판</span>
+        </button>
+        <button class="btn-header staff-only" onclick="app.openSettingsModal()" title="환경 설정">
+          <span>🛠️</span>
+          <span class="btn-text btn-desktop-only">설정</span>
+        </button>
+        <button class="btn-header btn-desktop-only" onclick="app.toggleFullscreen()">
+          <span>⛶</span>
+        </button>
+        <div class="led-clock btn-desktop-only" id="liveClock">12:00:00</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Full-Width Title & Mode Badge (No Squishing, No Weird Circle) -->
+    <div class="header-title-row">
+      <h1 class="tournament-title" id="tournamentTitleDisplay">2026년 10월 정기대회</h1>
+      <span id="tournamentModeBadge" class="mode-pill mode-individual">👤 개인 리그전 (전 경기 복식 · 개인 승점 누적)</span>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       📺 Desktop / Stadium View (Big Screen)
+       ========================================== -->
+  <main class="dashboard-container">
+    <!-- Top Stadium Row: Court Timeline Grid (Left) + Real-time Match Ticker (Right) -->
+    <div class="stadium-top-grid">
+      <!-- Left: Court Timeline Matrix (40min slots) -->
+      <section class="timeline-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📊</span>
+            <span>코트 시계열 현황 (40분 슬롯)</span>
+          </div>
+          <div class="timeline-legend">
+            <div class="legend-item"><span class="legend-dot legend-finished"></span> 종료</div>
+            <div class="legend-item"><span class="legend-dot legend-calling"></span> 입장</div>
+            <div class="legend-item"><span class="legend-dot legend-playing"></span> 진행</div>
+            <div class="legend-item"><span class="legend-dot legend-delayed"></span> 지연</div>
+            <div class="legend-item"><span class="legend-dot legend-waiting"></span> 대기</div>
+          </div>
+        </div>
+
+        <div class="timeline-wrapper">
+          <table class="timeline-table">
+            <thead>
+              <tr id="timelineTheadRow">
+                <!-- Populated dynamically -->
+              </tr>
+            </thead>
+            <tbody id="timelineTbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bottom Floating Mobile QR Badge -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+          <div class="qr-float-card" style="padding: 3px 8px;">
+            <img id="mobileQrImg" class="qr-code-img" style="width: 26px; height: 26px;" alt="모바일 접속 QR">
+            <span class="qr-label" style="font-size: 10px;">📱 모바일 접속</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Real-time Match Ticker Feed -->
+      <section class="panel-card ticker-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>📢</span>
+            <span>경기 속보 및 호출</span>
+          </div>
+          <span style="font-size: 10px; font-weight: 800; color: #38bdf8; background: rgba(56,189,248,0.15); padding: 2px 6px; border-radius: 4px;">Real-Time</span>
+        </div>
+
+        <div class="ticker-feed-list" id="tickerFeedList">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom Stadium Row: Dual Simultaneous Leaderboards (Monthly League Left, Annual Season Right) -->
+    <div class="stadium-bottom-grid">
+      <!-- Left: Real-time Cumulative League Leaderboard -->
+      <section class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div class="panel-title" style="color:var(--neon-gold);">
+            <span>🏆</span>
+            <span>개인 리그전 순위표 (누적 승점)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="desktopLeaderboardSubtitle" style="font-size:11px; color:var(--text-muted); font-weight:700;">운영진 리셋 전까지 지속 누적</span>
+            <button id="btnResetLeagueUi" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="누적된 개인리그전 결과를 초기화하고 새로 시작합니다">
+              <span>🔄</span>
+              <span>순위 리셋</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">순위</th>
+                <th style="width: 48px; text-align: center;">변동</th>
+                <th>선수명</th>
+                <th>전적(승-무-패)</th>
+                <th style="text-align: center;">승점</th>
+                <th style="text-align: center;">득실차</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyLeaderboardBody">
+              <!-- Dynamically populated by app -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right: Real-time Annual Cumulative Season Leaderboard -->
+      <section class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div class="panel-title" style="color:#38bdf8;">
+            <span>👑</span>
+            <span>연간 종합 랭킹 (2026 시즌 누적)</span>
+          </div>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700;">누적 승점 기준</span>
+        </div>
+
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">순위</th>
+                <th style="width: 48px; text-align: center;">변동</th>
+                <th>선수명</th>
+                <th style="text-align: center; color:#fbbf24;">누적승점</th>
+                <th style="text-align: center;">통산전적</th>
+                <th style="text-align: center; color:#f59e0b;">입상 (🥇/🥈)</th>
+                <th style="text-align: center;">참가</th>
+              </tr>
+            </thead>
+            <tbody id="annualLeaderboardBody">
+              <!-- Dynamically populated by app -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       📱 Mobile-First Interactive View
+       ========================================== -->
+  <div class="mobile-container">
+    <!-- Tab 1: 코트 현황 (모바일 최우선 배치) -->
+    <section id="tab-courts" class="mobile-view-section active">
+      <!-- Sticky "My Next Match" Quick Card (상단 고정 내 다음 경기 안내) -->
+      <div id="myNextMatchBannerMobile"></div>
+
+      <!-- Quick Manual Access Banner -->
+      <a href="manual.html" target="_blank" class="mobile-manual-quickbar" style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(2, 132, 199, 0.15) 100%); border:1px solid rgba(245, 158, 11, 0.4); border-radius:8px; padding:7px 12px; margin-bottom:8px; text-decoration:none; color:#f8fafc;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:15px;">📖</span>
+          <span style="font-size:12px; font-weight:700;">처음 이용하시나요? <span style="color:var(--neon-gold);">사용 매뉴얼</span> 보기</span>
+        </div>
+        <span style="font-size:11px; color:var(--neon-cyan); font-weight:800;">열기 &gt;</span>
+      </a>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📊 코트별 진행 현황</div>
+          <span class="panel-subtitle">터치하여 스코어 즉시 입력</span>
+        </div>
+        <div id="mobileCourtsContainer">
+          <!-- Mobile court cards populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: 순위보드 (모바일 듀얼 순위표: 개인 리그전 & 연간 종합 랭킹) -->
+    <section id="tab-leaderboard" class="mobile-view-section">
+      <!-- 1. 개인 리그전 누적 순위표 -->
+      <div class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="color:var(--neon-gold); font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>🏆</span>
+            <span>개인 리그전 순위표 (누적 승점)</span>
+          </div>
+          <button id="mobBtnResetLeague" class="btn-reset-league staff-only" onclick="app.resetCurrentLeague()" title="누적된 개인리그전 순위 리셋">
+            <span>🔄</span>
+            <span>순위 리셋</span>
+          </button>
+        </div>
+        <div id="mobLeaderboardModeText" style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
+          👤 리그전 반영 대회 전적 누적 (운영진 리셋 전까지 지속 누적)
+        </div>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead id="mobileLeaderboardThead">
+              <tr>
+                <th style="width: 40px; text-align: center;">순위</th>
+                <th style="width: 45px;">변동</th>
+                <th>선수명</th>
+                <th>전적</th>
+                <th>승점</th>
+                <th>득실차</th>
+              </tr>
+            </thead>
+            <tbody id="mobileLeaderboardBody">
+              <!-- Synchronized with desktop leaderboard -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. 연간 종합 랭킹 (시즌 누적) -->
+      <div class="panel-card" style="margin-top: 14px;">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title" style="color:#38bdf8; font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>👑</span>
+            <span>연간 종합 랭킹 (2026 시즌 누적)</span>
+          </div>
+          <span style="font-size:11px; color:var(--text-muted); font-weight:700;">누적 승점 기준</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:8px;">
+          ⭐ 역대 정기전 대회 누적 성적 및 명예의 전당
+        </div>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 38px; text-align: center;">순위</th>
+                <th>선수명</th>
+                <th style="text-align: center; color:#fbbf24;">누적승점</th>
+                <th style="text-align: center;">통산전적</th>
+                <th style="text-align: center; color:#f59e0b;">입상 (🥇/🥈)</th>
+              </tr>
+            </thead>
+            <tbody id="mobileAnnualLeaderboardBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- Tab 3: 내 경기 일정 -->
+    <section id="tab-mymatches" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">📅 내 경기 일정 모아보기</div>
+        </div>
+        <div style="margin: 10px 0;">
+          <select id="myPlayerSelect" class="form-select" style="width: 100%; font-size: 14px; padding: 10px;">
+            <!-- Player options -->
+          </select>
+        </div>
+        <div id="myMatchesContainer">
+          <!-- Filtered personal match list -->
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- Tab 6: 대회 내역 요약 (#3) -->
+    <section id="tab-history" class="mobile-view-section">
+      <button type="button" class="btn-subview-back" onclick="app.switchMobileTab('tab-more')">← 더보기 메뉴로 돌아가기</button>
+      <div class="panel-card">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="panel-title">📜 대회 내역 &amp; 명예의 전당</div>
+          <div style="display:flex; gap:4px;" class="staff-only">
+            <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800;" onclick="app.finishCurrentTournament()">🏁 현 대회 종료</button>
+            <button class="btn-xs" style="background:#059669;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+          </div>
+        </div>
+        <div id="mobileHistoryList" style="margin-top:10px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 5: 동호회 명단 -->
+    <section id="tab-roster" class="mobile-view-section">
+      <button type="button" class="btn-subview-back" onclick="app.switchMobileTab('tab-more')">← 더보기 메뉴로 돌아가기</button>
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">👥 참가 회원 명단</div>
+          <div style="display:flex; gap:4px;" class="staff-only">
+            <button class="btn-xs" style="background:#059669;" onclick="app.syncOfficialRoster()">🔄 최신화</button>
+            <button class="btn-xs" onclick="app.openRosterModal()">+ 회원 관리</button>
+          </div>
+        </div>
+        <div style="overflow-x: auto; margin-top: 8px;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 30px;">#</th>
+                <th>이름</th>
+                <th>레벨</th>
+                <th>소속조</th>
+                <th>직책</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="mobileRosterTableBody">
+              <!-- Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 7: 더보기 메뉴 (커피쿠폰, 회원명단, 대회내역, 매뉴얼, 운영진 모드) -->
+    <section id="tab-more" class="mobile-view-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">⋯ 추가 메뉴 및 클럽 서비스</div>
+        </div>
+        <div class="more-menu-grid">
+          <div class="more-menu-card" onclick="app.switchMobileTab('tab-roster')">
+            <span class="more-card-icon">👥</span>
+            <span class="more-card-title">동호회 정회원 명부</span>
+            <span class="more-card-desc">전체 64명 회원 명단, 레벨, 직책</span>
+          </div>
+          <div class="more-menu-card" onclick="app.switchMobileTab('tab-history')">
+            <span class="more-card-icon">📜</span>
+            <span class="more-card-title">대회 내역 &amp; 명예의전당</span>
+            <span class="more-card-desc">역대 월례대회 순위 및 우승자 아카이브</span>
+          </div>
+          <a href="manual.html" target="_blank" class="more-menu-card">
+            <span class="more-card-icon">📖</span>
+            <span class="more-card-title">공식 웹앱 사용 매뉴얼</span>
+            <span class="more-card-desc">초보자 이용법, 스코어 입력, FAQ 안내</span>
+          </a>
+        </div>
+
+        <!-- 운영진/경기이사 모드 토글 카드 -->
+        <div style="margin-top: 14px; background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #fbbf24;">🛠️ 경기이사 / 운영진 전용 모드</div>
+              <div style="font-size: 11px; color: #94a3b8;">대진표 작성, 대회 종료, 순위 리셋 등 관리 도구</div>
+            </div>
+            <button type="button" class="btn-primary" id="btnMoreModeToggle" style="background:#d97706; font-size:11px; padding:6px 10px; font-weight:800;" onclick="app.toggleAppMode()">
+              모드 전환
+            </button>
+          </div>
+          <div class="staff-only" style="display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #1e3358;">
+            <button type="button" class="btn-xs" style="flex:1; background:#059669; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#7c3aed; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.openGroupManagerModal()">👥 조 편성</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#0284c7; color:#fff; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.openMatchmakerModal()">⚙️ 대진 편성</button>
+            <button type="button" class="btn-xs" style="flex:1; background:#f59e0b; color:#000; padding:8px 4px; font-weight:800; border-radius:6px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar (회원 친화형 4대 핵심 탭) -->
+  <nav class="mobile-nav-bar">
+    <button class="mobile-nav-btn" id="navBtnMyMatches" data-tab="tab-mymatches" onclick="app.switchMobileTab('tab-mymatches')">
+      <span class="nav-icon">📅</span>
+      <span>내 경기</span>
+    </button>
+    <button class="mobile-nav-btn active" id="navBtnCourts" data-tab="tab-courts" onclick="app.switchMobileTab('tab-courts')">
+      <span class="nav-icon">📊</span>
+      <span>코트</span>
+    </button>
+    <button class="mobile-nav-btn" id="navBtnLeaderboard" data-tab="tab-leaderboard" onclick="app.switchMobileTab('tab-leaderboard')">
+      <span class="nav-icon">🏆</span>
+      <span>순위표</span>
+    </button>
+    <button class="mobile-nav-btn" id="navBtnMore" data-tab="tab-more" onclick="app.switchMobileTab('tab-more')">
+      <span class="nav-icon">⋯</span>
+      <span>더보기</span>
+    </button>
+  </nav>
+
+  <!-- ==========================================
+       Bottom Breaking News Marquee
+       ========================================== -->
+  <div class="bottom-ticker-bar">
+    <div class="ticker-label">속보</div>
+    <div class="ticker-track">
+      <div class="ticker-text" id="breakingNewsText">[속보] 15번 코트 스코어 [6 : 2] 확정.</div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- 1. Match Score Modal -->
+  <div id="scoreModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('scoreModal')">← 뒤로</button>
+          <h3 class="modal-title" id="modalMatchTitle">경기 스코어 입력</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('scoreModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body">
+        <div class="score-stepper-wrap">
+          <div class="team-score-box">
+            <span style="font-weight: 800; font-size: 13px; color: #fff;" id="modalTeamAName">Team A</span>
+            <div class="score-num-display" id="scoreADisplay">6</div>
+            <div class="score-btn-group">
+              <button class="btn-step" onclick="app.changeScore('A', -1)">-</button>
+              <button class="btn-step" onclick="app.changeScore('A', 1)">+</button>
+            </div>
+          </div>
+
+          <div class="score-colon">:</div>
+
+          <div class="team-score-box">
+            <span style="font-weight: 800; font-size: 13px; color: #fff;" id="modalTeamBName">Team B</span>
+            <div class="score-num-display" id="scoreBDisplay">3</div>
+            <div class="score-btn-group">
+              <button class="btn-step" onclick="app.changeScore('B', -1)">-</button>
+              <button class="btn-step" onclick="app.changeScore('B', 1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>타이브레이크 (선택)</label>
+            <input type="text" id="tieBreakInput" class="form-input" placeholder="예: 7:5">
+          </div>
+          <div class="form-group">
+            <label>경기 진행 상태</label>
+            <select id="matchStatusSelect" class="form-select">
+              <option value="finished">🟢 종료 (스코어 확정)</option>
+              <option value="playing">🔵 진행중 (코트 경기중)</option>
+              <option value="calling">🟡 입장/호출 (선수 대기중)</option>
+              <option value="delayed">🟠 지연 (경기 순연)</option>
+              <option value="waiting">⚪ 대기 (시작 전)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('scoreModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveScore()">확정 (저장)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Member Roster Modal (6대 역할 표준화 반영 #7) -->
+  <div id="rosterModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 680px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('rosterModal')">← 뒤로</button>
+          <h3 class="modal-title">👥 동호회 공식 회원 명단 (<span id="rosterMemberCount">64</span>명)</h3>
+          <button class="btn-xs" style="background:#059669; font-weight:800;" onclick="app.syncOfficialRoster()">🔄 64명 명부 최신화</button>
+        </div>
+        <button class="modal-close" onclick="app.closeModal('rosterModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Single Member Add -->
+        <div style="background: #090f1d; padding: 12px; border-radius: 8px; border: 1px solid #1e3358;">
+          <h4 style="font-size: 13px; margin-bottom: 8px; color: var(--neon-cyan);">+ 신규 회원 개별 등록</h4>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.3fr auto; gap: 6px; align-items: flex-end;">
+            <div class="form-group">
+              <label>이름</label>
+              <input type="text" id="addMemberName" class="form-input" placeholder="선수 이름">
+            </div>
+            <div class="form-group">
+              <label>NTRP</label>
+              <select id="addMemberLevel" class="form-select">
+                <option value="" selected>미입력</option>
+                <option value="2.0">2.0 (입문)</option>
+                <option value="2.5">2.5 (초급)</option>
+                <option value="3.0">3.0 (중급)</option>
+                <option value="3.5">3.5 (중상)</option>
+                <option value="4.0">4.0 (고급)</option>
+                <option value="4.5">4.5 (에이스)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>U-리그</label>
+              <select id="addMemberClubLevel" class="form-select">
+                <option value="U1">U1</option>
+                <option value="U2">U2</option>
+                <option value="U3" selected>U3</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>직책 (6대 역할)</label>
+              <select id="addMemberRole" class="form-select">
+                <option value="회장">회장</option>
+                <option value="부회장">부회장</option>
+                <option value="경기이사">경기이사</option>
+                <option value="재무이사">재무이사</option>
+                <option value="총무이사">총무이사</option>
+                <option value="회원" selected>회원</option>
+              </select>
+            </div>
+            <button class="btn-primary" style="height: 38px;" onclick="app.addNewMember()">추가</button>
+          </div>
+        </div>
+
+        <!-- Bulk Import Box -->
+        <div style="background: #090f1d; padding: 12px; border-radius: 8px; border: 1px solid #1e3358; margin-top:10px;">
+          <h4 style="font-size: 13px; margin-bottom: 6px; color: var(--neon-gold);">📋 명단 텍스트 일괄 붙여넣기 등록</h4>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+            한 줄에 한 명씩 입력하세요. 직책은 회장, 부회장, 경기이사, 재무이사, 총무이사, 회원 중 입력. 예: <code>홍길동 3.5 A조 회원</code>
+          </p>
+          <textarea id="bulkImportTextarea" class="form-input" style="width: 100%; height: 60px; resize: vertical;" placeholder="이름 [NTRP] [소속조] [직책]"></textarea>
+          <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
+            <button class="btn-secondary" onclick="app.executeBulkImport()">일괄 등록 실행</button>
+          </div>
+        </div>
+
+        <!-- Member List Table -->
+        <div style="overflow-x: auto; margin-top:10px;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 35px; text-align: center;">번호</th>
+                <th>이름</th>
+                <th style="text-align: center;">가입일</th>
+                <th style="text-align: center;">NTRP</th>
+                <th style="text-align: center;">U-리그</th>
+                <th style="text-align: center;">직책</th>
+                <th style="text-align: center;">상태</th>
+                <th style="text-align: center;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="rosterTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('rosterModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Matchmaker Modal (코트/시간표 설정 & 수동 대진표 작성) -->
+  <div id="matchmakerModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 620px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('matchmakerModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:14px;">⚙️ 대진표 설정 & 수동 작성</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('matchmakerModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body">
+        <!-- Court & Schedule Settings Form -->
+        <div style="background:#090f1d; padding:12px; border-radius:8px; border:1px solid #1e3358; margin-bottom:12px;">
+          <h4 style="font-size:13px; color:var(--neon-cyan); margin-bottom:8px;">🏟️ 코트 번호 & 게임 시간표 설정</h4>
+          <div style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.3); padding:8px 12px; border-radius:6px; margin-bottom:10px; font-size:11px; color:#38bdf8;">
+            💡 아래 설정을 적용하면 전광판 타임라인에 코트 x 시간 빈 칸이 생성됩니다. 각 빈 칸의 <b>[+ 경기 배정]</b>을 클릭해 대진표를 직접 작성하세요.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>코트 개수</label>
+              <select id="mmCourtCount" class="form-select" onchange="app.onCourtCountChange()">
+                <option value="2">2개 코트</option>
+                <option value="3">3개 코트</option>
+                <option value="4" selected>4개 코트</option>
+                <option value="5">5개 코트</option>
+                <option value="6">6개 코트</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:2;">
+              <label>코트 번호 직접 입력 (쉼표 구분)</label>
+              <input type="text" id="mmCourtNames" class="form-input" value="15번, 16번, 17번, 18번" placeholder="예: 15번, 16번, 17번, 18번">
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:6px;">
+            <div class="form-group">
+              <label style="color:var(--neon-gold); font-weight:800;">📅 대회 날짜</label>
+              <input type="date" id="mmTournamentDate" class="form-input" style="border-color:#fbbf24;" onchange="app.onTournamentDateChange(this.value)">
+            </div>
+            <div class="form-group">
+              <label>최초 시작 시간</label>
+              <input type="time" id="mmStartTime" class="form-input" value="08:00">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:6px;">
+            <label>게임당 소요 시간 (기본 40분)</label>
+            <select id="mmDuration" class="form-select">
+              <option value="30">30분 단위</option>
+              <option value="40" selected>40분 단위 (기본)</option>
+              <option value="45">45분 단위</option>
+              <option value="50">50분 단위</option>
+              <option value="60">60분 단위</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- A~D 4개조 편성 & 불참자 관리 전용 카드 -->
+        <div style="background: #111a33; border: 1px solid #3b2a6f; padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <div style="font-weight: 800; font-size: 13px; color: #c084fc;">👥 A~D 4개조 조 편성 &amp; 불참자 관리</div>
+            <div style="font-size: 11px; color: #94a3b8;">출석 선수를 A·B·C·D조로 분배하거나 LEVEL 밸런스를 자동 배정합니다.</div>
+          </div>
+          <button type="button" class="btn-primary" style="background: #7c3aed; font-weight:800; padding: 8px 14px;" onclick="app.openGroupManagerModal()">
+            👥 A~D조 직접 편성/관리
+          </button>
+        </div>
+
+        <div style="background: #111b33; border: 1px solid #233c6e; padding: 14px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #38bdf8;">📝 대진표 수동 배정 마법사</div>
+              <div style="font-size: 11px; color: #94a3b8;">코트×시간 슬롯을 한눈에 보며 4인 복식을 직접 지정하거나 1차 초안을 추천받습니다.</div>
+            </div>
+            <button type="button" class="btn-primary" style="background: #0284c7; font-weight:800; padding: 8px 14px;" onclick="app.applyCourtScheduleSettings(true)">
+              📝 대진표 작성창 열기
+            </button>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #1a2d50; padding-top: 8px;">
+            <button type="button" class="btn-secondary" style="font-size: 11px;" onclick="app.applyCourtScheduleSettings(false)">
+              💾 코트/시간표 설정만 저장
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="app.closeModal('matchmakerModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.1. Manual Match Builder Modal (대진표 수동 배정 및 일괄 편집기) -->
+  <div id="manualMatchBuilderModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 1240px; width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('manualMatchBuilderModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:15px;">📝 대진표 수동 배정 &amp; 편집기</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('manualMatchBuilderModal')">✕ 닫기</button>
+      </div>
+
+      <div class="manual-builder-toolbar">
+        <div class="builder-stats">
+          <span>출전 가능 선수: <b id="builderActiveCount">0명</b></span>
+          <span class="toolbar-sep">|</span>
+          <span>편성 완료 경기: <b id="builderMatchCount">0경기</b></span>
+        </div>
+        <div class="builder-actions">
+          <button type="button" class="btn-builder-tool" onclick="app.autoFillManualDraft()" title="출전 선수 레벨과 경기 수를 고려하여 빈 슬롯을 자동으로 균형 있게 채웁니다.">
+            ⚡ 1차 초안 자동 추천 채우기
+          </button>
+          <button type="button" class="btn-builder-tool danger" onclick="app.clearAllMatchesPrompt()">
+            🗑️ 전체 슬롯 비우기
+          </button>
+        </div>
+      </div>
+
+      <div class="builder-guide-banner">
+        💡 각 코트/시간대별로 팀A(2명) vs 팀B(2명)를 선택하세요. 같은 시간대에 중복 배정된 선수가 있으면 <span style="color:#ef4444; font-weight:800;">⚠️[중복]</span>으로 표시됩니다.
+      </div>
+
+      <!-- 🔍 대진표 작성창 실시간 선수 색인 필터 바 -->
+      <div class="builder-indexer-bar" style="background:#0a1326; border-bottom:1px solid #1e3358; padding:8px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px; flex:1; min-width:240px; position:relative;">
+          <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#38bdf8; font-size:12px;">🔍</span>
+          <input type="text" id="builderPlayerSearchInput" class="form-input" 
+                 placeholder="선수 빠른 색인 필터 (성/이름 입력 시 모든 드롭다운 실시간 압축 색인)..." 
+                 style="background:#0c162a; border-color:#2563eb; padding-left:30px; padding-right:60px; font-size:12px; height:32px; width:100%;"
+                 oninput="app.filterBuilderPlayers(this.value)">
+          <button type="button" class="btn-xs" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:#334155; color:#cbd5e1; padding:2px 8px; border-radius:4px; font-size:10px;" onclick="app.clearBuilderPlayerFilter()">초기화</button>
+        </div>
+        <div id="builderSearchMatchCount" style="font-size:11px; color:#38bdf8; font-weight:700; white-space:nowrap;"></div>
+      </div>
+
+      <div class="modal-body" id="manualBuilderBody" style="flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 14px;">
+        <!-- Populated dynamically by app.renderManualMatchBuilder() -->
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div id="builderCollisionNotice" style="font-size: 12px; font-weight: 700;"></div>
+        <div style="display:flex; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="app.closeModal('manualMatchBuilderModal')">취소</button>
+          <button type="button" class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.saveManualMatches()">
+            ✅ 대진표 확정 및 전광판 반영
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- 5. Season Cumulative Leaderboard Modal (#5) -->
+  <div id="seasonModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🏆 연간 / 시즌 개인 누적 종합 랭킹</h3>
+        <button class="modal-close" onclick="app.closeModal('seasonModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+          월별 정기전 개인 리그 결과가 누적된 시즌 전체 종합 랭킹입니다. (다승왕, 득실왕, 시즌 MVP)
+        </p>
+        <div style="overflow-x: auto;">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">시즌순위</th>
+                <th>선수명</th>
+                <th style="text-align: center;">누적 승점</th>
+                <th style="text-align: center;">누적 전적</th>
+                <th style="text-align: center;">누적 득실</th>
+                <th style="text-align: center;">우승 / 준우승</th>
+                <th style="text-align: center;">참가대회수</th>
+              </tr>
+            </thead>
+            <tbody id="seasonLeaderboardBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('seasonModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Settings Modal -->
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('settingsModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:14px;">⚙️ 환경 설정</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('settingsModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>대회 공식 명칭</label>
+          <input type="text" id="setTourneyTitle" class="form-input" value="2026년 10월 정기대회">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>대회 일자</label>
+            <input type="date" id="setTourneyDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>대회 운영 모드</label>
+            <select id="setTourneyMode" class="form-select">
+              <option value="regular_individual">👤 정기전: 개인 리그전 (파트너 순환)</option>
+              <option value="regular_group">👥 정기전: 조별 대항전 (A~D 4개조)</option>
+              <option value="event">🎉 이벤트 게임 (친선/번외)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:8px;">
+          <label style="font-weight:700; color:#fbbf24;">개인 리그전 순위표 반영 여부</label>
+          <select id="setTourneyIsLeague" class="form-select">
+            <option value="true">🏆 개인 리그전에 반영 (정기 리그전 승점 누적)</option>
+            <option value="false">✕ 개인 리그전에 미반영 (친선 / 이벤트전)</option>
+          </select>
+          <span style="font-size:10px; color:var(--text-muted); margin-top:3px; display:block;">* 미반영 선택 시 해당 대회의 경기 결과는 개인 리그 순위표에 합산되지 않습니다.</span>
+        </div>
+
+        <div class="form-group" style="margin-top:12px; padding-top:10px; border-top:1px solid #1e3358;">
+          <label style="font-weight:700; color:var(--neon-cyan);">☁️ Google Sheets 클라우드 동기화</label>
+          <button type="button" class="btn-secondary" style="width:100%; font-size:12px; margin-top:4px;" onclick="app.closeModal('settingsModal'); app.openCloudSettingsModal();">☁️ 클라우드 동기화 설정 (URL 변경/연결 테스트)</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('settingsModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveSettings()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Tournament Modal (새 대회 개막 전용 모달: 리그전 반영 여부 선택 필수) -->
+  <div id="newTournamentModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('newTournamentModal')">← 뒤로</button>
+          <h3 class="modal-title" style="font-size:15px; color:#34d399;">➕ 새로운 대회 개막</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('newTournamentModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-weight:700; color:#fff;">대회 공식 명칭</label>
+          <input type="text" id="newTourneyTitleInput" class="form-input" placeholder="예: 2026년 11월 정기대회">
+        </div>
+        <div class="form-row" style="margin-bottom: 14px;">
+          <div class="form-group">
+            <label style="font-weight:700; color:#fff;">대회 일자</label>
+            <input type="date" id="newTourneyDateInput" class="form-input">
+          </div>
+          <div class="form-group">
+            <label style="font-weight:700; color:#fff;">최초 시작 시간</label>
+            <input type="time" id="newTourneyStartTimeInput" class="form-input" value="08:00">
+          </div>
+        </div>
+
+        <!-- 🌟 개인리그전 순위표 반영 여부 선택 (사용자 핵심 요구사항) -->
+        <div style="background: #081120; border: 1px solid #1e3358; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 800; color: #fbbf24; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+            <span>🏆</span> <span>개인 리그전 순위표 반영 여부 선택</span>
+          </div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.5; margin-bottom: 10px;">
+            이 대회의 경기 결과를 <b>[개인 리그전 순위표]</b>에 계속 누적 합산할지 선택합니다. (운영진 리셋 전까지 지속 누적)
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:8px 12px; border-radius:6px;">
+              <input type="radio" id="radNewTourneyLeagueYes" name="newTourneyLeagueOption" value="true" checked style="accent-color:#10b981;">
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#34d399;">✓ 개인 리그전에 반영 (정기 리그전)</div>
+                <div style="font-size:10px; color:#cbd5e1;">복식 경기 개인 승점이 기존 리그 순위표에 계속 누적됩니다.</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); padding:8px 12px; border-radius:6px;">
+              <input type="radio" id="radNewTourneyLeagueNo" name="newTourneyLeagueOption" value="false" style="accent-color:#94a3b8;">
+              <div>
+                <div style="font-size:12px; font-weight:800; color:#cbd5e1;">✕ 개인 리그전에 미반영 (이벤트 / 친선 / 번외 경기)</div>
+                <div style="font-size:10px; color:#94a3b8;">개인 리그전 순위표에 영향을 주지 않고 당일 단독 경기만 진행합니다.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn-secondary" onclick="app.closeModal('newTournamentModal')">취소</button>
+        <button type="button" class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.confirmCreateNewTournament()">➕ 새 대회 공식 개막</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. New Match Modal (Manual Match Creation) -->
+  <div id="newMatchModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ 신규 경기 배정</h3>
+        <button class="modal-close" onclick="app.closeModal('newMatchModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="newMatchCourt">
+        <input type="hidden" id="newMatchSlot">
+        
+        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
+          💡 각 선수 드롭다운의 <span style="color:var(--neon-cyan); font-weight:700;">검색창</span>에 선수의 <span style="color:#fbbf24; font-weight:700;">원래 이름(예: 전현덕, 박현숙)</span>이나 성('김', '이')을 입력하면 해당 선수만 즉시 색인되어 빠르게 선택할 수 있습니다.
+        </div>
+
+        <div class="form-group">
+          <label style="color: var(--neon-cyan); font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span>🔵</span> <span>Team A (2명 복식)</span>
+          </label>
+          <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            <!-- Team A - 1번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #1e3a8a; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8;">A팀 1번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamA1')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamA1" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 전현덕, 김)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #2563eb;"
+                       oninput="app.filterSlotSelect('newTeamA1', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #38bdf8;">🔍</span>
+              </div>
+              <select id="newTeamA1" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+
+            <!-- Team A - 2번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #1e3a8a; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8;">A팀 2번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamA2')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamA2" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 박현숙, 김)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #2563eb;"
+                       oninput="app.filterSlotSelect('newTeamA2', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #38bdf8;">🔍</span>
+              </div>
+              <select id="newTeamA2" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label style="color: #f87171; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span>🔴</span> <span>Team B (2명 복식)</span>
+          </label>
+          <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+            <!-- Team B - 1번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #7f1d1d; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #f87171;">B팀 1번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamB1')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamB1" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 강현지, 이)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #b91c1c;"
+                       oninput="app.filterSlotSelect('newTeamB1', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #f87171;">🔍</span>
+              </div>
+              <select id="newTeamB1" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+
+            <!-- Team B - 2번 선수 -->
+            <div class="player-slot-box" style="display: flex; flex-direction: column; gap: 4px; background: rgba(15,23,42,0.6); border: 1px solid #7f1d1d; border-radius: 6px; padding: 6px 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; font-weight: 800; color: #f87171;">B팀 2번 선수</span>
+                <button type="button" onclick="app.clearSlotSearch('newTeamB2')" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 10px;" title="검색 초기화">초기화</button>
+              </div>
+              <div style="position: relative;">
+                <input type="text" id="search_newTeamB2" class="form-input" 
+                       placeholder="🔍 원래이름/성 검색 (예: 임준혁, 박)..." 
+                       style="font-size: 11px; height: 28px; padding-left: 22px; background: #0c1834; border-color: #b91c1c;"
+                       oninput="app.filterSlotSelect('newTeamB2', this.value)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #f87171;">🔍</span>
+              </div>
+              <select id="newTeamB2" class="form-select" style="font-size: 11px; height: 32px; background: #081126;"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('newMatchModal')">취소</button>
+        <button class="btn-primary" onclick="app.saveNewMatch()">경기 추가 확정</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts (Cache Buster v109) -->
+  <script src="sample_tournament_data.js?v=20261018_v109"></script>
+  <script src="js/member_manager.js?v=20261018_v109"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v109"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v109"></script>
+  <script src="js/tournament_app.js?v=20261018_v109"></script>
+
+  <!-- 8. Edit Member Modal (회원 개별 정보 & LEVEL 1~4등급 수정) -->
+  <div id="editMemberModalWindow" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 480px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('editMemberModalWindow')">← 회원 명단</button>
+          <h3 class="modal-title">✏️ 회원 정보 &amp; LEVEL 수정</h3>
+        </div>
+        <button class="modal-close" onclick="app.closeModal('editMemberModalWindow')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>선수 이름</label>
+          <input type="text" id="editMemName" class="form-input">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>가입일</label>
+            <input type="date" id="editMemJoinDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>NTRP (선택)</label>
+            <input type="number" step="0.5" id="editMemNtrp" class="form-input" placeholder="예: 3.0 (미입력 시 비워둠)">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:6px;">
+          <div class="form-group">
+            <label style="color:var(--neon-cyan); font-weight:800;">U-리그 (U1~U3)</label>
+            <select id="editMemLevel" class="form-select" style="border-color:#38bdf8;">
+              <option value="U1">U1</option>
+              <option value="U2">U2</option>
+              <option value="U3">U3</option>
+            </select>
+            <span style="font-size:10px; color:var(--text-muted);">* U-리그 등급으로 대진 및 그룹을 배정합니다.</span>
+          </div>
+          <div class="form-group">
+            <label>직책 (6대 역할)</label>
+            <select id="editMemRole" class="form-select">
+              <option value="회장">회장</option>
+              <option value="부회장">부회장</option>
+              <option value="경기이사">경기이사</option>
+              <option value="재무이사">재무이사</option>
+              <option value="총무이사">총무이사</option>
+              <option value="회원">회원</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" id="btnWithdrawMember" class="btn-danger" style="background:#dc2626; color:#fff; font-weight:800; border:none; padding:7px 14px; border-radius:6px; cursor:pointer;" onclick="app.deleteCurrentMember()">🗑️ 회원 탈퇴</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-secondary" onclick="app.closeModal('editMemberModalWindow')">취소</button>
+          <button type="button" class="btn-primary" onclick="app.saveEditedMember()">수정 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 9. Group Assignment Modal (A~D조 직접 선택 및 편성 관리) -->
+  <div id="groupManagerModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 820px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('groupManagerModal')">← 뒤로</button>
+          <div>
+            <h3 class="modal-title" style="font-size:14px;">👥 A~D 4개조 조 편성 관리자</h3>
+            <div style="font-size:11px; color:var(--text-muted);">회원 명단을 기준으로 A~D조 직접 편성 (불참자 제외 가능)</div>
+          </div>
+        </div>
+        <button type="button" class="modal-close" onclick="app.closeModal('groupManagerModal')">✕ 닫기</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Group Summary Cards -->
+        <div id="groupSummaryGrid" class="group-summary-grid">
+          <!-- Populated dynamically with 4 columns -->
+        </div>
+
+        <!-- Quick Balance Toolbar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin: 12px 0 8px 0; background:#090f1d; padding:8px 12px; border-radius:6px; border:1px solid #1e3358;">
+          <span id="groupSummaryHeaderInfo" style="font-size:12px; color:var(--neon-cyan); font-weight:800;">📋 회원별 소속조 직접 선택 (64명 명단)</span>
+          <button class="btn-xs" style="background:#7c3aed; font-weight:800;" onclick="app.autoBalanceGroups()">⚖️ LEVEL 밸런스 자동 배정</button>
+        </div>
+
+        <!-- Member Group Selection Table -->
+        <div style="overflow-x: auto; max-height: 350px;">
+          <table class="leaderboard-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="width: 35px; text-align: center;">번호</th>
+                <th>선수명</th>
+                <th style="text-align: center;">LEVEL</th>
+                <th style="text-align: center;">소속조 직접 선택</th>
+              </tr>
+            </thead>
+            <tbody id="groupAssignmentTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('groupManagerModal')">취소</button>
+        <button class="btn-primary" style="background:#059669; font-weight:800;" onclick="app.saveGroupAssignments()">조 편성 확정 및 저장</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 10. Tournament History Modal (대회 내역 요약 & 기록 보관소 #3) -->
+  <div id="historyModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 820px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-modal-back" onclick="app.closeModal('historyModal')">← 뒤로</button>
+          <div>
+            <h3 class="modal-title" style="font-size:14px;">📜 역대 대회 내역 &amp; 명예의 전당</h3>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div class="staff-only" style="display:flex; align-items:center; gap:6px;">
+            <button class="btn-xs" style="background:#f59e0b; color:#000; font-weight:800; padding:5px 8px;" onclick="app.finishCurrentTournament()">🏁 대회 종료</button>
+            <button class="btn-xs" style="background:#059669; font-weight:800; padding:5px 8px;" onclick="app.startNewTournamentPrompt()">➕ 새 대회</button>
+          </div>
+          <button class="modal-close" onclick="app.closeModal('historyModal')">✕ 닫기</button>
+        </div>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div id="historyTournamentList" class="history-tournaments-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="app.closeModal('historyModal')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Cloud Settings Modal (Google Apps Script 클라우드 연동 설정) -->
+  <div id="cloudSettingsModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ Google Apps Script 클라우드 동기화 설정</h3>
+        <button class="modal-close" onclick="app.closeModal('cloudSettingsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+          구글 스프레드시트의 Apps Script로 배포된 웹 앱 URL을 입력하면 전 회원 스마트폰과 실시간 점수 및 순위가 자동 동기화됩니다.<br>
+          <span style="color:var(--neon-cyan);">(※ 비워둘 경우 단일 기기 로컬 단독 모드로 동작합니다)</span>
+        </div>
+        <div class="form-group">
+          <label style="color:var(--neon-cyan); font-weight:800;">Google Apps Script 웹 앱 URL</label>
+          <input type="text" id="inputGasUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="font-family:var(--font-mono); font-size:12px;">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button type="button" class="btn-xs" style="background:#0284c7; padding:6px 12px; font-weight:800; cursor:pointer;" onclick="app.testGasConnection()">⚡ 연결 테스트</button>
+          <button type="button" class="btn-xs" style="background:#334155; padding:6px 12px; cursor:pointer;" onclick="document.getElementById('inputGasUrl').value=''">연동 해제 (로컬 모드)</button>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between;">
+        <button type="button" class="btn-secondary" onclick="app.closeModal('cloudSettingsModal')">닫기</button>
+        <button type="button" class="btn-primary" onclick="app.saveCloudUrlFromModal()">저장 및 동기화</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
