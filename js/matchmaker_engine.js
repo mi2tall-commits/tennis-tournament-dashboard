@@ -128,8 +128,13 @@ class MatchmakerEngine {
         const selected = available.slice(0, 4);
         selected.forEach(m => assignedInThisSlot.add(m.name));
 
-        // 레벨 정렬 (1등~4등) -> (1등+4등) vs (2등+3등) 페어링
-        selected.sort((a, b) => (a.clubLevel || 2) - (b.clubLevel || 2));
+        // 레벨 정렬 (U1~U3) -> (1등+4등) vs (2등+3등) 밸런스 페어링
+        const getLvlNum = (lvl) => {
+          if (lvl === "U1" || lvl === 1) return 1;
+          if (lvl === "U2" || lvl === 2) return 2;
+          return 3; // U3 or default
+        };
+        selected.sort((a, b) => getLvlNum(a.clubLevel) - getLvlNum(b.clubLevel));
         const teamA = [selected[0].name, selected[3].name];
         const teamB = [selected[1].name, selected[2].name];
 
