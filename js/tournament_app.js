@@ -125,18 +125,11 @@ class TournamentApp {
     return pairStr;
   }
 
-  // 🎾 회원 등급 표기: U-리그(U1~U3) 우선 표시 및 NTRP 입력 시에만 선택적 병기
+  // 🎾 회원 등급 표기: 회원명단의 U-리그 등급(U1~U3) 그대로 연동
   formatMemberLevelBadge(m) {
     if (!m) return "U3";
     const member = typeof m === "object" ? m : this.memberManager?.getActiveMembers()?.find(p => p.name === m || p.rawName === m);
-    if (!member) return "U3";
-    let uLvl = member.clubLevel || "U3";
-    if (uLvl === 1 || uLvl === "1") uLvl = "U1";
-    else if (uLvl === 2 || uLvl === "2") uLvl = "U2";
-    else if (uLvl === 3 || uLvl === "3") uLvl = "U3";
-
-    const hasNtrp = member.level && parseFloat(member.level) > 0;
-    return hasNtrp ? `${uLvl} / NTRP ${member.level}` : uLvl;
+    return member?.clubLevel || "U3";
   }
   getTeamWithGroupBadge(players = []) {
     if (!players || players.length === 0) return `<span style="color:var(--text-muted);">미정</span>`;
