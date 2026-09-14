@@ -1761,11 +1761,6 @@ class TournamentApp {
     const selectedMode = (modeSelect && modeSelect.value) || "regular_individual";
     // 🌟 사용자 선택 100% 존중: 하단부 창에서 선택한 리그전 반영/미반영 그대로 적용!
     const isLeague = radYes ? radYes.checked : true;
-    const selectedMode = (modeSelect && modeSelect.value) || "regular_individual";
-
-    // 설정 모달의 입력창도 즉시 동기화
-    const setTitleEl = document.getElementById("setTourneyTitle");
-    if (setTitleEl) setTitleEl.value = newTitle;
 
     // 설정 모달의 입력창도 즉시 동기화
     const setTitleEl = document.getElementById("setTourneyTitle");
