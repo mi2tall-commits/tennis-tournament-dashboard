@@ -171,7 +171,7 @@ class LeaderboardEngine {
     });
 
     const ranked = Object.values(stats).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
+      if (b.wins !== a.wins) return b.wins - a.wins;
       if (b.diff !== a.diff) return b.diff - a.diff;
       if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
       return a.name.localeCompare(b.name, "ko");
@@ -328,7 +328,8 @@ class LeaderboardEngine {
       thirdPlace: top3,
       matchesCount: finishedCount || (tournament.matches ? tournament.matches.length : 0),
       summary: `${tournament.title} 공식 종료 (우승: ${top1})`,
-      ranks: topRanks
+      ranks: topRanks,
+      matches: JSON.parse(JSON.stringify(tournament.matches || []))
     };
 
     if (existingIdx >= 0) {
@@ -353,6 +354,34 @@ class LeaderboardEngine {
     }
 
     return history;
+  }
+
+  deleteSeasonTournament(tourneyId, currentTournament = null) {
+    let list = [];
+    try {
+      const saved = localStorage.getItem(this.seasonStorageKey);
+      if (saved) list = JSON.parse(saved);
+    } catch(e) {}
+    if (!Array.isArray(list)) list = [];
+
+    const targetIdStr = String(tourneyId);
+    list = list.filter(t => {
+      const tid = String(t.id || ('tourney_' + t.date));
+      return tid !== targetIdStr;
+    });
+
+    try {
+      localStorage.setItem(this.seasonStorageKey, JSON.stringify(list));
+    } catch(e) {}
+
+    if (currentTournament && Array.isArray(currentTournament.history)) {
+      currentTournament.history = currentTournament.history.filter(t => {
+        const tid = String(t.id || ('tourney_' + t.date));
+        return tid !== targetIdStr;
+      });
+    }
+
+    return list;
   }
 
   saveTournamentToSeason(tournament, rankedList) {
@@ -416,11 +445,254 @@ class LeaderboardEngine {
     });
 
     return Object.values(cumulative).sort((a, b) => {
-      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
-      if (b.totalDiff !== a.totalDiff) return b.totalDiff - a.totalDiff;
       if (b.totalWins !== a.totalWins) return b.totalWins - a.totalWins;
-      return b.championships - a.championships;
+      if (b.totalDiff !== a.totalDiff) return b.totalDiff - a.totalDiff;
+      if (b.championships !== a.championships) return b.championships - a.championships;
+      return a.name.localeCompare(b.name, "ko");
     });
+  }
+
+  /**
+   * 👥 조별 대항전 (이벤트 대회) 조별 순위표 산출
+   * - A조, B조, C조, D조의 총 매치 경기수, 승/무/패, 승점, 득실차, 총득점/실점 집계
+   * - A조 2명 vs B조 2명 복식 경기 시 승리한 조에 매치 1승(+1) 및 게임 득실 집계
+   * - 각 조 소속 선수 명단 포함
+   */
+  calculateGroupEventLeaderboard(matches = [], members = [], pointsRule = { win: 3, draw: 1, loss: 0 }) {
+    const memberGroupMap = new Map();
+    (members || []).forEach(m => {
+      if (m.name) memberGroupMap.set(m.name, m.group || "A조");
+      if (m.rawName) memberGroupMap.set(m.rawName, m.group || "A조");
+    });
+
+    const standardGroups = ["A조", "B조", "C조", "D조"];
+    const groupStats = {};
+    standardGroups.forEach(g => {
+      groupStats[g] = {
+        group: g,
+        members: (members || []).filter(m => m.group === g && m.status !== "inactive").map(m => m.name),
+        played: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        points: 0,
+        gamesWon: 0,
+        gamesLost: 0,
+        diff: 0
+      };
+    });
+
+    (matches || []).forEach(m => {
+      if (m.status !== "finished" || m.scoreA === null || m.scoreB === null) return;
+      const sA = parseInt(m.scoreA) || 0;
+      const sB = parseInt(m.scoreB) || 0;
+
+      const teamA = m.teamA || [];
+      const teamB = m.teamB || [];
+      if (teamA.length === 0 || teamB.length === 0) return;
+
+      // Team A와 Team B의 소속 조 집계
+      const groupsA = teamA.map(n => memberGroupMap.get(n)).filter(Boolean);
+      const groupsB = teamB.map(n => memberGroupMap.get(n)).filter(Boolean);
+
+      // 1. 단일 조 대항 매치 (A조 2명 vs B조 2명 등)
+      const setA = new Set(groupsA);
+      const setB = new Set(groupsB);
+
+      if (setA.size === 1 && setB.size === 1) {
+        const gA = Array.from(setA)[0];
+        const gB = Array.from(setB)[0];
+
+        if (groupStats[gA] && groupStats[gB]) {
+          groupStats[gA].played++;
+          groupStats[gB].played++;
+
+          groupStats[gA].gamesWon += sA;
+          groupStats[gA].gamesLost += sB;
+          groupStats[gB].gamesWon += sB;
+          groupStats[gB].gamesLost += sA;
+
+          if (sA > sB) {
+            groupStats[gA].wins++;
+            groupStats[gA].points += pointsRule.win;
+            groupStats[gB].losses++;
+            groupStats[gB].points += pointsRule.loss;
+          } else if (sB > sA) {
+            groupStats[gB].wins++;
+            groupStats[gB].points += pointsRule.win;
+            groupStats[gA].losses++;
+            groupStats[gA].points += pointsRule.loss;
+          } else {
+            groupStats[gA].draws++;
+            groupStats[gA].points += pointsRule.draw;
+            groupStats[gB].draws++;
+            groupStats[gB].points += pointsRule.draw;
+          }
+        }
+      } else {
+        // 2. 조가 섞인 혼합 매치인 경우: 선수별 지분 비례(1/선수수) 합산
+        const weightA = 1 / groupsA.length;
+        const weightB = 1 / groupsB.length;
+
+        groupsA.forEach(g => {
+          if (groupStats[g]) {
+            groupStats[g].played += weightA;
+            groupStats[g].gamesWon += sA * weightA;
+            groupStats[g].gamesLost += sB * weightA;
+            if (sA > sB) {
+              groupStats[g].wins += weightA;
+              groupStats[g].points += pointsRule.win * weightA;
+            } else if (sB > sA) {
+              groupStats[g].losses += weightA;
+              groupStats[g].points += pointsRule.loss * weightA;
+            } else {
+              groupStats[g].draws += weightA;
+              groupStats[g].points += pointsRule.draw * weightA;
+            }
+          }
+        });
+
+        groupsB.forEach(g => {
+          if (groupStats[g]) {
+            groupStats[g].played += weightB;
+            groupStats[g].gamesWon += sB * weightB;
+            groupStats[g].gamesLost += sA * weightB;
+            if (sB > sA) {
+              groupStats[g].wins += weightB;
+              groupStats[g].points += pointsRule.win * weightB;
+            } else if (sA > sB) {
+              groupStats[g].losses += weightB;
+              groupStats[g].points += pointsRule.loss * weightB;
+            } else {
+              groupStats[g].draws += weightB;
+              groupStats[g].points += pointsRule.draw * weightB;
+            }
+          }
+        });
+      }
+    });
+
+    Object.values(groupStats).forEach(g => {
+      g.played = Math.round(g.played);
+      g.wins = Math.round(g.wins);
+      g.draws = Math.round(g.draws);
+      g.losses = Math.round(g.losses);
+      g.points = Math.round(g.points);
+      g.gamesWon = Math.round(g.gamesWon);
+      g.gamesLost = Math.round(g.gamesLost);
+      g.diff = g.gamesWon - g.gamesLost;
+      g.record = `${g.wins}승 ${g.draws}무 ${g.losses}패`;
+    });
+
+    const ranked = Object.values(groupStats).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.diff !== a.diff) return b.diff - a.diff;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      return a.group.localeCompare(b.group, "ko");
+    });
+
+    ranked.forEach((item, idx) => {
+      item.rank = idx + 1;
+      item.isChampion = (idx === 0 && item.played > 0);
+      item.isRunnerUp = (idx === 1 && item.played > 0);
+    });
+
+    return ranked;
+  }
+
+  /**
+   * 🎖️ 조별 이벤트 대회 참가자 당일 개인 순위 집계 (MVP 선발용)
+   * - 과거 누적 기록과 분리하여, 오늘 해당 대회 경기 전적만 독립 집계 (승무패 및 득실차 기준)
+   */
+  calculateEventIndividualLeaderboard(matches = [], members = []) {
+    const memberGroupMap = new Map();
+    (members || []).forEach(m => {
+      if (m.name) memberGroupMap.set(m.name, m.group || "A조");
+      if (m.rawName) memberGroupMap.set(m.rawName, m.group || "A조");
+    });
+
+    const stats = {};
+
+    (matches || []).forEach(m => {
+      if (m.status !== "finished" || m.scoreA === null || m.scoreB === null) return;
+      const sA = parseInt(m.scoreA) || 0;
+      const sB = parseInt(m.scoreB) || 0;
+
+      const teamA = m.teamA || [];
+      const teamB = m.teamB || [];
+
+      teamA.forEach(name => {
+        if (!stats[name]) {
+          stats[name] = {
+            name,
+            group: memberGroupMap.get(name) || "A조",
+            played: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            diff: 0
+          };
+        }
+        stats[name].played++;
+        stats[name].gamesWon += sA;
+        stats[name].gamesLost += sB;
+        if (sA > sB) {
+          stats[name].wins++;
+        } else if (sA === sB) {
+          stats[name].draws++;
+        } else {
+          stats[name].losses++;
+        }
+      });
+
+      teamB.forEach(name => {
+        if (!stats[name]) {
+          stats[name] = {
+            name,
+            group: memberGroupMap.get(name) || "A조",
+            played: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            diff: 0
+          };
+        }
+        stats[name].played++;
+        stats[name].gamesWon += sB;
+        stats[name].gamesLost += sA;
+        if (sB > sA) {
+          stats[name].wins++;
+        } else if (sA === sB) {
+          stats[name].draws++;
+        } else {
+          stats[name].losses++;
+        }
+      });
+    });
+
+    Object.values(stats).forEach(s => {
+      s.diff = s.gamesWon - s.gamesLost;
+      s.record = `${s.wins}-${s.draws}-${s.losses}`;
+    });
+
+    const ranked = Object.values(stats).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.diff !== a.diff) return b.diff - a.diff;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      return a.name.localeCompare(b.name, "ko");
+    });
+
+    ranked.forEach((item, idx) => {
+      item.rank = idx + 1;
+      item.isMvp = (idx === 0 && item.played > 0);
+      item.isRunnerUp = (idx === 1 && item.played > 0);
+    });
+
+    return ranked;
   }
 }
 

@@ -125,6 +125,19 @@ class TournamentApp {
     return pairStr;
   }
 
+  // 🎾 회원 등급 표기: U-리그(U1~U3) 우선 표시 및 NTRP 입력 시에만 선택적 병기
+  formatMemberLevelBadge(m) {
+    if (!m) return "U3";
+    const member = typeof m === "object" ? m : this.memberManager?.getActiveMembers()?.find(p => p.name === m || p.rawName === m);
+    if (!member) return "U3";
+    let uLvl = member.clubLevel || "U3";
+    if (uLvl === 1 || uLvl === "1") uLvl = "U1";
+    else if (uLvl === 2 || uLvl === "2") uLvl = "U2";
+    else if (uLvl === 3 || uLvl === "3") uLvl = "U3";
+
+    const hasNtrp = member.level && parseFloat(member.level) > 0;
+    return hasNtrp ? `${uLvl} / NTRP ${member.level}` : uLvl;
+  }
   getTeamWithGroupBadge(players = []) {
     if (!players || players.length === 0) return `<span style="color:var(--text-muted);">미정</span>`;
     const active = this.memberManager.getActiveMembers();
@@ -215,6 +228,10 @@ class TournamentApp {
       if (!silent) this.openCloudSettingsModal();
       return;
     }
+    // 🛡️ 로컬 테스트(file:/// 등) 환경에서 실서버 클라우드 동기화 비활성화
+    if (window.location.protocol === "file:") {
+      return;
+    }
     this.isSyncing = true;
     // 사용자가 직접 클릭했을 때만 1초간 회전 피드백 제공, 백그라운드 폴링 시에는 구름 아이콘 유지
     if (!silent) {
@@ -267,6 +284,10 @@ class TournamentApp {
 
   async pushToCloud(silent = true) {
     if (!this.gasUrl) return;
+    // 🛡️ 로컬 테스트(file:/// 등) 환경에서 실사용자 클라우드 데이터 오염 원천 차단
+    if (window.location.protocol === "file:") {
+      return;
+    }
     try {
       // 백그라운드 전송이므로 사용자 화면을 방해하지 않고 조용히 전송
       await fetch(this.gasUrl, {
@@ -488,11 +509,8 @@ class TournamentApp {
       const mode = this.tournament.mode || "regular_individual";
       const isLeague = this.tournament.isLeagueMatch !== false;
 
-      if (!isLeague) {
-        modeBadgeEl.textContent = "🎉 친선 / 이벤트전 (개인 리그 순위 미반영)";
-        modeBadgeEl.className = "mode-pill mode-event";
-      } else if (mode === "event") {
-        modeBadgeEl.textContent = "🎉 이벤트 게임 (조별 랜덤 복식 · 리그 반영)";
+      if (mode === "event" || !isLeague) {
+        modeBadgeEl.textContent = "🎉 이벤트 경기 (개인리그전 미반영 · 조편성 없음)";
         modeBadgeEl.className = "mode-pill mode-event";
       } else if (mode === "regular_group") {
         modeBadgeEl.textContent = "👥 정기전: 조별 대항전 (A~D 4개조 · 리그 반영)";
@@ -1024,11 +1042,12 @@ class TournamentApp {
 
     const matches = (this.tournament && this.tournament.matches) || [];
     if (matches.length === 0) {
+      const isCompleted = this.tournament.status === "completed";
       mobCourts.innerHTML = `
         <div style="text-align:center; padding:36px 16px; background:#0e1726; border-radius:8px; border:1px dashed #1e3358;">
-          <div style="font-size:36px; margin-bottom:10px;">🎾</div>
-          <div style="font-weight:800; font-size:15px; color:#fff;">현재 진행 중인 경기가 없습니다</div>
-          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">상단 <b>[⚙️ 대진 편성]</b> 버튼을 터치하여 새 대진표를 생성하세요.</div>
+          <div style="font-size:36px; margin-bottom:10px;">${isCompleted ? '🏁' : '🎾'}</div>
+          <div style="font-weight:800; font-size:15px; color:#fff;">${isCompleted ? '대회가 공식 종료되었습니다' : '현재 진행 중인 경기가 없습니다'}</div>
+          <div style="font-size:12px; color:#94a3b8; margin-top:6px;">${isCompleted ? '경기 기록은 <b>[대회 내역]</b> 및 연간 랭킹에 안전 보관되었습니다.<br>새 대회를 시작하시려면 상단 <b>[➕ 새 대회]</b> 버튼을 눌러주세요.' : '상단 <b>[⚙️ 대진 편성]</b> 버튼을 터치하여 새 대진표를 생성하세요.'}</div>
         </div>
       `;
       return;
@@ -1208,7 +1227,7 @@ class TournamentApp {
     let optHtml = `<option value="">-- 내 이름 선택 (출전 경기 모아보기) --</option>`;
     members.forEach(m => {
       const selected = m.name === this.selectedPlayerFilter ? "selected" : "";
-      optHtml += `<option value="${m.name}" ${selected}>${this.formatPlayerName(m.name)} (NTRP ${m.level || '-'})</option>`;
+      optHtml += `<option value="${m.name}" ${selected}>${this.formatPlayerName(m.name)} (${this.formatMemberLevelBadge(m)})</option>`;
     });
     selectEl.innerHTML = optHtml;
 
@@ -1592,6 +1611,11 @@ class TournamentApp {
     }
 
     const matches = this.tournament.matches || [];
+    if (!matches || matches.length === 0) {
+      alert("⚠️ 등록된 경기 데이터가 없습니다.");
+      return;
+    }
+
     const finishedMatches = matches.filter(m => m.status === "finished");
     const unfinMatches = matches.filter(m => m.status !== "finished");
 
@@ -1629,6 +1653,9 @@ class TournamentApp {
     const josa = this.getSubjectJosa(this.tournament.title);
     this.tournament.breakingNews = `[대회 공식 종료] ${this.tournament.title}${josa} 성황리에 종료되었습니다! 🥇 우승: ${top1}`;
 
+    // 💡 전광판 초기화: 새 대회 생성 전까지는 빈 슬롯(대기 상태)으로 표출 (사용자 핵심 요구사항)
+    this.tournament.matches = [];
+    this.builderMatches = [];
     // 🔄 조별 배치 초기화: 대회가 종료되면 조 배치를 자동으로 리셋 (사용자 핵심 요구사항)
     if (this.memberManager && typeof this.memberManager.resetAllGroups === "function") {
       this.memberManager.resetAllGroups();
@@ -1639,6 +1666,32 @@ class TournamentApp {
     this.renderHistoryTab();
 
     alert(`🎉 [${this.tournament.title}] 대회가 성공적으로 종료되었습니다!\n\n🥇 1위: ${top1}\n🥈 2위: ${top2}\n🥉 3위: ${top3}\n\n결과가 [대회 내역] 탭 및 연간 랭킹에 영구 보관되었습니다.\n다음 정기대회를 개막하시려면 [➕ 새 대회] 버튼을 눌러주세요.`);
+  }
+
+  setNewTourneyLeagueOption(isLeague) {
+    const radYes = document.getElementById("radNewTourneyLeagueYes");
+    const radNo = document.getElementById("radNewTourneyLeagueNo");
+    const cardYes = document.getElementById("cardLeagueYes");
+    const cardNo = document.getElementById("cardLeagueNo");
+
+    if (radYes && radNo) {
+      radYes.checked = !!isLeague;
+      radNo.checked = !isLeague;
+    }
+
+    if (cardYes && cardNo) {
+      if (isLeague) {
+        cardYes.classList.add("active-yes");
+        cardNo.classList.remove("active-no");
+      } else {
+        cardNo.classList.add("active-no");
+        cardYes.classList.remove("active-yes");
+      }
+    }
+  }
+
+  openNewTournamentModal() {
+    return this.startNewTournamentPrompt();
   }
 
   async startNewTournamentPrompt() {
@@ -1657,15 +1710,14 @@ class TournamentApp {
       this.applyAppModeUi();
     }
 
-    // 2. 현재 진행 중인 미종료 대회 엄격 보호: 반드시 [대회 종료] 완료 후 새 대회 생성 가능
-    if (this.tournament && this.tournament.status !== "completed" && Array.isArray(this.tournament.matches) && this.tournament.matches.length > 0) {
-      alert(
-        `⚠️ [대회 종료 필수 안내]\n\n` +
-        `현재 진행 중인 대회 [${this.tournament.title}](${this.tournament.matches.length}경기)가 아직 공식 종료되지 않았습니다.\n\n` +
-        `경기 기록과 개인 순위를 [대회 내역]과 [연간 종합 랭킹]에 안전하게 영구 보관하기 위해,\n` +
-        `먼저 [🏁 대회 종료] 버튼을 눌러 대회를 공식 완료한 후에 새로운 대회를 개막해 주세요.`
+    // 2. 현재 대회 종료 여부 확인 및 안내
+    if (this.tournament.status !== "completed") {
+      const proceed = confirm(
+        `⚠️ 현재 진행 중인 대회 [${this.tournament.title}]가 아직 공식 종료되지 않았습니다.\n\n` +
+        `새로운 대회를 시작하시겠습니까?\n` +
+        `(새 대회가 생성되어도 이전 대회 기록 및 연간 랭킹은 안전하게 보존됩니다.)`
       );
-      return;
+      if (!proceed) return;
     }
 
     // 3. 새 대회 전용 모달 열기 및 기본값 세팅
@@ -1674,8 +1726,6 @@ class TournamentApp {
     const titleInput = document.getElementById("newTourneyTitleInput");
     const dateInput = document.getElementById("newTourneyDateInput");
     const timeInput = document.getElementById("newTourneyStartTimeInput");
-    const radYes = document.getElementById("radNewTourneyLeagueYes");
-    const radNo = document.getElementById("radNewTourneyLeagueNo");
 
     if (titleInput) {
       titleInput.value = "";
@@ -1683,8 +1733,22 @@ class TournamentApp {
     }
     if (dateInput) dateInput.value = now.toISOString().slice(0, 10);
     if (timeInput) timeInput.value = "08:00";
-    if (radYes) radYes.checked = true;
-    if (radNo) radNo.checked = false;
+
+    const modeSelect = document.getElementById("newTourneyModeSelect");
+    if (modeSelect) {
+      modeSelect.value = "regular_individual";
+      this.setNewTourneyLeagueOption(true);
+
+      const syncLeagueRadios = () => {
+        if (modeSelect.value === "event") {
+          this.setNewTourneyLeagueOption(false);
+        } else {
+          this.setNewTourneyLeagueOption(true);
+        }
+      };
+      modeSelect.onchange = syncLeagueRadios;
+      modeSelect.addEventListener("change", syncLeagueRadios);
+    }
 
     this.showModal("newTournamentModal");
   }
@@ -1701,8 +1765,14 @@ class TournamentApp {
     const newTitle = (titleInput && titleInput.value.trim()) || defaultTitle;
     const newDate = (dateInput && dateInput.value) || now.toISOString().slice(0, 10);
     const newStartTime = (timeInput && timeInput.value) || "08:00";
+    const selectedMode = (modeSelect && modeSelect.value) || "regular_individual";
+    // 🌟 사용자 선택 100% 존중: 하단부 창에서 선택한 리그전 반영/미반영 그대로 적용!
     const isLeague = radYes ? radYes.checked : true;
     const selectedMode = (modeSelect && modeSelect.value) || "regular_individual";
+
+    // 설정 모달의 입력창도 즉시 동기화
+    const setTitleEl = document.getElementById("setTourneyTitle");
+    if (setTitleEl) setTitleEl.value = newTitle;
 
     // 설정 모달의 입력창도 즉시 동기화
     const setTitleEl = document.getElementById("setTourneyTitle");
@@ -1725,7 +1795,7 @@ class TournamentApp {
       matches: [],
       history: existingHistory,
       isMasterReset: true,
-      breakingNews: `[공식 개막] ${newTitle}${this.getSubjectJosa(newTitle)} 공식 개막되었습니다! (${isLeague ? "🏆 개인 리그전 전적/득실 누적" : "✕ 친선/이벤트전 - 리그 미반영"})`
+      breakingNews: `[공식 개막] ${newTitle}${this.getSubjectJosa(newTitle)} 공식 개막되었습니다! (${isLeague ? "🏆 개인 리그전 전적/득실 누적" : "✕ 친선/이벤트전 - 개인 리그 순위 미반영"})`
     };
 
     // 🔄 조별 배치 초기화: 새 대회가 시작되면 이전 대회의 조편성을 깨끗이 초기화 (사용자 핵심 요구사항)
@@ -1764,6 +1834,46 @@ class TournamentApp {
     this.showModal("historyModal");
   }
 
+  showHistoryModal() {
+    this.openHistoryModal();
+  }
+
+  async deleteTournamentHistory(tourneyId) {
+    if (!tourneyId) return;
+
+    // 1. 경기이사 / 운영진 권한 체크 (암호화 PIN 검증)
+    if (this.appMode !== "staff") {
+      const pin = prompt("🔐 대회 내역을 삭제하려면 경기이사/운영진 PIN 비밀번호를 입력하세요:");
+      if (pin === null) return;
+      if (!(await this.verifyPin(pin))) {
+        alert("❌ PIN 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      this.appMode = "staff";
+      try {
+        localStorage.setItem("tennis_app_mode", this.appMode);
+      } catch(e) {}
+      this.applyAppModeUi();
+    }
+
+    const historyList = this.leaderboard.getSeasonHistory(this.tournament);
+    const target = historyList.find(t => String(t.id || ('tourney_' + t.date)) === String(tourneyId));
+    const title = target ? target.title : "선택한 대회";
+
+    // 2. 삭제 확인 창
+    const confirmDelete = confirm(`⚠️ [대회 내역 삭제]\n\n정말로 [${title}] 대회를 보관함에서 영구 삭제하시겠습니까?\n\n• 해당 대회의 경기 기록 및 수상 내역이 완전히 삭제됩니다.\n• 연간 종합 랭킹이 해당 대회를 제외하고 즉시 재계산됩니다.`);
+    if (!confirmDelete) return;
+
+    // 3. LeaderboardEngine 및 tournament.history 동기화 삭제
+    this.leaderboard.deleteSeasonTournament(tourneyId, this.tournament);
+
+    this.saveTournament();
+    this.renderHistoryTab();
+    this.renderLeaderboard();
+
+    alert(`✅ [${title}] 대회가 영구 삭제되었으며, 연간 종합 랭킹이 재계산되었습니다.`);
+  }
+
   renderHistoryTab() {
     const listEl = document.getElementById("historyTournamentList");
     const mobListEl = document.getElementById("mobileHistoryList");
@@ -1777,14 +1887,18 @@ class TournamentApp {
       let html = "";
       historyList.forEach((h, idx) => {
         const topRanks = Array.isArray(h.ranks) ? h.ranks.slice(0, 5) : [];
+        const tid = h.id || ('tourney_' + h.date);
         html += `
           <div class="history-tourney-card">
             <div class="history-card-header">
               <div>
-                <span class="history-title-badge">${h.title}</span>
+                <span class="history-title-badge">${this.escape(h.title)}</span>
                 <span class="history-date">${h.date}</span>
               </div>
-              <span class="badge-completed">종료 완료</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="badge-completed">종료 완료</span>
+                <button type="button" class="btn-delete-history" onclick="app.deleteTournamentHistory('${tid}')">🗑️ 삭제</button>
+              </div>
             </div>
             <div class="history-podium-row">
               <span class="hist-medal">🥇 1위: <b>${h.firstPlace || (topRanks[0] ? topRanks[0].name : "-")}</b></span>
@@ -1929,7 +2043,7 @@ class TournamentApp {
       sortedPool.forEach((m, idx) => {
         const isSel = idx === defaultIdx ? "selected" : "";
         const groupBadge = (isGroupEvent && m.group) ? `[${m.group}] ` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${this.formatMemberLevelBadge(m)})</option>`;
       });
       el.innerHTML = opts;
     };
@@ -1962,7 +2076,7 @@ class TournamentApp {
       sortedMatches.forEach(m => {
         const isSel = (sortedMatches.length === 1 || m.name === currentVal) ? "selected" : "";
         const groupBadge = (isGroupEvent && m.group) ? `[${m.group}] ` : "";
-        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})</option>`;
+        opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${this.formatMemberLevelBadge(m)})</option>`;
       });
     }
 
@@ -2044,7 +2158,7 @@ class TournamentApp {
             <div class="group-members-pill-list">
               ${inGroup.map(m => `
                 <span class="group-mem-pill">
-                  ${m.name} <span class="badge-lvl">${m.clubLevel || 2}등</span>
+                  ${m.name} <span class="badge-lvl">${this.formatMemberLevelBadge(m)}</span>
                 </span>
               `).join("")}
             </div>
@@ -2060,7 +2174,7 @@ class TournamentApp {
           <div class="group-members-pill-list">
             ${absent.length === 0 ? '<span style="font-size:11px; color:#64748b;">불참자 없음</span>' : absent.map(m => `
               <span class="group-mem-pill" style="opacity:0.6; background:#1e293b; color:#94a3b8; border-color:#334155;">
-                ${m.name} <span class="badge-lvl">${m.clubLevel || 2}등</span>
+                ${m.name} <span class="badge-lvl">${this.formatMemberLevelBadge(m)}</span>
               </span>
             `).join("")}
           </div>
@@ -2091,7 +2205,7 @@ class TournamentApp {
           <tr style="${isAbsent ? 'opacity:0.55; background:rgba(15,23,42,0.4);' : ''}">
             <td style="text-align:center; font-family:var(--font-mono);">${m.no || idx + 1}</td>
             <td><b>${m.name}</b> ${isAbsent ? '<span style="font-size:10px; color:#ef4444; font-weight:800; margin-left:4px;">[불참]</span>' : ''}</td>
-            <td style="text-align:center;"><span class="level-badge">${m.clubLevel || 2}등급</span></td>
+            <td style="text-align:center;"><span class="level-badge">${this.formatMemberLevelBadge(m)}</span></td>
             <td style="text-align:center;">
               <select class="form-select form-select-xs" onchange="app.changeMemberGroup('${m.id}', this.value)" style="width:115px; padding:3px 6px; font-weight:800; background:#0e1726; color:${isAbsent ? '#ef4444' : curGroup ? '#38bdf8' : '#94a3b8'}; border:1px solid ${isAbsent ? '#ef4444' : '#1e3358'};">
                 <option value="" ${!curGroup ? "selected" : ""} style="color:#94a3b8;">-- 미지정 --</option>
@@ -2120,7 +2234,12 @@ class TournamentApp {
     const attendees = active.filter(m => m.group !== "미참석");
     const targetMembers = attendees.length >= 4 ? attendees : active;
 
-    const sorted = [...targetMembers].sort((a, b) => (a.clubLevel || 2) - (b.clubLevel || 2));
+    const getLvlNum = (lvl) => {
+      if (lvl === "U1" || lvl === 1) return 1;
+      if (lvl === "U2" || lvl === 2) return 2;
+      return 3;
+    };
+    const sorted = [...targetMembers].sort((a, b) => getLvlNum(a.clubLevel) - getLvlNum(b.clubLevel));
     const groups = ["A조", "B조", "C조", "D조"];
     sorted.forEach((m, idx) => {
       const g = groups[idx % 4];
@@ -2354,14 +2473,18 @@ class TournamentApp {
             const isColl = hasCollision(m.name);
             const collBadge = isColl ? " ⚠️[중복]" : "";
             const groupBadge = (isGroupEvent && m.group) ? `[${m.group}] ` : "";
-            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${m.clubLevel || 2}등 / NTRP ${m.level || 3.0})${collBadge}</option>`;
+            opts += `<option value="${m.name}" ${isSel}>${groupBadge}${m.name} (${this.formatMemberLevelBadge(m)})${collBadge}</option>`;
           });
           return opts;
         };
 
         const getLvl = (name) => {
           const m = pool.find(p => p.name === name);
-          return m ? (m.clubLevel || 2) : 2;
+          if (!m) return 3;
+          const lvl = m.clubLevel || "U3";
+          if (lvl === "U1" || lvl === 1) return 1;
+          if (lvl === "U2" || lvl === 2) return 2;
+          return 3;
         };
 
         const countA = (a1 ? 1 : 0) + (a2 ? 1 : 0);
@@ -2381,7 +2504,7 @@ class TournamentApp {
               <div class="builder-team-box">
                 <div class="team-tag team-a-tag">
                   <span>Team A (2명)</span>
-                  <span class="team-avg">평균: ${avgA}등급</span>
+                  <span class="team-avg">${avgA !== "-" ? `평균: U${avgA}` : "평균: -"}</span>
                 </div>
                 <select class="form-select builder-select ${hasCollision(a1) ? 'collision-alert' : ''}"
                   onchange="app.updateBuilderPlayer('${courtName}', ${tIdx}, 'teamA', 0, this.value)">
@@ -2398,7 +2521,7 @@ class TournamentApp {
               <div class="builder-team-box">
                 <div class="team-tag team-b-tag">
                   <span>Team B (2명)</span>
-                  <span class="team-avg">평균: ${avgB}등급</span>
+                  <span class="team-avg">${avgB !== "-" ? `평균: U${avgB}` : "평균: -"}</span>
                 </div>
                 <select class="form-select builder-select ${hasCollision(b1) ? 'collision-alert' : ''}"
                   onchange="app.updateBuilderPlayer('${courtName}', ${tIdx}, 'teamB', 0, this.value)">
@@ -2626,7 +2749,7 @@ class TournamentApp {
     const name = document.getElementById("addMemberName").value.trim();
     const rawLevel = document.getElementById("addMemberLevel").value;
     const level = rawLevel ? parseFloat(rawLevel) : null;
-    const clubLevel = parseInt(document.getElementById("addMemberClubLevel").value) || 2;
+    const clubLevel = document.getElementById("addMemberClubLevel")?.value || "U3";
     const role = document.getElementById("addMemberRole").value;
 
     if (!name) {
@@ -2702,8 +2825,18 @@ class TournamentApp {
   openSettingsModal() {
     document.getElementById("setTourneyTitle").value = this.tournament.title;
     document.getElementById("setTourneyDate").value = this.tournament.date || "";
-    document.getElementById("setTourneyMode").value = this.tournament.mode || "regular_individual";
+    const modeEl = document.getElementById("setTourneyMode");
     const leagueSelect = document.getElementById("setTourneyIsLeague");
+    if (modeEl) {
+      modeEl.value = this.tournament.mode || "regular_individual";
+      modeEl.onchange = () => {
+        if (modeEl.value === "event" && leagueSelect) {
+          leagueSelect.value = "false";
+        } else if (modeEl.value !== "event" && leagueSelect) {
+          leagueSelect.value = "true";
+        }
+      };
+    }
     if (leagueSelect) {
       leagueSelect.value = this.tournament.isLeagueMatch !== false ? "true" : "false";
     }
@@ -2724,7 +2857,7 @@ class TournamentApp {
     if (!hasCompletedMatches || (this.tournament.breakingNews && this.tournament.breakingNews.startsWith("[공식 개막]"))) {
       const isLeague = this.tournament.isLeagueMatch !== false;
       const josa = this.getSubjectJosa(this.tournament.title);
-      this.tournament.breakingNews = `[공식 개막] ${this.tournament.title}${josa} 공식 개막되었습니다! (${isLeague ? "🏆 개인 리그전 전적/득실 누적" : "✕ 친선/이벤트전 - 리그 미반영"})`;
+      this.tournament.breakingNews = `[공식 개막] ${this.tournament.title}${josa} 공식 개막되었습니다! (${isLeague ? "🏆 개인 리그전 전적/득실 누적" : "✕ 이벤트 경기 - 개인리그전 미반영 · 조편성 없음"})`;
     }
 
     this.saveTournament();

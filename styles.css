@@ -750,6 +750,9 @@ body {
   display: flex;
   align-items: center;
   letter-spacing: 1px;
+  flex-shrink: 0;
+  z-index: 2;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
 }
 
 .ticker-track {
@@ -764,8 +767,47 @@ body {
 .ticker-text {
   font-size: 12px;
   font-weight: 700;
-  padding-left: 15px;
+  padding-left: 14px;
   white-space: nowrap;
+}
+
+/* 📢 대회 공지 & 선수 호출 전용: 부드러운 우->좌 흐르는(Marquee) 애니메이션 */
+@keyframes tickerMarqueeAnim {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.ticker-text.ticker-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: tickerMarqueeAnim 20s linear infinite;
+}
+
+.ticker-text.ticker-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* 🎾 동일 슬롯 다중 코트 스코어 전용: 위아래 전환 부드러운 페이드인 */
+@keyframes tickerScoreFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ticker-text.ticker-rotating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: tickerScoreFadeIn 0.35s ease-out forwards;
 }
 
 /* ==========================================
@@ -842,6 +884,7 @@ body {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .form-group label {
@@ -854,6 +897,13 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-row-courts {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
 }
 
 .form-input, .form-select {
@@ -866,10 +916,34 @@ body {
   outline: none;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 .form-input:focus, .form-select:focus {
   border-color: var(--neon-cyan);
+}
+
+/* 📱 iOS Safari & Mobile Date/Time Input Overflow Prevention */
+input[type="date"].form-input,
+input[type="time"].form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  padding: 8px 8px;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: center;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: center;
+  min-height: 1.2em;
 }
 
 .score-stepper-wrap {
@@ -1552,6 +1626,77 @@ body.force-stadium-mode .dashboard-container {
   padding: 2px 8px;
   border-radius: 4px;
   border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.btn-delete-history {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.btn-delete-history:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #ef4444;
+}
+.league-option-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #1e3358;
+  background: rgba(15, 23, 42, 0.6);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.league-option-card:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+.league-option-card.active-yes {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+.league-option-card.active-yes .league-opt-title {
+  color: #34d399 !important;
+  font-weight: 800;
+}
+.league-option-card.active-no {
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+.league-option-card.active-no .league-opt-title {
+  color: #fbbf24 !important;
+  font-weight: 800;
+}
+.league-opt-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cbd5e1;
+  transition: color 0.15s ease;
+}
+.league-opt-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.league-option-card input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #10b981;
+}
+.league-option-card.active-no input[type="radio"] {
+  accent-color: #f59e0b;
 }
 .history-podium-row {
   display: flex;
@@ -2307,6 +2452,173 @@ body.mode-staff .btn-mode-toggle {
   .btn-mode-toggle .btn-text {
     font-size: 11px !important;
   }
+
+  /* 📱 Mobile Modal & Form Layout Sizing Optimization */
+  .modal-window {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .modal-body {
+    padding: 12px 14px !important;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .form-row {
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .form-row-courts {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
+  }
+  input[type="date"].form-input,
+  input[type="time"].form-input {
+    padding: 7px 4px !important;
+    font-size: 12px !important;
+    letter-spacing: -0.3px;
+    box-sizing: border-box !important;
+  }
 }
+
+/* ==============================================================================
+   👥 Group Event Tournament (조별 대항전) Leaderboard & Award Styles
+   ============================================================================== */
+.btn-subtab {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+.btn-subtab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.btn-subtab.active {
+  background: #1e3a8a;
+  color: #60a5fa;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.group-rank-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (max-width: 500px) {
+  .group-rank-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.group-rank-card {
+  background: #091224;
+  border: 1px solid #1e3358;
+  border-radius: 10px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.group-rank-card.champion-group {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+}
+.group-rank-card.runnerup-group {
+  border-color: #94a3b8;
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.group-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.group-badge-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.badge-group-pill {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+.badge-group-A { background: #d97706; }
+.badge-group-B { background: #0284c7; }
+.badge-group-C { background: #059669; }
+.badge-group-D { background: #7c3aed; }
+
+.group-card-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.stat-box-val {
+  font-size: 14px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+.stat-box-lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.group-card-roster {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.roster-pill {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+/* Award ceremony modal styling */
+.award-podium-card {
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.award-gold {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(20, 30, 55, 0.95) 100%);
+  border: 1.5px solid #f59e0b;
+}
+.award-silver {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(20, 30, 55, 0.95) 100%);
+  border: 1.5px solid #94a3b8;
+}
+.award-mvp {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(20, 30, 55, 0.95) 100%);
+  border: 1.5px solid #38bdf8;
+}
+
+
 
 

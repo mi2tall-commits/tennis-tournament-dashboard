@@ -14,8 +14,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="유니콘전광판">
   <meta name="application-name" content="유니콘전광판">
-  <meta name="theme-color" content="#0d182e">
-  <link rel="stylesheet" href="styles.css?v=20261018_v105">
+  <link rel="stylesheet" href="styles.css?v=20261018_v125">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -960,9 +959,9 @@
           <div class="form-group">
             <label>대회 운영 모드</label>
             <select id="setTourneyMode" class="form-select">
-              <option value="regular_individual">👤 정기전: 개인 리그전 (파트너 순환)</option>
-              <option value="regular_group">👥 정기전: 조별 대항전 (A~D 4개조)</option>
-              <option value="event">🎉 이벤트 게임 (친선/번외)</option>
+              <option value="regular_individual">👤 정기전: 개인 리그전 (파트너 순환 · 조편성 없음)</option>
+              <option value="regular_group">👥 정기전: 조별 대항전 (A~D 4개조 단체전)</option>
+              <option value="event">🎉 이벤트 경기 (개인리그전 미반영 · 조편성 없음)</option>
             </select>
           </div>
         </div>
@@ -1020,6 +1019,7 @@
           <select id="newTourneyModeSelect" class="form-select" style="background:#0e1726; color:#38bdf8; font-weight:800; border:1px solid #1e3358;">
             <option value="regular_individual" selected>👤 정기전: 개인 리그전 (파트너 순환 · 조편성 없음)</option>
             <option value="regular_group">👥 정기전: 조별 대항전 (A~D 4개조 단체전)</option>
+            <option value="event">🎉 이벤트 경기 (개인리그전 미반영 · 조편성 없음)</option>
           </select>
         </div>
 
@@ -1032,20 +1032,20 @@
             이 대회의 경기 결과를 <b>[개인 리그전 순위표]</b>에 계속 누적 합산할지 선택합니다. (운영진 리셋 전까지 지속 누적)
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:8px 12px; border-radius:6px;">
-              <input type="radio" id="radNewTourneyLeagueYes" name="newTourneyLeagueOption" value="true" checked style="accent-color:#10b981;">
-              <div>
-                <div style="font-size:12px; font-weight:800; color:#34d399;">✓ 개인 리그전에 반영 (정기 리그전)</div>
-                <div style="font-size:10px; color:#cbd5e1;">복식 경기 개인 전적이 기존 리그 순위표에 계속 누적됩니다.</div>
+            <div id="cardLeagueYes" class="league-option-card active-yes" onclick="app.setNewTourneyLeagueOption(true)">
+              <input type="radio" id="radNewTourneyLeagueYes" name="newTourneyLeagueOption" value="true" checked onchange="app.setNewTourneyLeagueOption(true)">
+              <div style="flex:1;">
+                <div class="league-opt-title">✓ 개인 리그전에 반영 (정기 리그전)</div>
+                <div class="league-opt-desc">복식 경기 개인 전적이 기존 리그 순위표에 계속 누적됩니다.</div>
               </div>
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.2); padding:8px 12px; border-radius:6px;">
-              <input type="radio" id="radNewTourneyLeagueNo" name="newTourneyLeagueOption" value="false" style="accent-color:#94a3b8;">
-              <div>
-                <div style="font-size:12px; font-weight:800; color:#cbd5e1;">✕ 개인 리그전에 미반영 (이벤트 / 친선 / 번외 경기)</div>
-                <div style="font-size:10px; color:#94a3b8;">개인 리그전 순위표에 영향을 주지 않고 당일 단독 경기만 진행합니다.</div>
+            </div>
+            <div id="cardLeagueNo" class="league-option-card" onclick="app.setNewTourneyLeagueOption(false)">
+              <input type="radio" id="radNewTourneyLeagueNo" name="newTourneyLeagueOption" value="false" onchange="app.setNewTourneyLeagueOption(false)">
+              <div style="flex:1;">
+                <div class="league-opt-title">✕ 개인 리그전에 미반영 (이벤트 / 친선 / 번외 경기)</div>
+                <div class="league-opt-desc">개인 리그전 순위표에 영향을 주지 않고 당일 단독 경기만 진행합니다.</div>
               </div>
-            </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1156,12 +1156,15 @@
     </div>
   </div>
 
-  <!-- Scripts (Cache Buster v115) -->
-  <script src="sample_tournament_data.js?v=20261018_v115"></script>
-  <script src="js/member_manager.js?v=20261018_v115"></script>
-  <script src="js/matchmaker_engine.js?v=20261018_v115"></script>
-  <script src="js/leaderboard_engine.js?v=20261018_v115"></script>
-  <script src="js/tournament_app.js?v=20261018_v115"></script>
+  <!-- Scripts (Cache Buster v125) -->
+  <script src="sample_tournament_data.js?v=20261018_v125"></script>
+  <script src="js/member_manager.js?v=20261018_v125"></script>
+  <script src="js/matchmaker_engine.js?v=20261018_v125"></script>
+  <script src="js/leaderboard_engine.js?v=20261018_v125"></script>
+  <script src="js/tournament_app.js?v=20261018_v125"></script>
+  <!-- 🦄 유니콘 대회 안내 포스터 팝업 (매 대회마다 poster_config.js 만 수정) -->
+  <script src="poster_config.js?v=20261018_v125"></script>
+  <script src="js/poster_popup.js?v=20261018_v125"></script>
 
   <!-- 8. Edit Member Modal (회원 개별 정보 & U-리그 U1~U3 수정) -->
   <div id="editMemberModalWindow" class="modal-backdrop">
