@@ -68,7 +68,7 @@ class TournamentApp {
 
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved);
+        const parsed = this.sanitizeData(JSON.parse(saved));
         if (parsed) {
           // 🛡️ 기존 로컬 데이터 자동 마스킹 위생 처리
           if (Array.isArray(parsed.players)) {
@@ -242,7 +242,8 @@ class TournamentApp {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const result = await res.json();
       if (result && result.status === "ok" && result.data) {
-        const remoteData = result.data;
+        // 🛡️ 클라우드 데이터는 innerHTML/onclick 템플릿에 그대로 삽입되므로 HTML/JS 특수문자 제거 (Stored XSS 방지)
+        const remoteData = this.sanitizeData(result.data);
         // 🛡️ 신규 생성된 로컬 대회가 클라우드의 이전 구버전 데이터로 덮어씌워지는 현상 방지
         const localCreatedTime = parseInt((this.tournament?.id || "").replace("tourney_", "") || "0");
         const remoteCreatedTime = parseInt((remoteData?.id || "").replace("tourney_", "") || "0");
@@ -3088,6 +3089,18 @@ class TournamentApp {
         this.renderMyNextMatchBanner();
       });
     }
+  }
+
+  // 🛡️ 외부 유입 데이터의 모든 문자열 값에서 HTML/JS 문맥 탈출 문자 제거
+  sanitizeData(value) {
+    if (typeof value === "string") return value.replace(/[<>"'`\\]/g, "");
+    if (Array.isArray(value)) return value.map(v => this.sanitizeData(v));
+    if (value && typeof value === "object") {
+      const out = {};
+      Object.keys(value).forEach(k => { out[k] = this.sanitizeData(value[k]); });
+      return out;
+    }
+    return value;
   }
 
   escape(str) {
