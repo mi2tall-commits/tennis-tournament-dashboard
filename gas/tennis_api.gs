@@ -15,6 +15,8 @@
  *    - 액세스 권한이 있는 사용자(Who has access): 모든 사용자(Anyone) ★필수★
  * 6. [배포] 버튼 클릭 후 생성된 웹 앱 URL(Web App URL)을 복사하여
  *    테니스 전광판 웹앱의 [클라우드 설정]에 입력하면 즉시 실시간 동기화가 활성화됩니다!
+ * 7. (선택) 쓰기 보호: [프로젝트 설정] > [스크립트 속성]에 WRITE_TOKEN 값을 추가하면
+ *    같은 토큰을 보낸 기기만 저장할 수 있습니다. (미설정 시 기존처럼 누구나 저장 가능)
  */
 
 // 시트 탭 이름 상수
@@ -115,6 +117,12 @@ function doPost(e) {
       payload = JSON.parse(e.postData.contents);
     } else if (e && e.parameter) {
       payload = e.parameter;
+    }
+
+    // 🔐 Script Properties에 WRITE_TOKEN이 설정된 경우에만 검사 (미설정 시 기존처럼 허용)
+    const requiredToken = PropertiesService.getScriptProperties().getProperty("WRITE_TOKEN");
+    if (requiredToken && payload.token !== requiredToken) {
+      return jsonResponse({ status: "error", code: "unauthorized", message: "Invalid or missing write token" }, 403);
     }
 
     const action = payload.action || "save_tournament";

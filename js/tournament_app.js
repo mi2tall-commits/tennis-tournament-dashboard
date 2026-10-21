@@ -25,6 +25,8 @@ class TournamentApp {
     // ☁️ Google Apps Script 클라우드 DB 동기화 (라이브 엔드포인트 영구 내장)
     this.defaultGasUrl = "https://script.google.com/macros/s/AKfycbz4kNhi6_JkN8l8iOuYltZk-99tRIPcTBm5jU86RPvWav-KweYtsMPX1hzMCuo1WqZk/exec";
     this.gasUrl = localStorage.getItem("tennis_gas_url") || this.defaultGasUrl;
+    this.gasWriteToken = localStorage.getItem("tennis_gas_write_token") || "";
+    this.cloudAuthAlertShown = false;
     this.isSyncing = false;
     this.lastSyncTime = null;
     this.cloudSyncTimer = null;
@@ -284,31 +286,54 @@ class TournamentApp {
     }
     try {
       // 백그라운드 전송이므로 사용자 화면을 방해하지 않고 조용히 전송
-      await fetch(this.gasUrl, {
+      const res = await fetch(this.gasUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "save_tournament",
+          token: this.gasWriteToken,
           tournament: this.tournament
         })
       });
+      let result = null;
+      try { result = await res.json(); } catch(parseErr) {}
+      if (result && result.status === "error" && result.code === "unauthorized") {
+        this.handleCloudUnauthorized();
+        return;
+      }
       this.lastSyncTime = new Date();
     } catch(err) {
       console.warn("클라우드 백그라운드 업로드 지연 (로컬 보존):", err.message);
     }
   }
 
+  // 🔐 저장 토큰 불일치/누락 시 처리 (세션당 1회만 경고)
+  handleCloudUnauthorized() {
+    this.updateCloudStatusBadge("error");
+    if (!this.cloudAuthAlertShown) {
+      this.cloudAuthAlertShown = true;
+      alert("⚠️ 클라우드 저장이 거부되었습니다 (저장 토큰 없음/불일치).\n\n이 기기에서 변경한 내용은 클라우드에 반영되지 않으며 다음 동기화 때 되돌아갈 수 있습니다.\n운영진 설정 > 클라우드 동기화 설정에서 '저장 토큰'을 입력해 주세요.");
+    }
+  }
+
   async pushMatchToCloud(match) {
     if (!this.gasUrl || !match || !match.id) return;
     try {
-      await fetch(this.gasUrl, {
+      const res = await fetch(this.gasUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "update_match",
+          token: this.gasWriteToken,
           match: match
         })
       });
+      let result = null;
+      try { result = await res.json(); } catch(parseErr) {}
+      if (result && result.status === "error" && result.code === "unauthorized") {
+        this.handleCloudUnauthorized();
+        return;
+      }
       this.lastSyncTime = new Date();
     } catch(err) {
       console.warn("개별 경기 클라우드 동기화 지연:", err.message);
@@ -319,6 +344,8 @@ class TournamentApp {
     const inputEl = document.getElementById("inputGasUrl");
     if (inputEl) {
       inputEl.value = this.gasUrl || "";
+      const tokenEl = document.getElementById("inputGasToken");
+      if (tokenEl) tokenEl.value = this.gasWriteToken || "";
       this.showModal("cloudSettingsModal");
     } else {
       const curUrl = this.gasUrl || "";
@@ -366,8 +393,11 @@ class TournamentApp {
   saveCloudUrlFromModal() {
     const url = document.getElementById("inputGasUrl")?.value.trim() || "";
     this.gasUrl = url;
+    this.gasWriteToken = document.getElementById("inputGasToken")?.value.trim() || "";
+    this.cloudAuthAlertShown = false;
     try {
       localStorage.setItem("tennis_gas_url", this.gasUrl);
+      localStorage.setItem("tennis_gas_write_token", this.gasWriteToken);
     } catch(e) {}
     this.updateCloudStatusBadge();
     this.closeModal("cloudSettingsModal");
